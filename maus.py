@@ -156,6 +156,29 @@ class Robot:
         self.last_right_time = current_time
 
 
+class PIDController:
+
+    def __init__(self, kp, ki, kd):
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        self.previous_error = 0 #überlegung den setzbar zumachen falls der die probleme macht
+        self.integral = 0
+
+    def update(self, setpoint, measurement, time_step):
+        error = setpoint - measurement
+        self.integral += error * time_step
+        derivative = (error - self.previous_error) / time_step
+        derivative = max(min(2, derivative),-2)
+        self.previous_error = error
+        return self.kp * error + self.ki * self.integral + self.kd * derivative
+    
+    def set_previous_error(self,error):
+        self.previous_error = error
+
+
+speed_pid_left = PIDController(kp=1.0, ki=0.1, kd=0.1)
+
 robot = Robot()
 mc = motoron.MotoronI2C()
 #mc2 = motoron.MotoronI2C(address=18)
@@ -166,9 +189,12 @@ mc.clear_reset_flag()
 mc.set_max_acceleration(1, 140)
 mc.set_max_deceleration(1, 300)
 
-
+last_time = time.monotonic()
 while True:
-    mc.set_speed(1, 400)
+    current_time = time.monotonic()
+    time_step = current_time - last_time
+    speed = speed_pid_left.update(10, robot.get_left_wheel_velocity(), time_step)
+    mc.set_speed(1, speed)
     robot.state_estimate()
     print(robot.get_left_wheel_velocity())
     time.sleep(0.1)
