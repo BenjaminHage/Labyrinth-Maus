@@ -177,7 +177,7 @@ class PIDController:
         self.previous_error = error
 
 
-speed_pid_left = PIDController(kp=1.0, ki=0.1, kd=0.1)
+speed_pid_left = PIDController(kp=50, ki=0.00, kd=0.0)
 
 robot = Robot()
 mc = motoron.MotoronI2C()
@@ -194,7 +194,7 @@ while True:
     current_time = time.monotonic()
     time_step = current_time - last_time
     speed = speed_pid_left.update(10, robot.get_left_wheel_velocity(), time_step)
-    mc.set_speed(1, speed)
+    mc.set_speed(1, int(speed))
     robot.state_estimate()
     print(robot.get_left_wheel_velocity())
-    time.sleep(0.1)
+   # time.sleep(0.1)
