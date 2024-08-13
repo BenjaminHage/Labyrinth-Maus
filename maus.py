@@ -207,6 +207,7 @@ class PIDController:
 
 
 speed_pid_left = PIDController(kp=45, ki=100, kd=0)
+speed_pid_right = PIDController(kp=45, ki=100, kd=0)
 robot = Robot()
 lpf = LowPassFilter(1)
 
@@ -234,9 +235,12 @@ duration = 8  # Dauer der Messung in Sekunden
 while time.monotonic() - start_time < duration:
     current_time = time.monotonic()
     time_step = current_time - last_time
-    speed = speed_pid_left.update(10, robot.get_left_wheel_velocity(), time_step)
-    mc.set_speed(1, 400)
-    mc_right.set_speed(1, 400)
+    
+    left_motor_control = speed_pid_left.update(10, robot.get_left_wheel_velocity(), time_step)
+    mc.set_speed(1, int(left_motor_control))
+    right_motor_control = -speed_pid_right.update(10, robot.get_right_wheel_velocity(), time_step)
+    mc_right.set_speed(1, int(right_motor_control))
+    
     robot.state_estimate()
     last_time = current_time
 
