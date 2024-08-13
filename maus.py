@@ -250,97 +250,101 @@ class PIDController:
 ################################################################################################################
         ########################################################################################################
 
-def handle_user_input(angle_setpoint, base_speed=0):
-    # Startet die curses-Bibliothek, um Tastatureingaben zu handhaben
-    screen = curses.initscr()
-    curses.noecho()
-    curses.cbreak()
-    screen.keypad(True)
-    
-    base_speed = 0
 
-    try:
-        key = screen.getch()
-        
-        if key == curses.KEY_UP:
-            base_speed += 0.1  # Erhöhe die Geschwindigkeit bei Druck der nach oben Taste
-        elif key == curses.KEY_DOWN:
-            base_speed -= 0.1  # Verringere die Geschwindigkeit bei Druck der nach unten Taste
-        elif key == curses.KEY_LEFT:
-            angle_setpoint += 5  # Erhöhe den Winkel bei Druck der linken Taste
-        elif key == curses.KEY_RIGHT:
-            angle_setpoint -= 5  # Verringere den Winkel bei Druck der rechten Taste
+def handle_user_input(angle_setpoint, base_speed, stdscr):
+    key = stdscr.getch()  # Holt die letzte Tasteneingabe
 
-    finally:
-        # Wiederherstellen des normalen Terminalzustands
-        curses.nocbreak()
-        screen.keypad(False)
-        curses.echo()
-        curses.endwin()
+    if key == curses.KEY_UP:
+        base_speed += 10  # Erhöht die Geschwindigkeit bei Drücken der nach oben gerichteten Pfeiltaste
+    elif key == curses.KEY_DOWN:
+        base_speed -= 10  # Verringert die Geschwindigkeit bei Drücken der nach unten gerichteten Pfeiltaste
+    else:
+        base_speed = 0  # Setzt die Geschwindigkeit auf 0, wenn keine der Tasten gedrückt wird
+
+    if key == curses.KEY_LEFT:
+        angle_setpoint += 5  # Erhöht den Winkel bei Drücken der nach links gerichteten Pfeiltaste
+    elif key == curses.KEY_RIGHT:
+        angle_setpoint -= 5  # Verringert den Winkel bei Drücken der nach rechts gerichteten Pfeiltaste
 
     return angle_setpoint, base_speed
 
 
 #################################################################################################################
 
-speed_pid_left = PIDController(kp=450, ki=1600, kd=0)
-speed_pid_right = PIDController(kp=450, ki=1600, kd=0)
-angle_pid = PIDController(kp=300.0, ki=300, kd=0)
-angle_pid
-robot = Robot()
-lpf = LowPassFilter(1)
+import curses
 
-mc = motoron.MotoronI2C()
-mc_right = motoron.MotoronI2C(address=17)
+def main(stdscr):
+    # Clear screen
+    stdscr.clear()
 
-mc.reinitialize()  
-mc.disable_crc()
-mc.clear_reset_flag()
+    # Aktiviere die nicht-blockierende Tasteneingabe
+    stdscr.nodelay(True)
+    curses.curs_set(0)  # Blendet den Cursor aus
 
-mc_right.reinitialize()  
-mc_right.disable_crc()
-mc_right.clear_reset_flag()
+    speed_pid_left = PIDController(kp=450, ki=1600, kd=0)
+    speed_pid_right = PIDController(kp=450, ki=1600, kd=0)
+    angle_pid = PIDController(kp=300.0, ki=300, kd=0)
+    robot = Robot()
+    lpf = LowPassFilter(1)
 
-mc.set_max_acceleration(1, 200)
-mc.set_max_deceleration(1, 300)
+    mc = motoron.MotoronI2C()
+    mc_right = motoron.MotoronI2C(address=17)
 
-mc_right.set_max_acceleration(1, 200)
-mc_right.set_max_deceleration(1, 300)
+    mc.reinitialize()  
+    mc.disable_crc()
+    mc.clear_reset_flag()
 
-last_time = time.monotonic()
-start_time = time.monotonic()
-duration = 100000  # Dauer der Messung in Sekunden
+    mc_right.reinitialize()  
+    mc_right.disable_crc()
+    mc_right.clear_reset_flag()
 
-angle_setpoint = 0
-base_speed = 0
+    mc.set_max_acceleration(1, 200)
+    mc.set_max_deceleration(1, 300)
 
-while time.monotonic() - start_time < duration:
-    current_time = time.monotonic()
-    time_step = current_time - last_time
-    last_time = current_time
+    mc_right.set_max_acceleration(1, 200)
+    mc_right.set_max_deceleration(1, 300)
+
+    last_time = time.monotonic()
+    start_time = time.monotonic()
+    duration = 10  # Dauer der Messung in Sekunden
+
+    angle_setpoint = 0
+    base_speed = 0
+
+    while time.monotonic() - start_time < duration:
+        current_time = time.monotonic()
+        time_step = current_time - last_time
+        last_time = current_time
+        
+        x, y, theta = robot.get_position_and_angle()
+        
+        angle_setpoint, base_speed = handle_user_input(angle_setpoint, base_speed, stdscr)
+        
+        # PID controller to adjust wheel velocities
+        angle_control = angle_pid.update(angle_setpoint, theta, time_step)
+        left_wheel_velocity = base_speed - angle_control
+        right_wheel_velocity = base_speed + angle_control
+        
+        left_motor_control = speed_pid_left.update(abs(left_wheel_velocity), robot.get_left_wheel_velocity(), time_step)
+        mc.set_speed(1, int(left_motor_control * np.sign(left_wheel_velocity)))
+        
+        right_motor_control = speed_pid_right.update(abs(right_wheel_velocity), robot.get_right_wheel_velocity(), time_step)
+        mc_right.set_speed(1, int(-right_motor_control * np.sign(right_wheel_velocity)))
+        
+        robot.state_estimate()
+        
+        # Ausgabe der Geschwindigkeit zur Überprüfung
+        stdscr.addstr(0, 0, f"Left Wheel Velocity: {robot.get_left_wheel_velocity():.2f} m/s")
+        stdscr.addstr(1, 0, f"Right Wheel Velocity: {robot.get_right_wheel_velocity():.2f} m/s")
+        stdscr.refresh()
+
+        time.sleep(0.01)  # Ggf. die Schleifenfrequenz anpassen
+
+    print("Messung beendet.")
+
+if __name__ == "__main__":
+    curses.wrapper(main)
     
-    x, y, theta = robot.get_position_and_angle()
-    
-    angle_setpoint, base_speed = handle_user_input(angle_setpoint, base_speed)
-    #base_speed = 0.5
-    
-    # PID controller to adjust wheel velocities
-    angle_control = angle_pid.update(angle_setpoint, theta, time_step)
-    left_wheel_velocity = base_speed #- angle_control
-    right_wheel_velocity = base_speed #+ angle_control
-    
-    left_motor_control = speed_pid_left.update(abs(left_wheel_velocity), robot.get_left_wheel_velocity(), time_step)
-    mc.set_speed(1, int(left_motor_control * np.sign(left_wheel_velocity)))
-    
-    right_motor_control = speed_pid_right.update(abs(right_wheel_velocity), robot.get_right_wheel_velocity(), time_step)
-    mc_right.set_speed(1, int(-right_motor_control * np.sign(right_wheel_velocity)))
-    
-    robot.state_estimate()
-    
-    print(robot.get_left_wheel_velocity())
-    #time.sleep(0.01)  # Ggf. die Schleifenfrequenz anpassen
-
-print("Messung beendet.")
 # Plot anzeigen
 #plt.figure(figsize=(10, 6))
 #plt.plot(robot.times, robot.left_wheel_velocities, label="Left Wheel Velocity")
