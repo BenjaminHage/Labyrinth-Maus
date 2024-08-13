@@ -185,7 +185,7 @@ class PIDController:
         self.previous_error = error
 
 
-speed_pid_left = PIDController(kp=50, ki=0.00, kd=0.0)
+speed_pid_left = PIDController(kp=70, ki=0.00, kd=0.0)
 
 robot = Robot()
 mc = motoron.MotoronI2C()
@@ -199,13 +199,8 @@ mc.set_max_deceleration(1, 300)
 
 last_time = time.monotonic()
 
-
-
-
-
-
 start_time = time.monotonic()
-duration = 100  # Dauer der Messung in Sekunden
+duration = 8  # Dauer der Messung in Sekunden
 
 while time.monotonic() - start_time < duration:
     current_time = time.monotonic()
