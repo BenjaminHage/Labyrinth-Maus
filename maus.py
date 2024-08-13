@@ -50,7 +50,7 @@ class Robot:
         self.right_wheel_velocity = 0
         self.last_left_time = time.monotonic()
         self.last_right_time = time.monotonic()
-        self.velocity_timeout = 0.3  # Sekundenschwelle, nach der die Geschwindigkeit auf 0 gesetzt wird
+        self.velocity_timeout = 0.17  # Sekundenschwelle, nach der die Geschwindigkeit auf 0 gesetzt wird
 
         #self.lpf_sensors = [LowPassFilter(cutoff_freq=3) for _ in self.sensor_angles]
         self.lpf_speed = LowPassFilter(1)
@@ -58,8 +58,8 @@ class Robot:
 
         self.pin_a_left = 17
         self.pin_b_left = 27
-        self.pin_a_right = 20
-        self.pin_b_right = 21
+        self.pin_a_right = 21
+        self.pin_b_right = 20
         
         self.ppr = 12  # Pulses Per Revolution
         self.counter_left = 0
@@ -210,7 +210,7 @@ class Robot:
         if time_step > 0:
             # Bestimmen der Richtung
             direction = 1 if GPIO.input(self.pin_b_left) else -1
-            left_wheel_velocity = direction * self.wheel_circumference / (self.ppr * time_step)
+            left_wheel_velocity = self.wheel_circumference / (self.ppr * time_step)
             self.left_wheel_velocity = self.lpf_speed.filter(left_wheel_velocity, time_step)
             
         self.last_left_time = current_time
@@ -221,7 +221,7 @@ class Robot:
         if time_step > 0:
             # Bestimmen der Richtung
             direction = 1 if GPIO.input(self.pin_b_right) else -1
-            right_wheel_velocity = direction * self.wheel_circumference / (self.ppr * time_step)
+            right_wheel_velocity = self.wheel_circumference / (self.ppr * time_step)
             self.right_wheel_velocity = self.lpf_speed_right.filter(right_wheel_velocity, time_step)
             
         self.last_right_time = current_time
@@ -248,8 +248,8 @@ class PIDController:
         self.previous_error = error
 
 
-speed_pid_left = PIDController(kp=45, ki=120, kd=0)
-speed_pid_right = PIDController(kp=45, ki=100, kd=0)
+speed_pid_left = PIDController(kp=30, ki=160, kd=0)
+speed_pid_right = PIDController(kp=30, ki=160, kd=0)
 robot = Robot()
 lpf = LowPassFilter(1)
 
@@ -278,15 +278,19 @@ while time.monotonic() - start_time < duration:
     current_time = time.monotonic()
     time_step = current_time - last_time
     
-    left_motor_control = speed_pid_left.update(5, robot.get_left_wheel_velocity(), time_step)
-    mc.set_speed(1, int(left_motor_control))
-    right_motor_control = speed_pid_right.update(5, robot.get_right_wheel_velocity(), time_step)
-    mc_right.set_speed(1, int(right_motor_control))
+    left_wheel_velosity = 5 * np.sin(current_time * 1)
+    right_wheel_velosity = 5
+    
+    left_motor_control = speed_pid_left.update(abs(left_wheel_velosity), robot.get_left_wheel_velocity(), time_step)
+    mc.set_speed(1, int(left_motor_control * np.sign(left_wheel_velosity)))
+    
+    right_motor_control = speed_pid_right.update(abs(right_wheel_velosity), robot.get_right_wheel_velocity(), time_step)
+    mc_right.set_speed(1, int(-right_motor_control * np.sign(right_wheel_velosity)))
     
     robot.state_estimate()
     last_time = current_time
 
-    time.sleep(0.01)  # Ggf. die Schleifenfrequenz anpassen
+    #time.sleep(0.01)  # Ggf. die Schleifenfrequenz anpassen
 
 print("Messung beendet.")
 # Plot anzeigen
