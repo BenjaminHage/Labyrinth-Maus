@@ -251,36 +251,42 @@ class PIDController:
         ########################################################################################################
 
 
-def handle_user_input(angle_setpoint, base_speed, stdscr):
-    key = stdscr.getch()  # Holt die letzte Tasteneingabe
+import sys
+import termios
+import tty
 
-    if key == curses.KEY_UP:
-        base_speed += 10  # Erhöht die Geschwindigkeit bei Drücken der nach oben gerichteten Pfeiltaste
-    elif key == curses.KEY_DOWN:
-        base_speed -= 10  # Verringert die Geschwindigkeit bei Drücken der nach unten gerichteten Pfeiltaste
-    else:
-        base_speed = 0  # Setzt die Geschwindigkeit auf 0, wenn keine der Tasten gedrückt wird
+def get_key():
+    """
+    Reads a single key press from the console.
+    """
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(fd)
+        key = sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    return key
 
-    if key == curses.KEY_LEFT:
-        angle_setpoint += 5  # Erhöht den Winkel bei Drücken der nach links gerichteten Pfeiltaste
-    elif key == curses.KEY_RIGHT:
-        angle_setpoint -= 5  # Verringert den Winkel bei Drücken der nach rechts gerichteten Pfeiltaste
-
+def handle_user_input(angle_setpoint, base_speed):
+    key = get_key()
+    
+    if key == '\x1b[A':  # Up arrow key
+        base_speed += 10  # Erhöhe die Geschwindigkeit
+    elif key == '\x1b[B':  # Down arrow key
+        base_speed -= 10  # Verringere die Geschwindigkeit
+    elif key == '\x1b[C':  # Right arrow key
+        angle_setpoint -= 5  # Verringere den Winkel
+    elif key == '\x1b[D':  # Left arrow key
+        angle_setpoint += 5  # Erhöhe den Winkel
+    elif key == 'q':  # Stop the program
+        return None, None  # Stop the main loop
     return angle_setpoint, base_speed
 
 
 #################################################################################################################
 
-import curses
-
-def main(stdscr):
-    # Clear screen
-    stdscr.clear()
-
-    # Aktiviere die nicht-blockierende Tasteneingabe
-    stdscr.nodelay(True)
-    curses.curs_set(0)  # Blendet den Cursor aus
-
+def main():
     speed_pid_left = PIDController(kp=450, ki=1600, kd=0)
     speed_pid_right = PIDController(kp=450, ki=1600, kd=0)
     angle_pid = PIDController(kp=300.0, ki=300, kd=0)
@@ -311,15 +317,17 @@ def main(stdscr):
     angle_setpoint = 0
     base_speed = 0
 
-    while time.monotonic() - start_time < duration:
+    while True:
         current_time = time.monotonic()
         time_step = current_time - last_time
         last_time = current_time
         
         x, y, theta = robot.get_position_and_angle()
         
-        angle_setpoint, base_speed = handle_user_input(angle_setpoint, base_speed, stdscr)
-        
+        angle_setpoint, base_speed = handle_user_input(angle_setpoint, base_speed)
+        if angle_setpoint is None or base_speed is None:
+            break  # Verlasse die Schleife, wenn das Programm gestoppt wird
+
         # PID controller to adjust wheel velocities
         angle_control = angle_pid.update(angle_setpoint, theta, time_step)
         left_wheel_velocity = base_speed - angle_control
@@ -333,17 +341,16 @@ def main(stdscr):
         
         robot.state_estimate()
         
-        # Ausgabe der Geschwindigkeit zur Überprüfung
-        stdscr.addstr(0, 0, f"Left Wheel Velocity: {robot.get_left_wheel_velocity():.2f} m/s")
-        stdscr.addstr(1, 0, f"Right Wheel Velocity: {robot.get_right_wheel_velocity():.2f} m/s")
-        stdscr.refresh()
+        print(f"Left Wheel Velocity: {robot.get_left_wheel_velocity():.2f} m/s")
+        print(f"Right Wheel Velocity: {robot.get_right_wheel_velocity():.2f} m/s")
 
         time.sleep(0.01)  # Ggf. die Schleifenfrequenz anpassen
 
-    print("Messung beendet.")
 
 if __name__ == "__main__":
-    curses.wrapper(main)
+    main()
+    print("Messung beendet.")
+
     
 # Plot anzeigen
 #plt.figure(figsize=(10, 6))
