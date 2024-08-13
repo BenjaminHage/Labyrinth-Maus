@@ -77,9 +77,15 @@ class Robot:
        
         time.sleep(0.2)
 
+        self.encoder_mode = 0
         # Interrupt on A pin
-        GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_velocity_left)
-        GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_velocity_right)
+        if self.encoder_mode == 0
+            GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_velocity_left)
+            GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_velocity_right)
+        elif self.encoder_mode == 1
+            GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_count_left)
+            GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_count_right)
+            
 
         
 
@@ -135,16 +141,29 @@ class Robot:
 
     def state_estimate(self):
         current_time = time.monotonic()
-
-        # Geschwindigkeit auf 0 setzen, falls das Timeout überschritten wurde
-        if current_time - self.last_left_time > self.velocity_timeout:
-            self.left_wheel_velocity = 0
-
-        if current_time - self.last_right_time > self.velocity_timeout:
-            self.right_wheel_velocity = 0
-
-        # Positions-Update basierend auf der aktuellen Geschwindigkeit
         time_step = current_time - self.last_time
+
+        if self.encoder_mode == 0
+        # Geschwindigkeit auf 0 setzen, falls das Timeout überschritten wurde
+            if current_time - self.last_left_time > self.velocity_timeout:
+                self.left_wheel_velocity = 0
+    
+            if current_time - self.last_right_time > self.velocity_timeout:
+                self.right_wheel_velocity = 0
+        elif self.encoder_mode == 1
+            # Calculate RPS (Revolutions Per Second)
+            rps_left = (self.counter_left / self.ppr) / time_step 
+            rps_right = (self.counter_right / self.ppr) / time_step 
+    
+            # Reset counter and time
+            self.counter_left = 0
+            self.counter_right = 0
+
+            self.left_wheel_velocity = (self.wheel_circumference * rps_left)   # in meters per second
+            self.right_wheel_velocity = (self.wheel_circumference * rps_right) # in meters per second
+            
+        # Positions-Update basierend auf der aktuellen Geschwindigkeit
+        
         self.robot_x, self.robot_y, self.robot_angle = self.update_robot(self.robot_x, self.robot_y, self.robot_angle, self.left_wheel_velocity, self.right_wheel_velocity, time_step)
         self.last_time = current_time
 
@@ -165,6 +184,22 @@ class Robot:
     #         filtered_readings.append(filtered_reading)
         
     #     return filtered_readings 
+
+    def _update_count_left(self, channel):
+        a_state = GPIO.input(self.pin_a_left)
+        b_state = GPIO.input(self.pin_b_left)
+        if a_state == b_state:
+            self.counter_left += 1
+        else:
+            self.counter_left -= 1
+    
+    def _update_count_right(self, channel):
+        a_state = GPIO.input(self.pin_a_right)
+        b_state = GPIO.input(self.pin_b_right)
+        if a_state == b_state:
+            self.counter_right += 1
+        else:
+            self.counter_right -= 1
 
     def _update_velocity_left(self, channel):
         current_time = time.monotonic()
