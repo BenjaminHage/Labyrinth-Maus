@@ -104,4 +104,4 @@ class Robot:
             filtered_reading = self.lpf_sensors[i].filter(reading, time_step)
             filtered_readings.append(filtered_reading)
         
-        return filtered_readings
+        return filtered_readings 
