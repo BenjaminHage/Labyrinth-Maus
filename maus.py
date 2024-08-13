@@ -109,7 +109,7 @@ class Robot:
         return x, y, theta
 
     def state_estimate(self):
-        current_time = time.time()
+        current_time = time.monotonic()
         time_step = current_time - self.last_time
 
         # Calculate RPM
@@ -122,8 +122,8 @@ class Robot:
         self.last_time = current_time
 
         # Calculate linear speed (circumference * RPM)
-        self.left_wheel_velocity = (self.wheel_circumference * rpm_left)   # in units of diameter per second
-        self.right_wheel_velocity = (self.wheel_circumference * rpm_right)   # in units of diameter per second
+        self.left_wheel_velocity = (self.wheel_circumference * rps_left)   # in units of diameter per second
+        self.right_wheel_velocity = (self.wheel_circumference * rps_right)   # in units of diameter per second
         self.robot_x, self.robot_y, self.robot_angle = self.update_robot(self.robot_x, self.robot_y, self.robot_angle, self.left_wheel_velocity, self.right_wheel_velocity, time_step)
 
     def get_position_and_angle(self):
@@ -167,7 +167,9 @@ mc.clear_reset_flag()
 mc.set_max_acceleration(1, 140)
 mc.set_max_deceleration(1, 300)
 
-mc.set_speed(1, 800)
+
 while True:
+    mc.set_speed(1, 400)
     robot.state_estimate()
     print(robot.get_left_wheel_velocity())
+    time.sleep(0.1)
