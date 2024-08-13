@@ -29,7 +29,7 @@ class Robot:
         self.right_wheel_velocity = 0
         self.last_left_time = time.monotonic()
         self.last_right_time = time.monotonic()
-        self.velocity_timeout = 0.2  # Sekundenschwelle, nach der die Geschwindigkeit auf 0 gesetzt wird
+        self.velocity_timeout = 0.3  # Sekundenschwelle, nach der die Geschwindigkeit auf 0 gesetzt wird
 
         #self.lpf_sensors = [LowPassFilter(cutoff_freq=3) for _ in self.sensor_angles]
 
@@ -56,7 +56,7 @@ class Robot:
 
         # Interrupt on A pin
         GPIO.add_event_detect(self.pin_a_left, GPIO.BOTH, callback=self._update_velocity_left)
-        GPIO.add_event_detect(self.pin_a_right, GPIO.BOTH, callback=self._update_velocity_right)
+        #GPIO.add_event_detect(self.pin_a_right, GPIO.BOTH, callback=self._update_velocity_right)
 
         
 
@@ -113,7 +113,7 @@ class Robot:
         return x, y, theta
 
     def state_estimate(self):
-         current_time = time.monotonic()
+        current_time = time.monotonic()
 
         # Geschwindigkeit auf 0 setzen, falls das Timeout überschritten wurde
         if current_time - self.last_left_time > self.velocity_timeout:
