@@ -52,6 +52,7 @@ class Robot:
         self.velocity_timeout = 0.3  # Sekundenschwelle, nach der die Geschwindigkeit auf 0 gesetzt wird
 
         #self.lpf_sensors = [LowPassFilter(cutoff_freq=3) for _ in self.sensor_angles]
+        self.lpf_speed = LowPassFilter(1)
 
         self.pin_a_left = 17
         self.pin_b_left = 27
@@ -166,9 +167,11 @@ class Robot:
 
     def _update_velocity_left(self, channel):
         current_time = time.monotonic()
-        time_delta = current_time - self.last_left_time
-        if time_delta > 0:
-            self.left_wheel_velocity = self.wheel_circumference / (self.ppr * time_delta)
+        time_step = current_time - self.last_left_time
+        if time_step > 0:
+            left_wheel_velocity = self.wheel_circumference / (self.ppr * time_step)
+            self.left_wheel_velocity = self.lpf_speed.filter(left_wheel_velocity, time_step)
+            
         self.last_left_time = current_time
 
     def _update_velocity_right(self, channel):
@@ -200,7 +203,7 @@ class PIDController:
         self.previous_error = error
 
 
-speed_pid_left = PIDController(kp=70, ki=0.00, kd=0.0)
+speed_pid_left = PIDController(kp=45, ki=100, kd=0)
 
 robot = Robot()
 lpf = LowPassFilter(1)
@@ -210,7 +213,7 @@ mc.reinitialize()
 mc.disable_crc()
 mc.clear_reset_flag()
 
-mc.set_max_acceleration(1, 140)
+mc.set_max_acceleration(1, 100)
 mc.set_max_deceleration(1, 300)
 
 last_time = time.monotonic()
@@ -221,13 +224,13 @@ duration = 8  # Dauer der Messung in Sekunden
 while time.monotonic() - start_time < duration:
     current_time = time.monotonic()
     time_step = current_time - last_time
-    filtered_speed = lpf.filter(robot.get_left_wheel_velocity(), time_step)
-    speed = speed_pid_left.update(10, filtered_speed, time_step)
+    #filtered_speed = lpf.filter(robot.get_left_wheel_velocity(), time_step)
+    speed = speed_pid_left.update(10, robot.get_left_wheel_velocity(), time_step)
     mc.set_speed(1, int(speed))
     robot.state_estimate()
     last_time = current_time
 
-    time.sleep(0.1)  # Ggf. die Schleifenfrequenz anpassen
+    #time.sleep(0.1)  # Ggf. die Schleifenfrequenz anpassen
 
 print("Messung beendet.")
 # Plot anzeigen
