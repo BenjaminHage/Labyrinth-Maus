@@ -170,7 +170,9 @@ class Robot:
         current_time = time.monotonic()
         time_step = current_time - self.last_left_time
         if time_step > 0:
-            left_wheel_velocity = self.wheel_circumference / (self.ppr * time_step)
+            # Bestimmen der Richtung
+            direction = 1 if GPIO.input(self.pin_b_left) == GPIO.input(self.pin_a_left) else -1
+            left_wheel_velocity = direction * self.wheel_circumference / (self.ppr * time_step)
             self.left_wheel_velocity = self.lpf_speed.filter(left_wheel_velocity, time_step)
             
         self.last_left_time = current_time
@@ -179,7 +181,9 @@ class Robot:
         current_time = time.monotonic()
         time_step = current_time - self.last_right_time
         if time_step > 0:
-            right_wheel_velocity = self.wheel_circumference / (self.ppr * time_step)
+            # Bestimmen der Richtung
+            direction = 1 if GPIO.input(self.pin_b_right) == GPIO.input(self.pin_a_right) else -1
+            right_wheel_velocity = direction * self.wheel_circumference / (self.ppr * time_step)
             self.right_wheel_velocity = self.lpf_speed_right.filter(right_wheel_velocity, time_step)
             
         self.last_right_time = current_time
