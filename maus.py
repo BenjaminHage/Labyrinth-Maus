@@ -53,11 +53,12 @@ class Robot:
 
         #self.lpf_sensors = [LowPassFilter(cutoff_freq=3) for _ in self.sensor_angles]
         self.lpf_speed = LowPassFilter(1)
+        self.lpf_speed_right = LowPassFilter(1)
 
         self.pin_a_left = 17
         self.pin_b_left = 27
-        self.pin_a_right = self.pin_a_left
-        self.pin_b_right = self.pin_b_left
+        self.pin_a_right = 22
+        self.pin_b_right = 23
         
         self.ppr = 12  # Pulses Per Revolution
         self.counter_left = 0
@@ -77,7 +78,7 @@ class Robot:
 
         # Interrupt on A pin
         GPIO.add_event_detect(self.pin_a_left, GPIO.BOTH, callback=self._update_velocity_left)
-        #GPIO.add_event_detect(self.pin_a_right, GPIO.BOTH, callback=self._update_velocity_right)
+        GPIO.add_event_detect(self.pin_a_right, GPIO.BOTH, callback=self._update_velocity_right)
 
         
 
@@ -178,7 +179,9 @@ class Robot:
         current_time = time.monotonic()
         time_delta = current_time - self.last_right_time
         if time_delta > 0:
-            self.right_wheel_velocity = self.wheel_circumference / (self.ppr * time_delta)
+            right_wheel_velocity = self.wheel_circumference / (self.ppr * time_delta)
+            self.right_wheel_velocity = self.lpf_speed_right.filter(right_wheel_velocity, time_step)
+            
         self.last_right_time = current_time
 
 
@@ -204,29 +207,36 @@ class PIDController:
 
 
 speed_pid_left = PIDController(kp=45, ki=100, kd=0)
-
 robot = Robot()
 lpf = LowPassFilter(1)
+
 mc = motoron.MotoronI2C()
-#mc2 = motoron.MotoronI2C(address=18)
+mc_right = motoron.MotoronI2C(address=17)
+
 mc.reinitialize()  
 mc.disable_crc()
 mc.clear_reset_flag()
 
+mc_right.reinitialize()  
+mc_right.disable_crc()
+mc_right.clear_reset_flag()
+
 mc.set_max_acceleration(1, 100)
 mc.set_max_deceleration(1, 300)
 
-last_time = time.monotonic()
+mc_right.set_max_acceleration(1, 100)
+mc_right.set_max_deceleration(1, 300)
 
+last_time = time.monotonic()
 start_time = time.monotonic()
 duration = 8  # Dauer der Messung in Sekunden
 
 while time.monotonic() - start_time < duration:
     current_time = time.monotonic()
     time_step = current_time - last_time
-    #filtered_speed = lpf.filter(robot.get_left_wheel_velocity(), time_step)
     speed = speed_pid_left.update(10, robot.get_left_wheel_velocity(), time_step)
-    mc.set_speed(1, int(speed))
+    mc.set_speed(1, 400)
+    mc_right.set_speed(1, 400)
     robot.state_estimate()
     last_time = current_time
 
