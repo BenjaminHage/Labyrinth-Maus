@@ -3,8 +3,8 @@ import motoron
 import RPi.GPIO as GPIO
 import math
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+#import matplotlib.pyplot as plt
+#import matplotlib.animation as animation
 
 class LowPassFilter:
     def __init__(self, cutoff_freq):
@@ -61,7 +61,7 @@ class Robot:
         self.pin_a_right = 21
         self.pin_b_right = 20
         
-        self.ppr = 12  # Pulses Per Revolution
+        self.ppr = 12 * 15 # Pulses Per Revolution ############
         self.counter_left = 0
         self.counter_right = 0
         self.last_time = time.time()
@@ -210,7 +210,7 @@ class Robot:
         if time_step > 0:
             # Bestimmen der Richtung
             direction = 1 if GPIO.input(self.pin_b_left) else -1
-            left_wheel_velocity = self.wheel_circumference / (self.ppr * time_step)
+            left_wheel_velocity = 1/(self.ppr* time_step) #self.wheel_circumference / (self.ppr * time_step)
             self.left_wheel_velocity = self.lpf_speed.filter(left_wheel_velocity, time_step)
             
         self.last_left_time = current_time
@@ -221,7 +221,7 @@ class Robot:
         if time_step > 0:
             # Bestimmen der Richtung
             direction = 1 if GPIO.input(self.pin_b_right) else -1
-            right_wheel_velocity = self.wheel_circumference / (self.ppr * time_step)
+            right_wheel_velocity = 1/(self.ppr * time_step) #self.wheel_circumference / (self.ppr * time_step)
             self.right_wheel_velocity = self.lpf_speed_right.filter(right_wheel_velocity, time_step)
             
         self.last_right_time = current_time
@@ -246,10 +246,11 @@ class PIDController:
     
     def set_previous_error(self,error):
         self.previous_error = error
+################################################################################################################
+        ########################################################################################################
 
-
-speed_pid_left = PIDController(kp=30, ki=160, kd=0)
-speed_pid_right = PIDController(kp=30, ki=160, kd=0)
+speed_pid_left = PIDController(kp=450, ki=1600, kd=0)
+speed_pid_right = PIDController(kp=450, ki=1600, kd=0)
 robot = Robot()
 lpf = LowPassFilter(1)
 
@@ -264,22 +265,22 @@ mc_right.reinitialize()
 mc_right.disable_crc()
 mc_right.clear_reset_flag()
 
-mc.set_max_acceleration(1, 100)
+mc.set_max_acceleration(1, 200)
 mc.set_max_deceleration(1, 300)
 
-mc_right.set_max_acceleration(1, 100)
+mc_right.set_max_acceleration(1, 200)
 mc_right.set_max_deceleration(1, 300)
 
 last_time = time.monotonic()
 start_time = time.monotonic()
-duration = 8  # Dauer der Messung in Sekunden
+duration = 10  # Dauer der Messung in Sekunden
 
 while time.monotonic() - start_time < duration:
     current_time = time.monotonic()
     time_step = current_time - last_time
     
-    left_wheel_velosity = 5 * np.sin(current_time * 1)
-    right_wheel_velosity = 5
+    left_wheel_velosity = 1 #* np.sin(current_time * 1)
+    right_wheel_velosity = 1
     
     left_motor_control = speed_pid_left.update(abs(left_wheel_velosity), robot.get_left_wheel_velocity(), time_step)
     mc.set_speed(1, int(left_motor_control * np.sign(left_wheel_velosity)))
@@ -289,17 +290,17 @@ while time.monotonic() - start_time < duration:
     
     robot.state_estimate()
     last_time = current_time
-
+    print(robot.get_left_wheel_velocity())
     #time.sleep(0.01)  # Ggf. die Schleifenfrequenz anpassen
 
 print("Messung beendet.")
 # Plot anzeigen
-plt.figure(figsize=(10, 6))
-plt.plot(robot.times, robot.left_wheel_velocities, label="Left Wheel Velocity")
-plt.plot(robot.times, robot.right_wheel_velocities, label="Right Wheel Velocity", linestyle='--')
-plt.xlabel("Time (s)")
-plt.ylabel("Velocity (m/s)")
-plt.title("Wheel Velocity Over Time")
-plt.legend()
-plt.grid(True)
-plt.show()
+#plt.figure(figsize=(10, 6))
+#plt.plot(robot.times, robot.left_wheel_velocities, label="Left Wheel Velocity")
+#plt.plot(robot.times, robot.right_wheel_velocities, label="Right Wheel Velocity", linestyle='--')
+#plt.xlabel("Time (s)")
+#plt.ylabel("Velocity (m/s)")
+#plt.title("Wheel Velocity Over Time")
+#plt.legend()
+#plt.grid(True)
+#plt.show()
