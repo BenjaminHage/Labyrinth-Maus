@@ -112,8 +112,6 @@ class Robot:
         new_y = y + v * math.sin(theta) * time_step
         new_theta = theta + omega * time_step
         
-        # if not ev.check_collision(new_x, new_y):
-        
         x, y, theta = new_x, new_y, new_theta
 
         return x, y, theta
@@ -181,8 +179,8 @@ class Robot:
         current_time = time.monotonic()
         time_step = current_time - self.last_right_time
         if time_step > 0:
-            self.right_wheel_velocity = self.wheel_circumference / (self.ppr * time_step)
-            #self.right_wheel_velocity = self.lpf_speed_right.filter(right_wheel_velocity, time_step)
+            right_wheel_velocity = self.wheel_circumference / (self.ppr * time_step)
+            self.right_wheel_velocity = self.lpf_speed_right.filter(right_wheel_velocity, time_step)
             
         self.last_right_time = current_time
 
@@ -240,7 +238,7 @@ while time.monotonic() - start_time < duration:
     
     left_motor_control = 400 #speed_pid_left.update(10, robot.get_left_wheel_velocity(), time_step)
     mc.set_speed(1, int(left_motor_control))
-    right_motor_control = 400 #speed_pid_right.update(10, robot.get_right_wheel_velocity(), time_step)
+    right_motor_control = -400 #speed_pid_right.update(10, robot.get_right_wheel_velocity(), time_step)
     mc_right.set_speed(1, int(right_motor_control))
     
     robot.state_estimate()
