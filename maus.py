@@ -6,6 +6,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
+class LowPassFilter:
+    def __init__(self, cutoff_freq):
+        self.cutoff_freq = cutoff_freq
+        self.prev_output = 0
+    
+    def filter(self, input_signal, time_step):
+        alpha = time_step / (time_step + (1 / (2 * np.pi * self.cutoff_freq)))
+        output_signal = alpha * input_signal + (1 - alpha) * self.prev_output
+        self.prev_output = output_signal
+        return output_signal
+    
+    def set_previous_output(self, output):
+        self.prev_output = output
+
+
 class Robot:
     def __init__ (self, mesurment_noise_mean = 0, mesurment_noise_standard_deviation = 1, system_noise_mean = 0, system_noise_standard_deviation = 1, init_robot_x = 0, init_robot_y = 0, init_robot_angle = 0):
         self.left_wheel_velocities = []  # Liste zur Speicherung der gemessenen Geschwindigkeiten
@@ -188,6 +203,7 @@ class PIDController:
 speed_pid_left = PIDController(kp=70, ki=0.00, kd=0.0)
 
 robot = Robot()
+lpf = LowPassFilter(1)
 mc = motoron.MotoronI2C()
 #mc2 = motoron.MotoronI2C(address=18)
 mc.reinitialize()  
@@ -205,7 +221,8 @@ duration = 8  # Dauer der Messung in Sekunden
 while time.monotonic() - start_time < duration:
     current_time = time.monotonic()
     time_step = current_time - last_time
-    speed = speed_pid_left.update(10, robot.get_left_wheel_velocity(), time_step)
+    filtered_speed = lpf.filter(robot.get_left_wheel_velocity(), time_step)
+    speed = speed_pid_left.update(10, filtered_speed, time_step)
     mc.set_speed(1, int(speed))
     robot.state_estimate()
     last_time = current_time
