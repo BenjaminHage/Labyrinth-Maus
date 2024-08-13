@@ -3,6 +3,7 @@ import motoron
 import RPi.GPIO as GPIO
 import math
 import numpy as np
+import curses  # Modul für die Handhabung von Tastatureingaben
 #import matplotlib.pyplot as plt
 #import matplotlib.animation as animation
 
@@ -248,6 +249,37 @@ class PIDController:
         self.previous_error = error
 ################################################################################################################
         ########################################################################################################
+
+def handle_user_input(angle_setpoint, base_speed=0):
+    # Startet die curses-Bibliothek, um Tastatureingaben zu handhaben
+    screen = curses.initscr()
+    curses.noecho()
+    curses.cbreak()
+    screen.keypad(True)
+
+    try:
+        key = screen.getch()
+        
+        if key == curses.KEY_UP:
+            base_speed = 0.5  # Erhöhe die Geschwindigkeit bei Druck der nach oben Taste
+        elif key == curses.KEY_DOWN:
+            base_speed = -0.5  # Verringere die Geschwindigkeit bei Druck der nach unten Taste
+        elif key == curses.KEY_LEFT:
+            angle_setpoint += 5  # Erhöhe den Winkel bei Druck der linken Taste
+        elif key == curses.KEY_RIGHT:
+            angle_setpoint -= 5  # Verringere den Winkel bei Druck der rechten Taste
+
+    finally:
+        # Wiederherstellen des normalen Terminalzustands
+        curses.nocbreak()
+        screen.keypad(False)
+        curses.echo()
+        curses.endwin()
+
+    return angle_setpoint, base_speed
+
+
+#################################################################################################################
 
 speed_pid_left = PIDController(kp=450, ki=1600, kd=0)
 speed_pid_right = PIDController(kp=450, ki=1600, kd=0)
