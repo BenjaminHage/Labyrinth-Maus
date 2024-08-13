@@ -1,6 +1,8 @@
 import time
 import motoron
 import RPi.GPIO as GPIO
+import math
+import numpy as np
 
 class Robot:
     def __init__ (self, mesurment_noise_mean = 0, mesurment_noise_standard_deviation = 1, system_noise_mean = 0, system_noise_standard_deviation = 1, init_robot_x = 0, init_robot_y = 0, init_robot_angle = 0):
@@ -28,26 +30,30 @@ class Robot:
 
         #self.lpf_sensors = [LowPassFilter(cutoff_freq=3) for _ in self.sensor_angles]
 
-        self.pin_a_left = pin_a
-        self.pin_b_left = pin_b
-        self.pin_a_right = pin_a
-        self.pin_b_right = pin_b
+        self.pin_a_left = 17
+        self.pin_b_left = 27
+        self.pin_a_right = self.pin_a_left
+        self.pin_b_right = self.pin_b_left
         
-        self.ppr = ppr  # Pulses Per Revolution
+        self.ppr = 12  # Pulses Per Revolution
         self.counter_left = 0
         self.counter_right = 0
         self.last_time = time.time()
+        
+        GPIO.cleanup()
 
         # Setup GPIO
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.pin_a_left, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.setup(self.pin_b_left, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.setup(self.pin_a_right, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.setup(self.pin_b_right, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+       # GPIO.setup(self.pin_a_right, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        #GPIO.setup(self.pin_b_right, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+       
+        time.sleep(0.2)
 
         # Interrupt on A pin
         GPIO.add_event_detect(self.pin_a_left, GPIO.BOTH, callback=self._update_count_left)
-        GPIO.add_event_detect(self.pin_a_right, GPIO.BOTH, callback=self._update_count_right)
+        #GPIO.add_event_detect(self.pin_a_right, GPIO.BOTH, callback=self._update_count_right)
         
 
     def get_robot_radius(self):
@@ -102,7 +108,7 @@ class Robot:
         
         return x, y, theta
 
-    def state_estimate():
+    def state_estimate(self):
         current_time = time.time()
         time_step = current_time - self.last_time
 
