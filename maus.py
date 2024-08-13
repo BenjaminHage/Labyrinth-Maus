@@ -61,7 +61,7 @@ class Robot:
         self.pin_a_right = 21
         self.pin_b_right = 20
         
-        self.ppr = 12 * 15 # Pulses Per Revolution ############
+        self.ppr = 140 # Pulses Per Revolution ############
         self.counter_left = 0
         self.counter_right = 0
         self.last_time = time.time()
@@ -210,7 +210,7 @@ class Robot:
         if time_step > 0:
             # Bestimmen der Richtung
             direction = 1 if GPIO.input(self.pin_b_left) else -1
-            left_wheel_velocity = 1/(self.ppr* time_step) #self.wheel_circumference / (self.ppr * time_step)
+            left_wheel_velocity = self.wheel_circumference / (self.ppr * time_step)
             self.left_wheel_velocity = self.lpf_speed.filter(left_wheel_velocity, time_step)
             
         self.last_left_time = current_time
@@ -221,7 +221,7 @@ class Robot:
         if time_step > 0:
             # Bestimmen der Richtung
             direction = 1 if GPIO.input(self.pin_b_right) else -1
-            right_wheel_velocity = 1/(self.ppr * time_step) #self.wheel_circumference / (self.ppr * time_step)
+            right_wheel_velocity = self.wheel_circumference / (self.ppr * time_step)
             self.right_wheel_velocity = self.lpf_speed_right.filter(right_wheel_velocity, time_step)
             
         self.last_right_time = current_time
@@ -279,8 +279,12 @@ while time.monotonic() - start_time < duration:
     current_time = time.monotonic()
     time_step = current_time - last_time
     
-    left_wheel_velosity = 1 #* np.sin(current_time * 1)
-    right_wheel_velosity = 1
+#     x, y, theta = robot.get_position_and_angle()
+#     
+#     angle_setpoint, base_speed = handle_user_input()
+    
+    left_wheel_velosity = 0.4 #* np.sin(current_time * 1)
+    right_wheel_velosity = 0.4
     
     left_motor_control = speed_pid_left.update(abs(left_wheel_velosity), robot.get_left_wheel_velocity(), time_step)
     mc.set_speed(1, int(left_motor_control * np.sign(left_wheel_velosity)))
