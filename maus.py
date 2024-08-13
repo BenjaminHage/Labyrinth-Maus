@@ -251,6 +251,8 @@ class PIDController:
 
 speed_pid_left = PIDController(kp=450, ki=1600, kd=0)
 speed_pid_right = PIDController(kp=450, ki=1600, kd=0)
+angle_pid = PIDController(kp=300.0, ki=300, kd=0)
+angle_pid
 robot = Robot()
 lpf = LowPassFilter(1)
 
@@ -275,16 +277,21 @@ last_time = time.monotonic()
 start_time = time.monotonic()
 duration = 10  # Dauer der Messung in Sekunden
 
+angle_setpoint = 0
+
 while time.monotonic() - start_time < duration:
     current_time = time.monotonic()
     time_step = current_time - last_time
+    last_time = current_time
     
-#     x, y, theta = robot.get_position_and_angle()
-#     
-#     angle_setpoint, base_speed = handle_user_input()
+    x, y, theta = robot.get_position_and_angle()
     
-    left_wheel_velosity = 0.4 #* np.sin(current_time * 1)
-    right_wheel_velosity = 0.4
+    angle_setpoint, base_speed = handle_user_input(angle_setpoint)
+    
+    # PID controller to adjust wheel velocities
+    angle_control = angle_pid.update(angle_setpoint, theta, time_step)
+    left_wheel_velocity = base_speed - angle_control
+    right_wheel_velocity = base_speed + angle_control
     
     left_motor_control = speed_pid_left.update(abs(left_wheel_velosity), robot.get_left_wheel_velocity(), time_step)
     mc.set_speed(1, int(left_motor_control * np.sign(left_wheel_velosity)))
@@ -293,7 +300,7 @@ while time.monotonic() - start_time < duration:
     mc_right.set_speed(1, int(-right_motor_control * np.sign(right_wheel_velosity)))
     
     robot.state_estimate()
-    last_time = current_time
+    
     print(robot.get_left_wheel_velocity())
     #time.sleep(0.01)  # Ggf. die Schleifenfrequenz anpassen
 
