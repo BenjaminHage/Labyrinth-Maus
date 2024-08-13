@@ -24,6 +24,7 @@ class LowPassFilter:
 class Robot:
     def __init__ (self, mesurment_noise_mean = 0, mesurment_noise_standard_deviation = 1, system_noise_mean = 0, system_noise_standard_deviation = 1, init_robot_x = 0, init_robot_y = 0, init_robot_angle = 0):
         self.left_wheel_velocities = []  # Liste zur Speicherung der gemessenen Geschwindigkeiten
+        self.right_wheel_velocities = []  # Liste zur Speicherung der gemessenen Geschwindigkeiten
         self.times = []  # Liste zur Speicherung der Zeitpunkte
         
         self.robot_radius = 20
@@ -57,8 +58,8 @@ class Robot:
 
         self.pin_a_left = 17
         self.pin_b_left = 27
-        self.pin_a_right = 22
-        self.pin_b_right = 23
+        self.pin_a_right = 20
+        self.pin_b_right = 21
         
         self.ppr = 12  # Pulses Per Revolution
         self.counter_left = 0
@@ -150,6 +151,7 @@ class Robot:
         self.last_time = current_time
 
         self.left_wheel_velocities.append(self.left_wheel_velocity)
+        self.right_wheel_velocities.append(self.right_wheel_velocity)
         self.times.append(current_time)
 
     def get_position_and_angle(self):
@@ -177,10 +179,10 @@ class Robot:
 
     def _update_velocity_right(self, channel):
         current_time = time.monotonic()
-        time_delta = current_time - self.last_right_time
-        if time_delta > 0:
-            right_wheel_velocity = self.wheel_circumference / (self.ppr * time_delta)
-            self.right_wheel_velocity = self.lpf_speed_right.filter(right_wheel_velocity, time_step)
+        time_step = current_time - self.last_right_time
+        if time_step > 0:
+            self.right_wheel_velocity = self.wheel_circumference / (self.ppr * time_step)
+            #self.right_wheel_velocity = self.lpf_speed_right.filter(right_wheel_velocity, time_step)
             
         self.last_right_time = current_time
 
@@ -236,9 +238,9 @@ while time.monotonic() - start_time < duration:
     current_time = time.monotonic()
     time_step = current_time - last_time
     
-    left_motor_control = speed_pid_left.update(10, robot.get_left_wheel_velocity(), time_step)
+    left_motor_control = 400 #speed_pid_left.update(10, robot.get_left_wheel_velocity(), time_step)
     mc.set_speed(1, int(left_motor_control))
-    right_motor_control = -speed_pid_right.update(10, robot.get_right_wheel_velocity(), time_step)
+    right_motor_control = 400 #speed_pid_right.update(10, robot.get_right_wheel_velocity(), time_step)
     mc_right.set_speed(1, int(right_motor_control))
     
     robot.state_estimate()
