@@ -79,10 +79,10 @@ class Robot:
 
         self.encoder_mode = 0
         # Interrupt on A pin
-        if self.encoder_mode == 0
+        if self.encoder_mode == 0:
             GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_velocity_left)
             GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_velocity_right)
-        elif self.encoder_mode == 1
+        elif self.encoder_mode == 1:
             GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_count_left)
             GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_count_right)
             
@@ -139,18 +139,18 @@ class Robot:
         
         return x, y, theta
 
-    def state_estimate(self):
+    def state_estimate(self): ######################################################################
         current_time = time.monotonic()
         time_step = current_time - self.last_time
 
-        if self.encoder_mode == 0
+        if self.encoder_mode == 0:
         # Geschwindigkeit auf 0 setzen, falls das Timeout überschritten wurde
             if current_time - self.last_left_time > self.velocity_timeout:
                 self.left_wheel_velocity = 0
     
             if current_time - self.last_right_time > self.velocity_timeout:
                 self.right_wheel_velocity = 0
-        elif self.encoder_mode == 1
+        elif self.encoder_mode == 1:
             # Calculate RPS (Revolutions Per Second)
             rps_left = (self.counter_left / self.ppr) / time_step 
             rps_right = (self.counter_right / self.ppr) / time_step 
@@ -159,8 +159,11 @@ class Robot:
             self.counter_left = 0
             self.counter_right = 0
 
-            self.left_wheel_velocity = (self.wheel_circumference * rps_left)   # in meters per second
-            self.right_wheel_velocity = (self.wheel_circumference * rps_right) # in meters per second
+            left_wheel_velocity = (self.wheel_circumference * rps_left)   # in meters per second
+            right_wheel_velocity = (self.wheel_circumference * rps_right) # in meters per second
+            
+            self.left_wheel_velocity = self.lpf_speed.filter(left_wheel_velocity, time_step)
+            self.right_wheel_velocity = self.lpf_speed_right.filter(left_wheel_velocity, time_step)
             
         # Positions-Update basierend auf der aktuellen Geschwindigkeit
         
@@ -186,17 +189,17 @@ class Robot:
     #     return filtered_readings 
 
     def _update_count_left(self, channel):
-        a_state = GPIO.input(self.pin_a_left)
+        #a_state = GPIO.input(self.pin_a_left)
         b_state = GPIO.input(self.pin_b_left)
-        if a_state == b_state:
+        if b_state:
             self.counter_left += 1
         else:
             self.counter_left -= 1
     
     def _update_count_right(self, channel):
-        a_state = GPIO.input(self.pin_a_right)
+        #a_state = GPIO.input(self.pin_a_right)
         b_state = GPIO.input(self.pin_b_right)
-        if a_state == b_state:
+        if b_state:
             self.counter_right += 1
         else:
             self.counter_right -= 1
@@ -245,7 +248,7 @@ class PIDController:
         self.previous_error = error
 
 
-speed_pid_left = PIDController(kp=45, ki=100, kd=0)
+speed_pid_left = PIDController(kp=45, ki=120, kd=0)
 speed_pid_right = PIDController(kp=45, ki=100, kd=0)
 robot = Robot()
 lpf = LowPassFilter(1)
@@ -275,9 +278,9 @@ while time.monotonic() - start_time < duration:
     current_time = time.monotonic()
     time_step = current_time - last_time
     
-    left_motor_control = 400#speed_pid_left.update(5, robot.get_left_wheel_velocity(), time_step)
+    left_motor_control = speed_pid_left.update(5, robot.get_left_wheel_velocity(), time_step)
     mc.set_speed(1, int(left_motor_control))
-    right_motor_control = 400#speed_pid_right.update(5, robot.get_right_wheel_velocity(), time_step)
+    right_motor_control = speed_pid_right.update(5, robot.get_right_wheel_velocity(), time_step)
     mc_right.set_speed(1, int(right_motor_control))
     
     robot.state_estimate()
