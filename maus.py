@@ -3,6 +3,8 @@ import motoron
 import RPi.GPIO as GPIO
 import math
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 class Robot:
     def __init__ (self, mesurment_noise_mean = 0, mesurment_noise_standard_deviation = 1, system_noise_mean = 0, system_noise_standard_deviation = 1, init_robot_x = 0, init_robot_y = 0, init_robot_angle = 0):
@@ -190,11 +192,47 @@ mc.set_max_acceleration(1, 140)
 mc.set_max_deceleration(1, 300)
 
 last_time = time.monotonic()
-while True:
-    current_time = time.monotonic()
-    time_step = current_time - last_time
-    speed = speed_pid_left.update(10, robot.get_left_wheel_velocity(), time_step)
-    mc.set_speed(1, int(speed))
+
+# Set up the plot
+fig, ax = plt.subplots()
+line, = ax.plot([], [], label="Left Wheel Velocity")
+ax.set_xlim(0, 10)  # x-Achse kann angepasst werden, um Zeitfenster zu definieren
+ax.set_ylim(0, 0.5)  # y-Achse basierend auf deiner Geschwindigkeits-Skala anpassen
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Velocity (m/s)")
+ax.set_title("Wheel Velocity Over Time")
+ax.legend()
+ax.grid(True)
+
+def init():
+    """Initialisiert den Hintergrund des Plots."""
+    line.set_data([], [])
+    return line,
+
+def update_plot(frame):
+    """Wird von FuncAnimation aufgerufen, um den Plot zu aktualisieren."""
     robot.state_estimate()
-    print(robot.get_left_wheel_velocity())
-   # time.sleep(0.1)
+    line.set_data(np.array(robot.times) - robot.times[0], robot.left_wheel_velocities)
+    ax.set_xlim(robot.times[0], robot.times[0] + 10)  # Bewege das Zeitfenster entlang der x-Achse
+    return line,
+
+# Start der Animation
+ani = animation.FuncAnimation(fig, update_plot, init_func=init, blit=True, interval=100)
+
+try:
+    plt.show(block=False)  # Start the plot in a non-blocking way
+
+    while True:
+        current_time = time.monotonic()
+        time_step = current_time - last_time
+        speed = speed_pid_left.update(10, robot.get_left_wheel_velocity(), time_step)
+        mc.set_speed(1, int(speed))
+        robot.state_estimate()
+        last_time = current_time
+
+        time.sleep(0.1)  # Ggf. die Schleifenfrequenz anpassen
+
+except KeyboardInterrupt:
+    pass
+finally:
+    plt.close()
