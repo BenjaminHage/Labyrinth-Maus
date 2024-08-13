@@ -27,6 +27,9 @@ class Robot:
         
         self.left_wheel_velocity = 0
         self.right_wheel_velocity = 0
+        self.left_wheel_velocity_buffer = []
+        self.right_wheel_velocity_buffer = []
+        self.buffer_size = 5  # Anzahl der Messungen für den gleitenden Mittelwert
 
         #self.lpf_sensors = [LowPassFilter(cutoff_freq=3) for _ in self.sensor_angles]
 
@@ -121,9 +124,22 @@ class Robot:
         self.counter_right = 0
         self.last_time = current_time
 
-        # Calculate linear speed (circumference * RPM)
-        self.left_wheel_velocity = (self.wheel_circumference * rps_left)   # in units of diameter per second
-        self.right_wheel_velocity = (self.wheel_circumference * rps_right)   # in units of diameter per second
+        # Berechnung der Geschwindigkeit
+        left_velocity = self.wheel_circumference * rps_left
+        right_velocity = self.wheel_circumference * rps_right
+
+        # Buffer updaten
+        if len(self.left_wheel_velocity_buffer) >= self.buffer_size:
+            self.left_wheel_velocity_buffer.pop(0)
+        if len(self.right_wheel_velocity_buffer) >= self.buffer_size:
+            self.right_wheel_velocity_buffer.pop(0)
+
+        self.left_wheel_velocity_buffer.append(left_velocity)
+        self.right_wheel_velocity_buffer.append(right_velocity)
+
+        self.left_wheel_velocity = sum(self.left_wheel_velocity_buffer) / len(self.left_wheel_velocity_buffer)
+        self.right_wheel_velocity = sum(self.right_wheel_velocity_buffer) / len(self.right_wheel_velocity_buffer)
+
         self.robot_x, self.robot_y, self.robot_angle = self.update_robot(self.robot_x, self.robot_y, self.robot_angle, self.left_wheel_velocity, self.right_wheel_velocity, time_step)
 
     def get_position_and_angle(self):
