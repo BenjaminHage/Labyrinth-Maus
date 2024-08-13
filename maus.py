@@ -78,8 +78,8 @@ class Robot:
         time.sleep(0.2)
 
         # Interrupt on A pin
-        GPIO.add_event_detect(self.pin_a_left, GPIO.BOTH, callback=self._update_velocity_left)
-        GPIO.add_event_detect(self.pin_a_right, GPIO.BOTH, callback=self._update_velocity_right)
+        GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_velocity_left)
+        GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_velocity_right)
 
         
 
@@ -171,7 +171,7 @@ class Robot:
         time_step = current_time - self.last_left_time
         if time_step > 0:
             # Bestimmen der Richtung
-            direction = 1 if GPIO.input(self.pin_b_left) == GPIO.input(self.pin_a_left) else -1
+            direction = 1 if GPIO.input(self.pin_b_left) else -1
             left_wheel_velocity = direction * self.wheel_circumference / (self.ppr * time_step)
             self.left_wheel_velocity = self.lpf_speed.filter(left_wheel_velocity, time_step)
             
@@ -182,7 +182,7 @@ class Robot:
         time_step = current_time - self.last_right_time
         if time_step > 0:
             # Bestimmen der Richtung
-            direction = 1 if GPIO.input(self.pin_b_right) == GPIO.input(self.pin_a_right) else -1
+            direction = 1 if GPIO.input(self.pin_b_right) else -1
             right_wheel_velocity = direction * self.wheel_circumference / (self.ppr * time_step)
             self.right_wheel_velocity = self.lpf_speed_right.filter(right_wheel_velocity, time_step)
             
@@ -240,15 +240,15 @@ while time.monotonic() - start_time < duration:
     current_time = time.monotonic()
     time_step = current_time - last_time
     
-    left_motor_control = 400 #speed_pid_left.update(10, robot.get_left_wheel_velocity(), time_step)
+    left_motor_control = 400#speed_pid_left.update(5, robot.get_left_wheel_velocity(), time_step)
     mc.set_speed(1, int(left_motor_control))
-    right_motor_control = -400 #speed_pid_right.update(10, robot.get_right_wheel_velocity(), time_step)
+    right_motor_control = 400#speed_pid_right.update(5, robot.get_right_wheel_velocity(), time_step)
     mc_right.set_speed(1, int(right_motor_control))
     
     robot.state_estimate()
     last_time = current_time
 
-    #time.sleep(0.1)  # Ggf. die Schleifenfrequenz anpassen
+    time.sleep(0.01)  # Ggf. die Schleifenfrequenz anpassen
 
 print("Messung beendet.")
 # Plot anzeigen
