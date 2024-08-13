@@ -8,6 +8,9 @@ import matplotlib.animation as animation
 
 class Robot:
     def __init__ (self, mesurment_noise_mean = 0, mesurment_noise_standard_deviation = 1, system_noise_mean = 0, system_noise_standard_deviation = 1, init_robot_x = 0, init_robot_y = 0, init_robot_angle = 0):
+        self.left_wheel_velocities = []  # Liste zur Speicherung der gemessenen Geschwindigkeiten
+        self.times = []  # Liste zur Speicherung der Zeitpunkte
+        
         self.robot_radius = 20
         self.wheel_distance = 40  # Distance between wheels
         self.wheel_diameter = 40 / 1000
@@ -129,6 +132,9 @@ class Robot:
         self.robot_x, self.robot_y, self.robot_angle = self.update_robot(self.robot_x, self.robot_y, self.robot_angle, self.left_wheel_velocity, self.right_wheel_velocity, time_step)
         self.last_time = current_time
 
+        self.left_wheel_velocities.append(self.left_wheel_velocity)
+        self.times.append(current_time)
+
     def get_position_and_angle(self):
         return self.robot_x, self.robot_y, self.robot_angle
 
@@ -193,46 +199,31 @@ mc.set_max_deceleration(1, 300)
 
 last_time = time.monotonic()
 
-# Set up the plot
-fig, ax = plt.subplots()
-line, = ax.plot([], [], label="Left Wheel Velocity")
-ax.set_xlim(0, 10)  # x-Achse kann angepasst werden, um Zeitfenster zu definieren
-ax.set_ylim(0, 0.5)  # y-Achse basierend auf deiner Geschwindigkeits-Skala anpassen
-ax.set_xlabel("Time (s)")
-ax.set_ylabel("Velocity (m/s)")
-ax.set_title("Wheel Velocity Over Time")
-ax.legend()
-ax.grid(True)
 
-def init():
-    """Initialisiert den Hintergrund des Plots."""
-    line.set_data([], [])
-    return line,
 
-def update_plot(frame):
-    """Wird von FuncAnimation aufgerufen, um den Plot zu aktualisieren."""
+
+
+
+start_time = time.monotonic()
+duration = 100  # Dauer der Messung in Sekunden
+
+while time.monotonic() - start_time < duration:
+    current_time = time.monotonic()
+    time_step = current_time - last_time
+    speed = speed_pid_left.update(10, robot.get_left_wheel_velocity(), time_step)
+    mc.set_speed(1, int(speed))
     robot.state_estimate()
-    line.set_data(np.array(robot.times) - robot.times[0], robot.left_wheel_velocities)
-    ax.set_xlim(robot.times[0], robot.times[0] + 10)  # Bewege das Zeitfenster entlang der x-Achse
-    return line,
+    last_time = current_time
 
-# Start der Animation
-ani = animation.FuncAnimation(fig, update_plot, init_func=init, blit=True, interval=100)
+    time.sleep(0.1)  # Ggf. die Schleifenfrequenz anpassen
 
-try:
-    plt.show(block=False)  # Start the plot in a non-blocking way
-
-    while True:
-        current_time = time.monotonic()
-        time_step = current_time - last_time
-        speed = speed_pid_left.update(10, robot.get_left_wheel_velocity(), time_step)
-        mc.set_speed(1, int(speed))
-        robot.state_estimate()
-        last_time = current_time
-
-        time.sleep(0.1)  # Ggf. die Schleifenfrequenz anpassen
-
-except KeyboardInterrupt:
-    pass
-finally:
-    plt.close()
+print("Messung beendet.")
+# Plot anzeigen
+plt.figure(figsize=(10, 6))
+plt.plot(robot.times, robot.left_wheel_velocities, label="Left Wheel Velocity")
+plt.xlabel("Time (s)")
+plt.ylabel("Velocity (m/s)")
+plt.title("Wheel Velocity Over Time")
+plt.legend()
+plt.grid(True)
+plt.show()
