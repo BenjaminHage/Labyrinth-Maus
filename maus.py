@@ -81,7 +81,7 @@ class Robot:
         self.encoder_mode = 0
         # Interrupt on A pin
         if self.encoder_mode == 0:
-            GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_velocity_left)
+            GPIO.add_event_detect(self.pin_b_left, GPIO.RISING, callback=self._update_velocity_left)
             GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_velocity_right)
         elif self.encoder_mode == 1:
             GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_count_left)
@@ -164,7 +164,7 @@ class Robot:
             right_wheel_velocity = (self.wheel_circumference * rps_right) # in meters per second
             
             self.left_wheel_velocity = self.lpf_speed.filter(left_wheel_velocity, time_step)
-            self.right_wheel_velocity = self.lpf_speed_right.filter(left_wheel_velocity, time_step)
+            self.right_wheel_velocity = self.lpf_speed_right.filter(right_wheel_velocity, time_step)
             
         # Positions-Update basierend auf der aktuellen Geschwindigkeit
         
@@ -192,7 +192,7 @@ class Robot:
     def _update_count_left(self, channel):
         #a_state = GPIO.input(self.pin_a_left)
         b_state = GPIO.input(self.pin_b_left)
-        if b_state:
+        if True:#b_state:
             self.counter_left += 1
         else:
             self.counter_left -= 1
@@ -200,7 +200,7 @@ class Robot:
     def _update_count_right(self, channel):
         #a_state = GPIO.input(self.pin_a_right)
         b_state = GPIO.input(self.pin_b_right)
-        if b_state:
+        if True:#b_state:
             self.counter_right += 1
         else:
             self.counter_right -= 1
@@ -230,16 +230,22 @@ class Robot:
 
 class PIDController:
 
-    def __init__(self, kp, ki, kd):
+    def __init__(self, kp, ki, kd, i_max = np.inf):
         self.kp = kp
         self.ki = ki
         self.kd = kd
+        self.imax = i_max
         self.previous_error = 0 #überlegung den setzbar zumachen falls der die probleme macht
         self.integral = 0
 
     def update(self, setpoint, measurement, time_step):
         error = setpoint - measurement
         self.integral += error * time_step
+        if self.integral * self.ki < -self.imax:
+            self.integral = - self.imax / self.ki
+        elif self.integral * self.ki > self.imax:
+            self.integral = self.imax / self.ki
+        
         derivative = (error - self.previous_error) / time_step
         derivative = max(min(2, derivative),-2)
         self.previous_error = error
@@ -275,7 +281,7 @@ def handle_user_input(angle_setpoint, base_speed):
 
 def main():
     
-    speed_pid_left = PIDController(kp=450, ki=1600, kd=0)
+    speed_pid_left = PIDController(kp=450, ki=1600, kd=0, i_max = 500)
     speed_pid_right = PIDController(kp=450, ki=1600, kd=0)
     
     angle_pid = PIDController(kp=0.2, ki=0.000, kd=0)
@@ -294,12 +300,13 @@ def main():
     mc_right.disable_crc()
     mc_right.clear_reset_flag()
 
-    mc.set_max_acceleration(1, 200)
-    mc.set_max_deceleration(1, 300)
-    #mc.set_starting_speed(1,10)
+    mc.set_max_acceleration(1, 500)
+    mc.set_max_deceleration(1, 500)
+    mc.set_starting_speed(1,10)
 
-    mc_right.set_max_acceleration(1, 200)
-    mc_right.set_max_deceleration(1, 300)
+    mc_right.set_max_acceleration(1, 500)
+    mc_right.set_max_deceleration(1, 500)
+    mc_right.set_starting_speed(1,10)
 
     last_time = time.monotonic()
     angle_setpoint = 0
@@ -328,13 +335,14 @@ def main():
             left_motor_control = speed_pid_left.update(abs(left_wheel_velocity), robot.get_left_wheel_velocity(), time_step)
             #if left_wheel_velocity == 0:
             #    left_motor_control = 0
-            mc.set_speed(1, int(left_motor_control * np.sign(left_wheel_velocity)))
-            #mc.set_speed(1, 100 * int(base_speed))
+            #mc.set_speed(1, int(left_motor_control * np.sign(left_wheel_velocity)))
+            mc.set_speed(1, int(left_motor_control * np.sign(right_wheel_velocity)))
             
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
             print(f"---------------------------------------------------------------------")
             print(f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s")
             print(f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s")
+            print(f"left_motor_control: 		 {left_motor_control:.2f} m/s")
             print(f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s")
             print(f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s")
             print(f"Base_Speed: {base_speed:.2f} m/s")
@@ -343,7 +351,7 @@ def main():
             print(f"angle_control: {angle_control:.2f} m/s")
 
 
-            #time.sleep(0.01)  # Ggf. die Schleifenfrequenz anpassen
+            time.sleep(0.01)  # Ggf. die Schleifenfrequenz anpassen
 
     except KeyboardInterrupt:
         print("Messung beendet.")
