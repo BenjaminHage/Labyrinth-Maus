@@ -383,6 +383,18 @@ def main():
 
     except KeyboardInterrupt:
         print("Messung beendet.")
+        
+        # Plot anzeigen
+        plt.figure(figsize=(10, 6))
+        plt.plot(robot.times, robot.left_wheel_velocities, label="Left Wheel Velocity")
+        plt.plot(robot.times, robot.right_wheel_velocities, label="Right Wheel Velocity", linestyle='--')
+        plt.xlabel("Time (s)")
+        plt.ylabel("Velocity (m/s)")
+        plt.title("Wheel Velocity Over Time")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
 
 if __name__ == "__main__":
     main()
