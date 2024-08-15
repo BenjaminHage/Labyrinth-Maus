@@ -12,5 +12,5 @@ sudo python3 setup.py install
 
 git clone https://github.com/abelectronicsuk/ABElectronics_Python_Libraries.git
 cd ABElectronics_Python_Libraries
-python3 -m build
-sudo python3 -m installer dist/*.whl 
+sudo python3 setup.py install
+
