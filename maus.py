@@ -55,7 +55,7 @@ class Robot:
         self.right_wheel_velocity = 0
         self.last_left_time = time.monotonic()
         self.last_right_time = time.monotonic()
-        self.velocity_timeout = 0.17  # Sekundenschwelle, nach der die Geschwindigkeit auf 0 gesetzt wird
+        self.velocity_timeout = 0.1  # Sekundenschwelle, nach der die Geschwindigkeit auf 0 gesetzt wird
 
         #self.lpf_sensors = [LowPassFilter(cutoff_freq=3) for _ in self.sensor_angles]
         self.lpf_speed = LowPassFilter(1)
@@ -308,8 +308,10 @@ def handle_user_input(angle_setpoint, base_speed):
 
 def main():
     
-    speed_pid_left = PIDController(kp=1000, ki=400, kd=0, i_max = 500) #4500 1600
-    speed_pid_right = PIDController(kp=1000, ki=400, kd=0, i_max = 500)
+    speed_pid_left = PIDController(kp=2000, ki=300, kd=0, i_max = 800) #4500 1600
+    speed_pid_right = PIDController(kp=2000, ki=300, kd=0, i_max = 800)
+    speed_pid_left.set_integral(1)
+    speed_pid_right.set_integral(1)
     
     angle_pid = PIDController(kp=0.2, ki=0.000, kd=0)
     
@@ -338,6 +340,10 @@ def main():
     last_time = time.monotonic()
     angle_setpoint = 0
     base_speed = 0
+    
+    start_Time = time.monotonic()
+    duration = 10
+    
 
     try:
         while True:
@@ -345,14 +351,20 @@ def main():
             time_step = current_time - last_time
             last_time = current_time
             
+            if (current_time - start_Time) > duration:
+                break
+            
             x, y, theta = robot.get_position_and_angle()
             
             angle_setpoint, base_speed = handle_user_input(angle_setpoint, base_speed)
 
+
             # PID controller to adjust wheel velocities
+            
             angle_control = angle_pid.update(angle_setpoint, theta, time_step)
             left_wheel_velocity = base_speed - angle_setpoint#- angle_control
             right_wheel_velocity = base_speed + angle_setpoint#+ angle_control
+            
             
             if right_wheel_velocity == 0:
                 speed_pid_right.set_integral(1)
@@ -380,7 +392,7 @@ def main():
                 f"angle_control:               {angle_control:.2f}",
           #      f"ADC_Values:                  {robot.get_sensor_readings()}"
             ]
-           # print("\n".join(info))
+            print("\n".join(info))
                 
 
 
@@ -388,19 +400,25 @@ def main():
 
     except KeyboardInterrupt:
         print("Messung beendet.")
-        
+    
+    try:
+    
         # Plot anzeigen
         plt.figure(figsize=(10, 6))
-        plt.plot(robot.times, robot.left_wheel_velocities, label="Left Wheel Velocity")
-        plt.plot(robot.times, robot.right_wheel_velocities, label="Right Wheel Velocity", linestyle='--')
-        plt.plot(robot.times, robot.left_wheel_velocity_targets, label="Left Wheel Target", linestyle=':')
-        plt.plot(robot.times, robot.right_wheel_velocity_targets, label="Right Wheel Target", linestyle='-.')
+        plt.plot(robot.times, robot.left_wheel_velocities, label="Left Wheel Velocity", color = 'b')
+        plt.plot(robot.times, robot.right_wheel_velocities, label="Right Wheel Velocity", linestyle='-', color = 'r')
+        plt.plot(robot.times, robot.left_wheel_velocity_targets, label="Left Wheel Target", linestyle='-.', color = 'c')
+        plt.plot(robot.times, robot.right_wheel_velocity_targets, label="Right Wheel Target", linestyle='-.', color = 'm')
         plt.xlabel("Time (s)")
         plt.ylabel("Velocity (m/s)")
         plt.title("Wheel Velocity Over Time")
         plt.legend()
         plt.grid(True)
         plt.show()
+    
+    except KeyboardInterrupt:
+        print("Plot Closed")
+        
 
 
 if __name__ == "__main__":
