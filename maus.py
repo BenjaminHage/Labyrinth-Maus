@@ -27,6 +27,9 @@ class Robot:
     def __init__ (self, mesurment_noise_mean = 0, mesurment_noise_standard_deviation = 1, system_noise_mean = 0, system_noise_standard_deviation = 1, init_robot_x = 0, init_robot_y = 0, init_robot_angle = 0):
         self.left_wheel_velocities = []  # Liste zur Speicherung der gemessenen Geschwindigkeiten
         self.right_wheel_velocities = []  # Liste zur Speicherung der gemessenen Geschwindigkeiten
+        self.left_wheel_velocity_targets = []  # Liste zur Speicherung der Zielgeschwindigkeiten
+        self.right_wheel_velocity_targets = []  # Liste zur Speicherung der Zielgeschwindigkeiten
+
         self.times = []  # Liste zur Speicherung der Zeitpunkte
         
         self.robot_radius = 20
@@ -148,6 +151,7 @@ class Robot:
     def state_estimate(self, left_wheel_velocity, right_wheel_velocity): ######################################################################
         current_time = time.monotonic()
         time_step = current_time - self.last_time
+        self.last_time = current_time
 
         if self.encoder_mode == 0:
         # Geschwindigkeit auf 0 setzen, falls das Timeout überschritten wurde
@@ -174,12 +178,13 @@ class Robot:
         # Positions-Update basierend auf der aktuellen Geschwindigkeit
         
         self.robot_x, self.robot_y, self.robot_angle = self.update_robot(self.robot_x, self.robot_y, self.robot_angle, left_wheel_velocity, np.sign(right_wheel_velocity) * self.right_wheel_velocity, time_step)
-        self.last_time = current_time
 
         self.left_wheel_velocities.append(self.left_wheel_velocity)
         self.right_wheel_velocities.append(self.right_wheel_velocity)
         self.times.append(current_time)
-
+        self.left_wheel_velocity_targets.append(left_wheel_velocity)
+        self.right_wheel_velocity_targets.append(right_wheel_velocity)
+    
     def get_position_and_angle(self):
         return self.robot_x, self.robot_y, self.robot_angle
 
@@ -388,6 +393,8 @@ def main():
         plt.figure(figsize=(10, 6))
         plt.plot(robot.times, robot.left_wheel_velocities, label="Left Wheel Velocity")
         plt.plot(robot.times, robot.right_wheel_velocities, label="Right Wheel Velocity", linestyle='--')
+        plt.plot(robot.times, robot.left_wheel_velocity_targets, label="Left Wheel Target", linestyle=':')
+        plt.plot(robot.times, robot.right_wheel_velocity_targets, label="Right Wheel Target", linestyle='-.')
         plt.xlabel("Time (s)")
         plt.ylabel("Velocity (m/s)")
         plt.title("Wheel Velocity Over Time")
