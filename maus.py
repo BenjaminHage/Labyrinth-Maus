@@ -4,6 +4,7 @@ import RPi.GPIO as GPIO
 import math
 import numpy as np
 import keyboard  # Modul für die Handhabung von Tastatureingaben
+from ADCDifferentialPi import ADCDifferentialPi
 #import matplotlib.pyplot as plt
 #import matplotlib.animation as animation
 
@@ -288,6 +289,9 @@ def main():
     
     robot = Robot()
     lpf = LowPassFilter(1)
+    
+    adc = ADCDifferentialPi(0x68, 0x69, 18)
+
 
     mc = motoron.MotoronI2C()
     mc_right = motoron.MotoronI2C(address=17)
@@ -339,16 +343,34 @@ def main():
             mc.set_speed(1, int(left_motor_control * np.sign(right_wheel_velocity)))
             
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
-            print(f"---------------------------------------------------------------------")
-            print(f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s")
-            print(f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s")
-            print(f"left_motor_control: 		 {left_motor_control:.2f} m/s")
-            print(f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s")
-            print(f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s")
-            print(f"Base_Speed: {base_speed:.2f} m/s")
-            print(f"angle: {theta:.2f} m/s")
-            print(f"angle_setpoint: {angle_setpoint:.2f} m/s")
-            print(f"angle_control: {angle_control:.2f} m/s")
+            info = [
+                f"---------------------------------------------------------------------",
+                f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s",
+                f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s",
+                f"left_motor_control: 		 {left_motor_control:.2f} m/s",
+                f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s",
+                f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s",
+                f"Base_Speed: {base_speed:.2f} m/s",
+                f"angle: {theta:.2f} m/s",
+                f"angle_setpoint: {angle_setpoint:.2f} m/s",
+                f"angle_control: {angle_control:.2f} m/s",
+                f"{adc.read_voltage(5)}"
+            ]
+            print(info)
+                
+                
+            
+#             print(f"---------------------------------------------------------------------")
+#             print(f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s")
+#             print(f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s")
+#             print(f"left_motor_control: 		 {left_motor_control:.2f} m/s")
+#             print(f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s")
+#             print(f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s")
+#             print(f"Base_Speed: {base_speed:.2f} m/s")
+#             print(f"angle: {theta:.2f} m/s")
+#             print(f"angle_setpoint: {angle_setpoint:.2f} m/s")
+#             print(f"angle_control: {angle_control:.2f} m/s")
+#             print(adc.read_voltage(5))
 
 
             time.sleep(0.01)  # Ggf. die Schleifenfrequenz anpassen
