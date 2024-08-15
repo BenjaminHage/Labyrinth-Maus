@@ -5,8 +5,8 @@ import math
 import numpy as np
 import keyboard  # Modul für die Handhabung von Tastatureingaben
 from ADCDifferentialPi import ADCDifferentialPi
-#import matplotlib.pyplot as plt
-#import matplotlib.animation as animation
+import matplotlib.pyplot as plt
+#import matplotlib.animation as animation --break-system-packages
 
 class LowPassFilter:
     def __init__(self, cutoff_freq):
@@ -88,7 +88,7 @@ class Robot:
             GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_count_left)
             GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_count_right)
             
-
+        self.adc = ADCDifferentialPi(0x68, 0x69, 18)
         
 
     def get_robot_radius(self):
@@ -109,8 +109,12 @@ class Robot:
     def get_right_wheel_velocity(self):
         return self.right_wheel_velocity
 
-    def get_sensor_readings(self,sensor_distances):   
-        return sensor_distances
+    def get_sensor_readings(self):   
+        sensor_readings = []
+        for i in range(5):
+            sensor_readings.append(self.adc.read_voltage(i+1))
+        
+        return sensor_readings
 
     def update_robot(self, x, y, theta, left_wheel_velocity, right_wheel_velocity, time_step):
         """Update the robot's position and orientation based on wheel velocities."""
@@ -231,29 +235,46 @@ class Robot:
 
 class PIDController:
 
-    def __init__(self, kp, ki, kd, i_max = np.inf):
+    def __init__(self, kp, ki, kd, i_max = np.inf, d_max = np.inf):
         self.kp = kp
         self.ki = ki
         self.kd = kd
         self.imax = i_max
+        self.d_max = d_max
         self.previous_error = 0 #überlegung den setzbar zumachen falls der die probleme macht
         self.integral = 0
 
     def update(self, setpoint, measurement, time_step):
         error = setpoint - measurement
         self.integral += error * time_step
-        if self.integral * self.ki < -self.imax:
-            self.integral = - self.imax / self.ki
-        elif self.integral * self.ki > self.imax:
+        derivative = (error - self.previous_error) / time_step
+        self.previous_error = error
+        
+        P = self.kp * error
+        I = self.ki * self.integral
+        D = self.kd * derivative
+        
+        
+        if I < -self.imax:
+            I = -self.imax
+            self.integral = -self.imax / self.ki
+        elif I > self.imax:
+            I = self.imax
             self.integral = self.imax / self.ki
         
-        derivative = (error - self.previous_error) / time_step
-        derivative = max(min(2, derivative),-2)
-        self.previous_error = error
-        return self.kp * error + self.ki * self.integral + self.kd * derivative
+        if D < -self.d_max:
+            D = -self.d_max
+        elif D > self.d_max:
+            D = self.d_max
+        
+        
+        return P + I + D
     
     def set_previous_error(self,error):
         self.previous_error = error
+        
+    def set_integral(self, integral):
+        self.integral = integral
         
         
 ################################################################################################################
@@ -282,16 +303,13 @@ def handle_user_input(angle_setpoint, base_speed):
 
 def main():
     
-    speed_pid_left = PIDController(kp=450, ki=1600, kd=0, i_max = 500)
-    speed_pid_right = PIDController(kp=450, ki=1600, kd=0)
+    speed_pid_left = PIDController(kp=1000, ki=400, kd=0, i_max = 500) #4500 1600
+    speed_pid_right = PIDController(kp=1000, ki=400, kd=0, i_max = 500)
     
     angle_pid = PIDController(kp=0.2, ki=0.000, kd=0)
     
     robot = Robot()
     lpf = LowPassFilter(1)
-    
-    adc = ADCDifferentialPi(0x68, 0x69, 18)
-
 
     mc = motoron.MotoronI2C()
     mc_right = motoron.MotoronI2C(address=17)
@@ -328,52 +346,40 @@ def main():
 
             # PID controller to adjust wheel velocities
             angle_control = angle_pid.update(angle_setpoint, theta, time_step)
-            left_wheel_velocity = base_speed + angle_setpoint#- angle_control
+            left_wheel_velocity = base_speed - angle_setpoint#- angle_control
             right_wheel_velocity = base_speed + angle_setpoint#+ angle_control
             
-            
+            if right_wheel_velocity == 0:
+                speed_pid_right.set_integral(1)
             right_motor_control = speed_pid_right.update(abs(right_wheel_velocity), robot.get_right_wheel_velocity(), time_step)
             mc_right.set_speed(1, int(-right_motor_control * np.sign(right_wheel_velocity)))
             #mc_right.set_speed(1, 100 * -int(base_speed))
             
+            if left_wheel_velocity == 0:
+                speed_pid_left.set_integral(1)
             left_motor_control = speed_pid_left.update(abs(left_wheel_velocity), robot.get_left_wheel_velocity(), time_step)
-            #if left_wheel_velocity == 0:
-            #    left_motor_control = 0
-            #mc.set_speed(1, int(left_motor_control * np.sign(left_wheel_velocity)))
-            mc.set_speed(1, int(left_motor_control * np.sign(right_wheel_velocity)))
+            mc.set_speed(1, int(left_motor_control * np.sign(left_wheel_velocity)))
+            #mc.set_speed(1, int(left_motor_control * np.sign(right_wheel_velocity)))
             
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
             info = [
                 f"---------------------------------------------------------------------",
                 f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s",
                 f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s",
-                f"left_motor_control: 		 {left_motor_control:.2f} m/s",
+                f"left_motor_control:          {left_motor_control:.2f}",
                 f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s",
                 f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s",
-                f"Base_Speed: {base_speed:.2f} m/s",
-                f"angle: {theta:.2f} m/s",
-                f"angle_setpoint: {angle_setpoint:.2f} m/s",
-                f"angle_control: {angle_control:.2f} m/s",
-                f"{adc.read_voltage(5)}"
+                f"Base_Speed:                  {base_speed:.2f} m/s",
+                f"angle:                       {math.degrees(theta):.2f} °",
+                f"angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
+                f"angle_control:               {angle_control:.2f}",
+          #      f"ADC_Values:                  {robot.get_sensor_readings()}"
             ]
-            print(info)
+           # print("\n".join(info))
                 
-                
-            
-#             print(f"---------------------------------------------------------------------")
-#             print(f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s")
-#             print(f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s")
-#             print(f"left_motor_control: 		 {left_motor_control:.2f} m/s")
-#             print(f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s")
-#             print(f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s")
-#             print(f"Base_Speed: {base_speed:.2f} m/s")
-#             print(f"angle: {theta:.2f} m/s")
-#             print(f"angle_setpoint: {angle_setpoint:.2f} m/s")
-#             print(f"angle_control: {angle_control:.2f} m/s")
-#             print(adc.read_voltage(5))
 
 
-            time.sleep(0.01)  # Ggf. die Schleifenfrequenz anpassen
+            #time.sleep(0.01)  # Ggf. die Schleifenfrequenz anpassen
 
     except KeyboardInterrupt:
         print("Messung beendet.")
