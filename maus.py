@@ -118,6 +118,11 @@ class Robot:
             sensor_readings.append(self.adc.read_voltage(i+1))
         
         return sensor_readings
+        
+    def get_formatted_sensor_readings(self, decimal_places=2):
+        sensor_readings = self.get_sensor_readings()
+        formatted_readings = [round(reading, decimal_places) for reading in sensor_readings]
+        return formatted_readings    
 
     def update_robot(self, x, y, theta, left_wheel_velocity, right_wheel_velocity, time_step):
         """Update the robot's position and orientation based on wheel velocities."""
@@ -390,7 +395,7 @@ def main():
                 f"angle:                       {math.degrees(theta):.2f} °",
                 f"angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
                 f"angle_control:               {angle_control:.2f}",
-                f"ADC_Values:                  {robot.get_sensor_readings()}"
+                f"ADC_Values:                  {robot.get_formatted_sensor_readings(4)}"
             ]
             print("\n".join(info))
                 
