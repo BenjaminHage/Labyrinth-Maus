@@ -313,8 +313,8 @@ def handle_user_input(angle_setpoint, base_speed):
 
 def main():
     
-    speed_pid_left = PIDController(kp=2000, ki=310, kd=0, i_max = 800) #4500 1600
-    speed_pid_right = PIDController(kp=2000, ki=310, kd=0, i_max = 800)
+    speed_pid_left = PIDController(kp=2000, ki=300, kd=0, i_max = 550,d_max= 70) #4500 16000	
+    speed_pid_right = PIDController(kp=2000, ki=300, kd=0, i_max = 550, d_max= 70)
     speed_pid_left.set_integral(1)
     speed_pid_right.set_integral(1)
     
@@ -395,7 +395,7 @@ def main():
                 f"angle:                       {math.degrees(theta):.2f} °",
                 f"angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
                 f"angle_control:               {angle_control:.2f}",
-                f"ADC_Values:                  {robot.get_formatted_sensor_readings(4)}"
+                #f"ADC_Values:                  {robot.get_formatted_sensor_readings(4)}"
             ]
             print("\n".join(info))
                 
