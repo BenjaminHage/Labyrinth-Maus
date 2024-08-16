@@ -55,7 +55,7 @@ class Robot:
         self.right_wheel_velocity = 0
         self.last_left_time = time.monotonic()
         self.last_right_time = time.monotonic()
-        self.velocity_timeout = 0.1  # Sekundenschwelle, nach der die Geschwindigkeit auf 0 gesetzt wird
+        self.velocity_timeout = 0.17  # Sekundenschwelle, nach der die Geschwindigkeit auf 0 gesetzt wird
 
         #self.lpf_sensors = [LowPassFilter(cutoff_freq=3) for _ in self.sensor_angles]
         self.lpf_speed = LowPassFilter(1)
@@ -91,7 +91,7 @@ class Robot:
             GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_count_left)
             GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_count_right)
             
-        self.adc = ADCDifferentialPi(0x68, 0x69, 18)
+        self.adc = ADCDifferentialPi(0x68, 0x69, 14)
         
 
     def get_robot_radius(self):
@@ -308,8 +308,8 @@ def handle_user_input(angle_setpoint, base_speed):
 
 def main():
     
-    speed_pid_left = PIDController(kp=2000, ki=300, kd=0, i_max = 800) #4500 1600
-    speed_pid_right = PIDController(kp=2000, ki=300, kd=0, i_max = 800)
+    speed_pid_left = PIDController(kp=2000, ki=310, kd=0, i_max = 800) #4500 1600
+    speed_pid_right = PIDController(kp=2000, ki=310, kd=0, i_max = 800)
     speed_pid_left.set_integral(1)
     speed_pid_right.set_integral(1)
     
@@ -342,7 +342,7 @@ def main():
     base_speed = 0
     
     start_Time = time.monotonic()
-    duration = 10
+    duration = np.inf
     
 
     try:
@@ -390,7 +390,7 @@ def main():
                 f"angle:                       {math.degrees(theta):.2f} °",
                 f"angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
                 f"angle_control:               {angle_control:.2f}",
-          #      f"ADC_Values:                  {robot.get_sensor_readings()}"
+                f"ADC_Values:                  {robot.get_sensor_readings()}"
             ]
             print("\n".join(info))
                 
