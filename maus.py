@@ -364,7 +364,8 @@ def handle_user_input(angle_setpoint, base_speed):
 
     return angle_setpoint, base_speed
 
-def print_terminal(robot)
+def print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed,
+                   angle_setpoint, left_motor_control, angle_control):
     x, y, theta = robot.get_position_and_angle()
 
     info = [
@@ -464,6 +465,8 @@ def main():
             
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
            
+            print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed,
+                   angle_setpoint, left_motor_control, angle_control)
 
             plotter.update_plot(current_time, 
                                 robot.get_left_wheel_velocity(), 
