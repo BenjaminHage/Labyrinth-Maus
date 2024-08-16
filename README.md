@@ -12,13 +12,15 @@ sudo apt install python3-rpi-lgpio
 
 git clone https://github.com/pololu/motoron-python.git
 cd motoron-python
-sudo python3 setup.py install //--break-system-packages
+sudo python3 setup.py install #--break-system-packages
 
 git clone https://github.com/abelectronicsuk/ABElectronics_Python_Libraries.git
 cd ABElectronics_Python_Libraries
-sudo python3 setup.py install //--break-system-packages
+sudo python3 setup.py install #--break-system-packages
 
 sudo pip3 install matplotlib --break-system-packages
 sudo pip3 install keyboard --break-system-packages
+
+chmod +x setup_pi_ap.sh
 
 
