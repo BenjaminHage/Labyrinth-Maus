@@ -121,7 +121,7 @@ class Robot:
         
     def get_formatted_sensor_readings(self, decimal_places=2):
         sensor_readings = self.get_sensor_readings()
-        formatted_readings = [f"{value:.decimal_placesf}".rjust(6) for value in adc_values]
+        formatted_readings = [f"{value:.4f}".rjust(6) for value in adc_values]
         return formatted_readings    
 
     def update_robot(self, x, y, theta, left_wheel_velocity, right_wheel_velocity, time_step):
