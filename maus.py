@@ -8,6 +8,65 @@ from ADCDifferentialPi import ADCDifferentialPi
 import matplotlib.pyplot as plt
 #import matplotlib.animation as animation --break-system-packages
 
+import matplotlib.pyplot as plt
+from collections import deque
+
+class RealTimePlotter:
+    def __init__(self, time_window=10):
+        self.time_window = time_window  # Zeitfenster in Sekunden
+        self.times = deque(maxlen=1000)  # Speichert die letzten Zeitpunkte
+        self.left_wheel_velocities = deque(maxlen=1000)
+        self.right_wheel_velocities = deque(maxlen=1000)
+        self.left_wheel_velocity_targets = deque(maxlen=1000)
+        self.right_wheel_velocity_targets = deque(maxlen=1000)
+        
+        plt.ion()  # Interaktiver Modus zum Echtzeit-Plotten
+        self.fig, self.ax = plt.subplots()
+        self.left_wheel_line, = self.ax.plot([], [], label="Left Wheel Velocity", color='b')
+        self.right_wheel_line, = self.ax.plot([], [], label="Right Wheel Velocity", color='r')
+        self.left_target_line, = self.ax.plot([], [], label="Left Wheel Target", linestyle='-.', color='c')
+        self.right_target_line, = self.ax.plot([], [], label="Right Wheel Target", linestyle='-.', color='m')
+
+        self.ax.set_xlabel("Time (s)")
+        self.ax.set_ylabel("Velocity (m/s)")
+        self.ax.set_title("Wheel Velocity Over Time")
+        self.ax.legend()
+        self.ax.grid(True)
+
+    def update_plot(self, current_time, left_velocity, right_velocity, left_target, right_target):
+        # Nur die Datenpunkte innerhalb des Zeitfensters anzeigen
+        self.times.append(current_time)
+        self.left_wheel_velocities.append(left_velocity)
+        self.right_wheel_velocities.append(right_velocity)
+        self.left_wheel_velocity_targets.append(left_target)
+        self.right_wheel_velocity_targets.append(right_target)
+
+        min_time = current_time - self.time_window
+        indices = [i for i, t in enumerate(self.times) if t >= min_time]
+
+        times_window = [self.times[i] for i in indices]
+        left_velocities_window = [self.left_wheel_velocities[i] for i in indices]
+        right_velocities_window = [self.right_wheel_velocities[i] for i in indices]
+        left_targets_window = [self.left_wheel_velocity_targets[i] for i in indices]
+        right_targets_window = [self.right_wheel_velocity_targets[i] for i in indices]
+
+        self.left_wheel_line.set_data(times_window, left_velocities_window)
+        self.right_wheel_line.set_data(times_window, right_velocities_window)
+        self.left_target_line.set_data(times_window, left_targets_window)
+        self.right_target_line.set_data(times_window, right_targets_window)
+
+        self.ax.set_xlim(min_time, current_time)
+        self.ax.set_ylim(min(min(left_velocities_window), min(right_velocities_window)) - 0.1,
+                         max(max(left_velocities_window), max(right_velocities_window)) + 0.1)
+
+        plt.draw()
+        plt.pause(0.01)  # Pause für eine kurze Zeit, um den Plot zu aktualisieren
+
+    def show(self):
+        plt.show(block=False)  # Blockieren des Hauptprogramms vermeiden
+
+
+
 class LowPassFilter:
     def __init__(self, cutoff_freq):
         self.cutoff_freq = cutoff_freq
@@ -305,7 +364,24 @@ def handle_user_input(angle_setpoint, base_speed):
 
     return angle_setpoint, base_speed
 
+def print_terminal(robot)
+    x, y, theta = robot.get_position_and_angle()
 
+    info = [
+            f"---------------------------------------------------------------------",
+            f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s",
+            f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s",
+            f"left_motor_control:          {left_motor_control:.2f}",
+            f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s",
+            f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s",
+            f"Base_Speed:                  {base_speed:.2f} m/s",
+            f"angle:                       {math.degrees(theta):.2f} °",
+            f"angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
+            f"angle_control:               {angle_control:.2f}",
+            #f"ADC_Values:                  {robot.get_formatted_sensor_readings(4)}"
+    ]
+    print("\n".join(info))
+    
 
 ###############################################################################################################
 
@@ -341,6 +417,9 @@ def main():
     mc_right.set_max_acceleration(1, 500)
     mc_right.set_max_deceleration(1, 500)
     mc_right.set_starting_speed(1,10)
+
+    plotter = RealTimePlotter(time_window=10)
+    plotter.show()
 
     last_time = time.monotonic()
     angle_setpoint = 0
@@ -384,20 +463,13 @@ def main():
             #mc.set_speed(1, int(left_motor_control * np.sign(right_wheel_velocity)))
             
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
-            info = [
-                f"---------------------------------------------------------------------",
-                f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s",
-                f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s",
-                f"left_motor_control:          {left_motor_control:.2f}",
-                f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s",
-                f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s",
-                f"Base_Speed:                  {base_speed:.2f} m/s",
-                f"angle:                       {math.degrees(theta):.2f} °",
-                f"angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
-                f"angle_control:               {angle_control:.2f}",
-                #f"ADC_Values:                  {robot.get_formatted_sensor_readings(4)}"
-            ]
-            print("\n".join(info))
+           
+
+            plotter.update_plot(current_time, 
+                                robot.get_left_wheel_velocity(), 
+                                robot.get_right_wheel_velocity(), 
+                                left_wheel_velocity, 
+                                right_wheel_velocity)
                 
 
 
@@ -406,39 +478,26 @@ def main():
     except KeyboardInterrupt:
         print("Messung beendet.")
     
-    try:
+    # try:
     
-        # Plot anzeigen
-        plt.figure(figsize=(10, 6))
-        plt.plot(robot.times, robot.left_wheel_velocities, label="Left Wheel Velocity", color = 'b')
-        plt.plot(robot.times, robot.right_wheel_velocities, label="Right Wheel Velocity", linestyle='-', color = 'r')
-        plt.plot(robot.times, robot.left_wheel_velocity_targets, label="Left Wheel Target", linestyle='-.', color = 'c')
-        plt.plot(robot.times, robot.right_wheel_velocity_targets, label="Right Wheel Target", linestyle='-.', color = 'm')
-        plt.xlabel("Time (s)")
-        plt.ylabel("Velocity (m/s)")
-        plt.title("Wheel Velocity Over Time")
-        plt.legend()
-        plt.grid(True)
-        plt.show()
+    #     # Plot anzeigen
+    #     plt.figure(figsize=(10, 6))
+    #     plt.plot(robot.times, robot.left_wheel_velocities, label="Left Wheel Velocity", color = 'b')
+    #     plt.plot(robot.times, robot.right_wheel_velocities, label="Right Wheel Velocity", linestyle='-', color = 'r')
+    #     plt.plot(robot.times, robot.left_wheel_velocity_targets, label="Left Wheel Target", linestyle='-.', color = 'c')
+    #     plt.plot(robot.times, robot.right_wheel_velocity_targets, label="Right Wheel Target", linestyle='-.', color = 'm')
+    #     plt.xlabel("Time (s)")
+    #     plt.ylabel("Velocity (m/s)")
+    #     plt.title("Wheel Velocity Over Time")
+    #     plt.legend()
+    #     plt.grid(True)
+    #     plt.show()
     
-    except KeyboardInterrupt:
-        print("Plot Closed")
+    # except KeyboardInterrupt:
+    #     print("Plot Closed")
         
 
 
 if __name__ == "__main__":
     main()
 
-#################################################################################################################
-
-    
-# Plot anzeigen
-#plt.figure(figsize=(10, 6))
-#plt.plot(robot.times, robot.left_wheel_velocities, label="Left Wheel Velocity")
-#plt.plot(robot.times, robot.right_wheel_velocities, label="Right Wheel Velocity", linestyle='--')
-#plt.xlabel("Time (s)")
-#plt.ylabel("Velocity (m/s)")
-#plt.title("Wheel Velocity Over Time")
-#plt.legend()
-#plt.grid(True)
-#plt.show()
