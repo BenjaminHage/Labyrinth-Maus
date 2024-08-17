@@ -107,7 +107,7 @@ class ConsoleOutput:
             f"Angle:                       {math.degrees(theta):.2f} °",
             f"Angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
             f"Angle_control:               {angle_control:.2f}",
-           # f"ADC_Values:	{robot.get_formatted_sensor_readings(4)}"
+            f"ADC_Values:	{robot.get_formatted_sensor_readings(4)}"
         ]
 
     def display_console_output(self):
@@ -595,10 +595,10 @@ def main():
     mc_right.set_max_deceleration(1, 500)
     mc_right.set_starting_speed(1,10)
 
-    #plotter = RealTimePlotter(time_window=10)
-    #plotter.show()
+#     plotter = RealTimePlotter(time_window=10)
+#     plotter.show()
     out = OutputManager()
-    #out.start_console_output()
+    out.start_console_output()
     out.start_rt_plot()
     
 
@@ -639,7 +639,7 @@ def main():
             
             if left_wheel_velocity == 0:
                 speed_pid_left.set_integral(0.00000000000000001)
-            left_motor_control = speed_pid_left.update(abs(left_wheel_velocity), robot.get_left_wheel_velocity(), time_step)
+            left_motor_control = 400#speed_pid_left.update(abs(left_wheel_velocity), robot.get_left_wheel_velocity(), time_step)
 
             mc.set_speed(1, int(left_motor_control * np.sign(left_wheel_velocity)))
             #mc.set_speed(1, int(left_motor_control * np.sign(right_wheel_velocity)))
