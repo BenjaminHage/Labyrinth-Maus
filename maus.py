@@ -15,7 +15,7 @@ import threading
 
 class OutputManager:
     def __init__(self, rtp_window_size = 10):
-        #self.plotter = RealTimePlotter(rtp_window_size)
+        self.plotter = RealTimePlotter(rtp_window_size)
         self.console_output = ConsoleOutput()
 
     def start_console_output(self):
@@ -23,6 +23,13 @@ class OutputManager:
 
     def stop_console_output(self):
         self.console_output.stop()
+        
+    def start_rt_plot(self):
+        self.plotter.show()
+        self.plotter.start()
+
+    def stop_rt_plot(self):
+        self.plotter.stop()
 
     def update_console_output(self, robot, left_wheel_velocity, right_wheel_velocity,
                               base_speed, angle_setpoint, angle_control, pid_r, pid_l):
@@ -60,7 +67,7 @@ class ConsoleOutput:
         """Hält die Konsole am Laufen."""
         while self.is_running:
             self.display_console_output()
-            time.sleep(1)  # Aktualisiere die Konsole alle 1 Sekunde
+            time.sleep(0.05)  # Aktualisiere die Konsole alle 1 Sekunde
 
     def update(self, robot, left_wheel_velocity, right_wheel_velocity, base_speed,
                angle_setpoint, angle_control, pid_r, pid_l):
@@ -111,16 +118,30 @@ class RealTimePlotter:
         self.ax.set_title("Wheel Velocity Over Time")
         self.ax.legend()
         self.ax.grid(True)
+        
+        self.is_running = False
+        self.plotter_thread = None
+        
+    def start(self):
+        """Startet den Plotter."""
+        self.is_running = True
+        self.Plotter_thread = threading.Thread(target=self.run_rt_plotter)
+        self.Plotter_thread.start()
+        
+    def stop(self):
+        """Stoppt die Konsole."""
+        self.is_running = False
+        if self.plotter_thread:
+            self.plotter_thread.join()
 
-    def update_plot(self, current_time, left_velocity, right_velocity, left_target, right_target):
-        # Nur die Datenpunkte innerhalb des Zeitfensters anzeigen
-        self.times.append(current_time)
-        self.left_wheel_velocities.append(left_velocity)
-        self.right_wheel_velocities.append(right_velocity)
-        self.left_wheel_velocity_targets.append(left_target)
-        self.right_wheel_velocity_targets.append(right_target)
-
-        min_time = current_time - self.time_window
+    def run_rt_plotter(self):
+        """Hält die Konsole am Laufen."""
+        while self.is_running:
+            self.display_rt_plot()
+            time.sleep(0.1)  # Aktualisiere die Konsole alle 1 Sekunde
+            
+    def display_rt_plot(self):
+        min_time = self.times[-1] - self.time_window
         indices = [i for i, t in enumerate(self.times) if t >= min_time]
 
         times_window = [self.times[i] for i in indices]
@@ -134,12 +155,20 @@ class RealTimePlotter:
         self.left_target_line.set_data(times_window, left_targets_window)
         self.right_target_line.set_data(times_window, right_targets_window)
 
-        self.ax.set_xlim(min_time, current_time)
+        self.ax.set_xlim(min_time, self.times[-1])
         self.ax.set_ylim(min(min(left_velocities_window), min(right_velocities_window)) - 0.1,
                          max(max(left_velocities_window), max(right_velocities_window)) + 0.1)
 
         plt.draw()
-        plt.pause(0.01)  # Pause für eine kurze Zeit, um den Plot zu aktualisieren
+
+    def update_plot(self, current_time, left_velocity, right_velocity, left_target, right_target):
+        # Nur die Datenpunkte innerhalb des Zeitfensters anzeigen
+        self.times.append(current_time)
+        self.left_wheel_velocities.append(left_velocity)
+        self.right_wheel_velocities.append(right_velocity)
+        self.left_wheel_velocity_targets.append(left_target)
+        self.right_wheel_velocity_targets.append(right_target)
+
 
     def show(self):
         plt.show(block=False)  # Blockieren des Hauptprogramms vermeiden
@@ -572,6 +601,8 @@ def main():
    # plotter.show()
     out = OutputManager()
     out.start_console_output()
+    out.start_rt_plot()
+    
 
     last_time = time.monotonic()
     angle_setpoint = 0
@@ -618,6 +649,12 @@ def main():
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
            
             out.update_console_output(robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint, angle_control, speed_pid_right, speed_pid_left)
+            out.update_plot(current_time, 
+                                robot.get_left_wheel_velocity(), 
+                                robot.get_right_wheel_velocity(), 
+                                left_wheel_velocity, 
+                                right_wheel_velocity)
+
 
             #print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint, angle_control, speed_pid_right, speed_pid_left)
 
@@ -637,6 +674,7 @@ def main():
     
     try:
         out.stop_console_output()
+        out.start_rt_plot()
     
         # Plot anzeigen
         plt.figure(figsize=(10, 6))
