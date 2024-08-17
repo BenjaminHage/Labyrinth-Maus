@@ -11,6 +11,84 @@ from collections import deque
 #from rich.console import Console
 #from rich.text import Text
 #import curses
+import threading
+
+class OutputManager:
+    def __init__(self, rtp_window_size = 10):
+        #self.plotter = RealTimePlotter(rtp_window_size)
+        self.console_output = ConsoleOutput()
+
+    def start_console_output(self):
+        self.console_output.start()
+
+    def stop_console_output(self):
+        self.console_output.stop()
+
+    def update_console_output(self, robot, left_wheel_velocity, right_wheel_velocity,
+                              base_speed, angle_setpoint, angle_control, pid_r, pid_l):
+        self.console_output.update(robot, left_wheel_velocity, right_wheel_velocity,
+                                   base_speed, angle_setpoint, angle_control, pid_r, pid_l)
+
+    def update_plot(self, current_time, left_wheel_velocity, right_wheel_velocity,
+                    left_wheel_velocity_target, right_wheel_velocity_target):
+        self.plotter.update_plot(current_time, left_wheel_velocity, right_wheel_velocity,
+                                 left_wheel_velocity_target, right_wheel_velocity_target)
+
+    def show_final_plot(self):
+        self.plotter.show_final_plot()
+
+
+class ConsoleOutput:
+    def __init__(self):
+        self.is_running = False
+        self.console_thread = None
+        self.info_lines = []
+
+    def start(self):
+        """Startet die Konsole."""
+        self.is_running = True
+        self.console_thread = threading.Thread(target=self.run_console_output)
+        self.console_thread.start()
+
+    def stop(self):
+        """Stoppt die Konsole."""
+        self.is_running = False
+        if self.console_thread:
+            self.console_thread.join()
+
+    def run_console_output(self):
+        """Hält die Konsole am Laufen."""
+        while self.is_running:
+            self.display_console_output()
+            time.sleep(1)  # Aktualisiere die Konsole alle 1 Sekunde
+
+    def update(self, robot, left_wheel_velocity, right_wheel_velocity, base_speed,
+               angle_setpoint, angle_control, pid_r, pid_l):
+        """Aktualisiert die Informationen für den Konsolenoutput."""
+        x, y, theta = robot.get_position_and_angle()
+
+        self.info_lines = [
+            "---------------------------------------------------------------------",
+            f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s",
+            f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s",
+            f"P: {pid_l.P:6.2f}    I: {pid_l.I:6.2f}    D: {pid_l.D:6.2f}    PID: {pid_l.PID:6.2f}",
+            "",
+            f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s",
+            f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s",
+            f"P: {pid_r.P:6.2f}    I: {pid_r.I:6.2f}    D: {pid_r.D:6.2f}    PID: {pid_r.PID:6.2f}",
+            "",
+            f"Base_Speed:                  {base_speed:.2f} m/s",
+            f"Angle:                       {math.degrees(theta):.2f} °",
+            f"Angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
+            f"Angle_control:               {angle_control:.2f}"
+        ]
+
+    def display_console_output(self):
+        """Zeigt den Konsolenoutput an."""
+        print("\033[H\033[J", end="")  # Lösche die Konsole
+        print("\n".join(self.info_lines))
+
+
 
 class RealTimePlotter:
     def __init__(self, time_window=10):
@@ -492,6 +570,8 @@ def main():
 
    # plotter = RealTimePlotter(time_window=10)
    # plotter.show()
+    out = OutputManager()
+    out.start_console_output()
 
     last_time = time.monotonic()
     angle_setpoint = 0
@@ -537,7 +617,9 @@ def main():
             
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
            
-            print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint, angle_control, speed_pid_right, speed_pid_left)
+            out.update_console_output(robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint, angle_control, speed_pid_right, speed_pid_left)
+
+            #print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint, angle_control, speed_pid_right, speed_pid_left)
 
 #             plotter.update_plot(current_time, 
 #                                 robot.get_left_wheel_velocity(), 
@@ -551,8 +633,10 @@ def main():
 
     except KeyboardInterrupt:
         print("Messung beendet.")
+        
     
     try:
+        out.stop_console_output()
     
         # Plot anzeigen
         plt.figure(figsize=(10, 6))
