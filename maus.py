@@ -8,6 +8,8 @@ from ADCDifferentialPi import ADCDifferentialPi
 import matplotlib.pyplot as plt
 #import matplotlib.animation as animation 
 from collections import deque
+from rich.console import Console
+from rich.text import Text
 
 class RealTimePlotter:
     def __init__(self, time_window=10):
@@ -426,27 +428,32 @@ def handle_user_input(angle_setpoint, base_speed):
 
     return angle_setpoint, base_speed
 
-def print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed,
-                   angle_setpoint, left_motor_control, angle_control, pid_r, pid_l):
+
+def print_terminal(console, robot, left_wheel_velocity, right_wheel_velocity, base_speed,
+                   angle_setpoint, angle_control, pid_r, pid_l):
+    
     x, y, theta = robot.get_position_and_angle()
 
-    info = [
-            f"---------------------------------------------------------------------",
-            f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s",
-            f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s",
-            f"P: {pid_l.P:.2f}		I: {pid_l.I:.2f}		D: {pid_l.D:.2f}		PID: {pid_l.PID:.2f}",
-            f"",
-            f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s",
-            f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s",
-            f"P: {pid_r.P:.2f}		I: {pid_r.I:.2f}		D: {pid_r.D:.2f}		PID: {pid_r.PID:.2f}",
-            f"",
-            f"Base_Speed:                  {base_speed:.2f} m/s",
-            f"angle:                       {math.degrees(theta):.2f} °",
-            f"angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
-            f"angle_control:               {angle_control:.2f}",
-            #f"ADC_Values:                  {robot.get_formatted_sensor_readings(4)}"
+    info_lines = [
+        "---------------------------------------------------------------------",
+        f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s",
+        f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s",
+        f"P: {pid_l.P:6.2f}    I: {pid_l.I:6.2f}    D: {pid_l.D:6.2f}    PID: {pid_l.PID:6.2f}",
+        "",
+        f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s",
+        f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s",
+        f"P: {pid_r.P:6.2f}    I: {pid_r.I:6.2f}    D: {pid_r.D:6.2f}    PID: {pid_r.PID:6.2f}",
+        "",
+        f"Base_Speed:                  {base_speed:.2f} m/s",
+        f"angle:                       {math.degrees(theta):.2f} °",
+        f"angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
+        f"angle_control:               {angle_control:.2f}"
     ]
-    print("\n".join(info))
+
+    info = Text("\n".join(info_lines))
+
+    console.clear()
+    console.print(info)
     
 
 ###############################################################################################################
@@ -486,6 +493,7 @@ def main():
 
    # plotter = RealTimePlotter(time_window=10)
    # plotter.show()
+    console = Console()
 
     last_time = time.monotonic()
     angle_setpoint = 0
@@ -531,8 +539,8 @@ def main():
             
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
            
-            print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed,
-                   angle_setpoint, left_motor_control, angle_control, speed_pid_right, speed_pid_left)
+            print_terminal(console, robot, left_wheel_velocity, right_wheel_velocity, base_speed,
+                   angle_setpoint, angle_control, speed_pid_right, speed_pid_left)
 
 #             plotter.update_plot(current_time, 
 #                                 robot.get_left_wheel_velocity(), 
