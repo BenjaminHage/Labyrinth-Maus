@@ -3,8 +3,9 @@
 # Staging aller Änderungen
 git add .
 
-# Eingabe der Commit-Nachricht mit dialog
-commitMessage=$(dialog --inputbox "Geben Sie Ihre Commit-Nachricht ein:" 10 50 3>&1 1>&2 2>&3)
+# Eingabe der Commit-Nachricht
+echo "Geben Sie Ihre Commit-Nachricht ein: "
+read commitMessage
 
 # Überprüfe, ob die Commit-Nachricht leer ist
 if [ -z "$commitMessage" ]; then
