@@ -106,6 +106,12 @@ class RealTimePlotter:
         self.left_wheel_velocity_targets = deque(maxlen=1000)
         self.right_wheel_velocity_targets = deque(maxlen=1000)
         
+        self.times.append(0)
+        self.left_wheel_velocities.append(0)
+        self.right_wheel_velocities.append(0)
+        self.left_wheel_velocity_targets.append(0)
+        self.right_wheel_velocity_targets.append(0)
+        
         plt.ion()  # Interaktiver Modus zum Echtzeit-Plotten
         self.fig, self.ax = plt.subplots()
         self.left_wheel_line, = self.ax.plot([], [], label="Left Wheel Velocity", color='b')
@@ -125,8 +131,8 @@ class RealTimePlotter:
     def start(self):
         """Startet den Plotter."""
         self.is_running = True
-        self.Plotter_thread = threading.Thread(target=self.run_rt_plotter)
-        self.Plotter_thread.start()
+        self.plotter_thread = threading.Thread(target=self.run_rt_plotter)
+        self.plotter_thread.start()
         
     def stop(self):
         """Stoppt die Konsole."""
@@ -136,9 +142,12 @@ class RealTimePlotter:
 
     def run_rt_plotter(self):
         """Hält die Konsole am Laufen."""
-        while self.is_running:
-            self.display_rt_plot()
-            time.sleep(0.1)  # Aktualisiere die Konsole alle 1 Sekunde
+        try:
+            while self.is_running:
+                self.display_rt_plot()
+                time.sleep(0.1)  # Aktualisiere die Konsole alle 1 Sekunde
+        except Exception as e:
+            print(f"run fehler:	{e}")
             
     def display_rt_plot(self):
         min_time = self.times[-1] - self.time_window
@@ -159,7 +168,9 @@ class RealTimePlotter:
         self.ax.set_ylim(min(min(left_velocities_window), min(right_velocities_window)) - 0.1,
                          max(max(left_velocities_window), max(right_velocities_window)) + 0.1)
 
-        plt.draw()
+        self.fig.draw()
+        self.fig.flush_events()
+        print()
 
     def update_plot(self, current_time, left_velocity, right_velocity, left_target, right_target):
         # Nur die Datenpunkte innerhalb des Zeitfensters anzeigen
@@ -600,7 +611,7 @@ def main():
    # plotter = RealTimePlotter(time_window=10)
    # plotter.show()
     out = OutputManager()
-    out.start_console_output()
+    #out.start_console_output()
     out.start_rt_plot()
     
 
