@@ -308,6 +308,11 @@ class PIDController:
         self.kp = kp
         self.ki = ki
         self.kd = kd
+        self.P = 0
+        self.I = 0
+        self.D = 0
+        
+        
         self.imax = i_max
         self.d_max = d_max
         self.previous_error = 0 #überlegung den setzbar zumachen falls der die probleme macht
@@ -319,25 +324,25 @@ class PIDController:
         derivative = (error - self.previous_error) / time_step
         self.previous_error = error
         
-        P = self.kp * error
-        I = self.ki * self.integral
-        D = self.kd * derivative
+        self.P = self.kp * error
+        self.I = self.ki * self.integral
+        self.D = self.kd * derivative
         
         
-        if I < -self.imax:
-            I = -self.imax
+        if self.I < -self.imax:
+            self.I = -self.imax
             self.integral = -self.imax / self.ki
-        elif I > self.imax:
-            I = self.imax
+        elif self.I > self.imax:
+            self.I = self.imax
             self.integral = self.imax / self.ki
         
-        if D < -self.d_max:
-            D = -self.d_max
-        elif D > self.d_max:
-            D = self.d_max
+        if self.D < -self.d_max:
+            self.D = -self.d_max
+        elif self.D > self.d_max:
+            self.D = self.d_max
         
         
-        return P + I + D
+        return self.P + self.I + self.D
     
     def set_previous_error(self,error):
         self.previous_error = error
@@ -365,7 +370,7 @@ def handle_user_input(angle_setpoint, base_speed):
     return angle_setpoint, base_speed
 
 def print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed,
-                   angle_setpoint, left_motor_control, angle_control):
+                   angle_setpoint, left_motor_control, angle_control, pid_r):
     x, y, theta = robot.get_position_and_angle()
 
     info = [
@@ -373,8 +378,11 @@ def print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed,
             f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s",
             f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s",
             f"left_motor_control:          {left_motor_control:.2f}",
+            f"",
             f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s",
             f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s",
+            f"P: {pid_r.P:.2f}		I: {pid_r.I:.2f}		D: {pid_r.D:.2f}",
+            f"",
             f"Base_Speed:                  {base_speed:.2f} m/s",
             f"angle:                       {math.degrees(theta):.2f} °",
             f"angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
@@ -390,10 +398,10 @@ def print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed,
 
 def main():
     
-    speed_pid_left = PIDController(kp=2000, ki=300, kd=0, i_max = 550,d_max= 70) #4500 16000	
-    speed_pid_right = PIDController(kp=2000, ki=300, kd=0, i_max = 550, d_max= 70)
-    speed_pid_left.set_integral(1)
-    speed_pid_right.set_integral(1)
+    speed_pid_left = PIDController(kp=450, ki=4000, kd=0, i_max = 550,d_max= 70) #4500 16000	
+    speed_pid_right = PIDController(kp=450, ki=4000, kd=0, i_max = 550, d_max= 70)
+    speed_pid_left.set_integral(0.00000000000000001)
+    speed_pid_right.set_integral(0.00000000000000001)
     
     angle_pid = PIDController(kp=0.2, ki=0.000, kd=0)
     
@@ -419,8 +427,8 @@ def main():
     mc_right.set_max_deceleration(1, 500)
     mc_right.set_starting_speed(1,10)
 
-    plotter = RealTimePlotter(time_window=10)
-    plotter.show()
+   # plotter = RealTimePlotter(time_window=10)
+   # plotter.show()
 
     last_time = time.monotonic()
     angle_setpoint = 0
@@ -452,13 +460,13 @@ def main():
             
             
             if right_wheel_velocity == 0:
-                speed_pid_right.set_integral(1)
+                speed_pid_right.set_integral(0.00000000000000001)
             right_motor_control = speed_pid_right.update(abs(right_wheel_velocity), robot.get_right_wheel_velocity(), time_step)
             mc_right.set_speed(1, int(-right_motor_control * np.sign(right_wheel_velocity)))
             #mc_right.set_speed(1, 100 * -int(base_speed))
             
             if left_wheel_velocity == 0:
-                speed_pid_left.set_integral(1)
+                speed_pid_left.set_integral(0.00000000000000001)
             left_motor_control = speed_pid_left.update(abs(left_wheel_velocity), robot.get_left_wheel_velocity(), time_step)
             mc.set_speed(1, int(left_motor_control * np.sign(left_wheel_velocity)))
             #mc.set_speed(1, int(left_motor_control * np.sign(right_wheel_velocity)))
@@ -466,13 +474,13 @@ def main():
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
            
             print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed,
-                   angle_setpoint, left_motor_control, angle_control)
+                   angle_setpoint, left_motor_control, angle_control, speed_pid_right)
 
-            plotter.update_plot(current_time, 
-                                robot.get_left_wheel_velocity(), 
-                                robot.get_right_wheel_velocity(), 
-                                left_wheel_velocity, 
-                                right_wheel_velocity)
+#             plotter.update_plot(current_time, 
+#                                 robot.get_left_wheel_velocity(), 
+#                                 robot.get_right_wheel_velocity(), 
+#                                 left_wheel_velocity, 
+#                                 right_wheel_velocity)
                 
 
 
