@@ -7,8 +7,6 @@ import keyboard  # Modul für die Handhabung von Tastatureingaben
 from ADCDifferentialPi import ADCDifferentialPi
 import matplotlib.pyplot as plt
 #import matplotlib.animation as animation --break-system-packages
-
-import matplotlib.pyplot as plt
 from collections import deque
 
 class RealTimePlotter:
@@ -315,7 +313,7 @@ class PIDController:
         
         self.imax = i_max
         self.d_max = d_max
-        self.previous_error = 0 #überlegung den setzbar zumachen falls der die probleme macht
+        self.previous_error = 0 
         self.integral = 0
 
     def update(self, setpoint, measurement, time_step):
@@ -329,8 +327,8 @@ class PIDController:
         self.D = self.kd * derivative
         
         
-        if self.I < -self.imax:
-            self.I = -self.imax
+        if self.I < 0:#-self.imax:
+            self.I = -0'self.imax
             self.integral = -self.imax / self.ki
         elif self.I > self.imax:
             self.I = self.imax
