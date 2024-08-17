@@ -328,7 +328,7 @@ class PIDController:
         
         
         if self.I < 0:#-self.imax:
-            self.I = -0'self.imax
+            self.I = -0#self.imax
             self.integral = -self.imax / self.ki
         elif self.I > self.imax:
             self.I = self.imax
