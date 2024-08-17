@@ -8,9 +8,9 @@ from ADCDifferentialPi import ADCDifferentialPi
 import matplotlib.pyplot as plt
 #import matplotlib.animation as animation 
 from collections import deque
-from rich.console import Console
-from rich.text import Text
-import curses
+#from rich.console import Console
+#from rich.text import Text
+#import curses
 
 class RealTimePlotter:
     def __init__(self, time_window=10):
@@ -432,29 +432,27 @@ def handle_user_input(angle_setpoint, base_speed):
 
 def print_terminal(stdscr, robot, left_wheel_velocity, right_wheel_velocity, base_speed,
                    angle_setpoint, angle_control, pid_r, pid_l):
-    stdscr.clear()
-    x, y, theta = robot.get_position_and_angle()
+        
+        x, y, theta = robot.get_position_and_angle()
 
-    info_lines = [
-        "---------------------------------------------------------------------",
-        f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s",
-        f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s",
-        f"P: {pid_l.P:6.2f}    I: {pid_l.I:6.2f}    D: {pid_l.D:6.2f}    PID: {pid_l.PID:6.2f}",
-        "",
-        f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s",
-        f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s",
-        f"P: {pid_r.P:6.2f}    I: {pid_r.I:6.2f}    D: {pid_r.D:6.2f}    PID: {pid_r.PID:6.2f}",
-        "",
-        f"Base_Speed:                  {base_speed:.2f} m/s",
-        f"angle:                       {math.degrees(theta):.2f} °",
-        f"angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
-        f"angle_control:               {angle_control:.2f}"
-    ]
+        info_lines = [
+            "---------------------------------------------------------------------",
+            f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s",
+            f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s",
+            f"P: {pid_l.P:6.2f}    I: {pid_l.I:6.2f}    D: {pid_l.D:6.2f}    PID: {pid_l.PID:6.2f}",
+            "",
+            f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s",
+            f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s",
+            f"P: {pid_r.P:6.2f}    I: {pid_r.I:6.2f}    D: {pid_r.D:6.2f}    PID: {pid_r.PID:6.2f}",
+            "",
+            f"Base_Speed:                  {base_speed:.2f} m/s",
+            f"angle:                       {math.degrees(theta):.2f} °",
+            f"angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
+            f"angle_control:               {angle_control:.2f}"
+        ]
 
-    for i, line in enumerate(info_lines):
-        stdscr.addstr(i, 0, line)
-
-    stdscr.refresh()
+        print("\033[H\033[J", end="")  # ANSI escape code to clear the screen
+        print("\n".join(info_lines))
     
 
 ###############################################################################################################
@@ -494,7 +492,6 @@ def main():
 
    # plotter = RealTimePlotter(time_window=10)
    # plotter.show()
-    console = Console()
 
     last_time = time.monotonic()
     angle_setpoint = 0
@@ -540,7 +537,7 @@ def main():
             
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
            
-            curses.wrapper(print_terminal, robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint, angle_control, pid_r, pid_l)
+            print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint, angle_control, speed_pid_right, speed_pid_left)
 
 #             plotter.update_plot(current_time, 
 #                                 robot.get_left_wheel_velocity(), 
