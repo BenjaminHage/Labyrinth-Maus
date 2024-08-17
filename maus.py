@@ -429,9 +429,9 @@ def handle_user_input(angle_setpoint, base_speed):
     return angle_setpoint, base_speed
 
 
-def print_terminal(console, robot, left_wheel_velocity, right_wheel_velocity, base_speed,
+def print_terminal(stdscr, robot, left_wheel_velocity, right_wheel_velocity, base_speed,
                    angle_setpoint, angle_control, pid_r, pid_l):
-    
+    stdscr.clear()
     x, y, theta = robot.get_position_and_angle()
 
     info_lines = [
@@ -450,10 +450,10 @@ def print_terminal(console, robot, left_wheel_velocity, right_wheel_velocity, ba
         f"angle_control:               {angle_control:.2f}"
     ]
 
-    info = Text("\n".join(info_lines))
+    for i, line in enumerate(info_lines):
+        stdscr.addstr(i, 0, line)
 
-    console.clear()
-    console.print(info)
+    stdscr.refresh()
     
 
 ###############################################################################################################
@@ -539,8 +539,7 @@ def main():
             
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
            
-            print_terminal(console, robot, left_wheel_velocity, right_wheel_velocity, base_speed,
-                   angle_setpoint, angle_control, speed_pid_right, speed_pid_left)
+            curses.wrapper(print_terminal, robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint, angle_control, pid_r, pid_l)
 
 #             plotter.update_plot(current_time, 
 #                                 robot.get_left_wheel_velocity(), 
