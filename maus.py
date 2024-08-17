@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from collections import deque
 from rich.console import Console
 from rich.text import Text
+import curses
 
 class RealTimePlotter:
     def __init__(self, time_window=10):
