@@ -6,7 +6,7 @@ import numpy as np
 import keyboard  # Modul für die Handhabung von Tastatureingaben
 from ADCDifferentialPi import ADCDifferentialPi
 import matplotlib.pyplot as plt
-#import matplotlib.animation as animation --break-system-packages
+#import matplotlib.animation as animation 
 from collections import deque
 
 class RealTimePlotter:
@@ -114,7 +114,7 @@ class Robot:
         self.last_right_time = time.monotonic()
         self.velocity_timeout = 0.17  # Sekundenschwelle, nach der die Geschwindigkeit auf 0 gesetzt wird
 
-        #self.lpf_sensors = [LowPassFilter(cutoff_freq=3) for _ in self.sensor_angles]
+        self.lpf_sensors = [LowPassFilter(cutoff_freq=3) for _ in self.sensor_angles]
         self.lpf_speed = LowPassFilter(1)
         self.lpf_speed_right = LowPassFilter(1)
 
@@ -253,13 +253,13 @@ class Robot:
     def set_position_and_angle(self, x, y, theta):
         self.robot_x, self.robot_y, self.robot_angle = x, y, theta
 
-    # def filter_sensor_readings(self, sensor_readings, time_step):
-    #     filtered_readings = []
-    #     for i, reading in enumerate(sensor_readings):
-    #         filtered_reading = self.lpf_sensors[i].filter(reading, time_step)
-    #         filtered_readings.append(filtered_reading)
+    def filter_sensor_readings(self, sensor_readings, time_step):
+        filtered_readings = []
+        for i, reading in enumerate(sensor_readings):
+            filtered_reading = self.lpf_sensors[i].filter(reading, time_step)
+            filtered_readings.append(filtered_reading)
         
-    #     return filtered_readings 
+        return filtered_readings 
 
     def _update_count_left(self, channel):
         #a_state = GPIO.input(self.pin_a_left)
@@ -487,23 +487,23 @@ def main():
     except KeyboardInterrupt:
         print("Messung beendet.")
     
-    # try:
+    try:
     
-    #     # Plot anzeigen
-    #     plt.figure(figsize=(10, 6))
-    #     plt.plot(robot.times, robot.left_wheel_velocities, label="Left Wheel Velocity", color = 'b')
-    #     plt.plot(robot.times, robot.right_wheel_velocities, label="Right Wheel Velocity", linestyle='-', color = 'r')
-    #     plt.plot(robot.times, robot.left_wheel_velocity_targets, label="Left Wheel Target", linestyle='-.', color = 'c')
-    #     plt.plot(robot.times, robot.right_wheel_velocity_targets, label="Right Wheel Target", linestyle='-.', color = 'm')
-    #     plt.xlabel("Time (s)")
-    #     plt.ylabel("Velocity (m/s)")
-    #     plt.title("Wheel Velocity Over Time")
-    #     plt.legend()
-    #     plt.grid(True)
-    #     plt.show()
+        # Plot anzeigen
+        plt.figure(figsize=(10, 6))
+        plt.plot(robot.times, robot.left_wheel_velocities, label="Left Wheel Velocity", color = 'b')
+        plt.plot(robot.times, robot.right_wheel_velocities, label="Right Wheel Velocity", linestyle='-', color = 'r')
+        plt.plot(robot.times, robot.left_wheel_velocity_targets, label="Left Wheel Target", linestyle='-.', color = 'c')
+        plt.plot(robot.times, robot.right_wheel_velocity_targets, label="Right Wheel Target", linestyle='-.', color = 'm')
+        plt.xlabel("Time (s)")
+        plt.ylabel("Velocity (m/s)")
+        plt.title("Wheel Velocity Over Time")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
     
-    # except KeyboardInterrupt:
-    #     print("Plot Closed")
+    except KeyboardInterrupt:
+        print("Plot Closed")
         
 
 
