@@ -430,7 +430,7 @@ def handle_user_input(angle_setpoint, base_speed):
     return angle_setpoint, base_speed
 
 
-def print_terminal(stdscr, robot, left_wheel_velocity, right_wheel_velocity, base_speed,
+def print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed,
                    angle_setpoint, angle_control, pid_r, pid_l):
         
         x, y, theta = robot.get_position_and_angle()
