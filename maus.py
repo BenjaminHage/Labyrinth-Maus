@@ -166,7 +166,7 @@ class RealTimePlotter:
                          max(max(left_velocities_window), max(right_velocities_window)) + 0.1)
 
         plt.draw()
-        #plt.pause(0.01)  # Pause für eine kurze Zeit, um den Plot zu aktualisieren
+        plt.pause(0.01)  # Pause für eine kurze Zeit, um den Plot zu aktualisieren
 
     def show(self):
         plt.show(block=False)  # Blockieren des Hauptprogramms vermeiden
