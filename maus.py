@@ -15,34 +15,53 @@ import threading
 
 class OutputManager:
     def __init__(self, rtp_window_size = 10):
-        self.plotter = RealTimePlotter(rtp_window_size)
-        self.console_output = ConsoleOutput()
+        self.rtp_window_size = rtp_window_size
+        self.plotter = None
+        self.console_output = None
 
     def start_console_output(self):
+        self.console_output = ConsoleOutput()
         self.console_output.start()
 
     def stop_console_output(self):
-        self.console_output.stop()
+        if self.console_output is not None:
+            self.console_output.stop()
         
     def start_rt_plot(self):
+        self.plotter = RealTimePlotter(self.rtp_window_size)
         self.plotter.show()
-        self.plotter.start()
+        #self.plotter.start()
+        
 
     def stop_rt_plot(self):
         self.plotter.stop()
 
     def update_console_output(self, robot, left_wheel_velocity, right_wheel_velocity,
                               base_speed, angle_setpoint, angle_control, pid_r, pid_l):
-        self.console_output.update(robot, left_wheel_velocity, right_wheel_velocity,
-                                   base_speed, angle_setpoint, angle_control, pid_r, pid_l)
+        
+        if self.console_output is not None:
+            self.console_output.update(robot, left_wheel_velocity, right_wheel_velocity,
+                                       base_speed, angle_setpoint, angle_control, pid_r, pid_l)
 
     def update_plot(self, current_time, left_wheel_velocity, right_wheel_velocity,
                     left_wheel_velocity_target, right_wheel_velocity_target):
-        self.plotter.update_plot(current_time, left_wheel_velocity, right_wheel_velocity,
-                                 left_wheel_velocity_target, right_wheel_velocity_target)
+        if self.plotter is not None:
+            self.plotter.update_plot(current_time, left_wheel_velocity, right_wheel_velocity,
+                                     left_wheel_velocity_target, right_wheel_velocity_target)
 
-    def show_final_plot(self):
-        self.plotter.show_final_plot()
+    def show_batch_plot(self,robot):
+        # Plot anzeigen
+        plt.figure(figsize=(10, 6))
+        plt.plot(robot.times, robot.left_wheel_velocities, label="Left Wheel Velocity", color = 'b')
+        plt.plot(robot.times, robot.right_wheel_velocities, label="Right Wheel Velocity", linestyle='-', color = 'r')
+        plt.plot(robot.times, robot.left_wheel_velocity_targets, label="Left Wheel Target", linestyle='-.', color = 'c')
+        plt.plot(robot.times, robot.right_wheel_velocity_targets, label="Right Wheel Target", linestyle='-.', color = 'm')
+        plt.xlabel("Time (s)")
+        plt.ylabel("Velocity (m/s)")
+        plt.title("Wheel Velocity Over Time")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
 
 
 class ConsoleOutput:
@@ -87,7 +106,8 @@ class ConsoleOutput:
             f"Base_Speed:                  {base_speed:.2f} m/s",
             f"Angle:                       {math.degrees(theta):.2f} °",
             f"Angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
-            f"Angle_control:               {angle_control:.2f}"
+            f"Angle_control:               {angle_control:.2f}",
+           # f"ADC_Values:	{robot.get_formatted_sensor_readings(4)}"
         ]
 
     def display_console_output(self):
@@ -106,12 +126,6 @@ class RealTimePlotter:
         self.left_wheel_velocity_targets = deque(maxlen=1000)
         self.right_wheel_velocity_targets = deque(maxlen=1000)
         
-        self.times.append(0)
-        self.left_wheel_velocities.append(0)
-        self.right_wheel_velocities.append(0)
-        self.left_wheel_velocity_targets.append(0)
-        self.right_wheel_velocity_targets.append(0)
-        
         plt.ion()  # Interaktiver Modus zum Echtzeit-Plotten
         self.fig, self.ax = plt.subplots()
         self.left_wheel_line, = self.ax.plot([], [], label="Left Wheel Velocity", color='b')
@@ -124,33 +138,16 @@ class RealTimePlotter:
         self.ax.set_title("Wheel Velocity Over Time")
         self.ax.legend()
         self.ax.grid(True)
-        
-        self.is_running = False
-        self.plotter_thread = None
-        
-    def start(self):
-        """Startet den Plotter."""
-        self.is_running = True
-        self.plotter_thread = threading.Thread(target=self.run_rt_plotter)
-        self.plotter_thread.start()
-        
-    def stop(self):
-        """Stoppt die Konsole."""
-        self.is_running = False
-        if self.plotter_thread:
-            self.plotter_thread.join()
 
-    def run_rt_plotter(self):
-        """Hält die Konsole am Laufen."""
-        try:
-            while self.is_running:
-                #self.display_rt_plot()
-                time.sleep(0.1)  # Aktualisiere die Konsole alle 1 Sekunde
-        except Exception as e:
-            print(f"run fehler:	{e}")
-            
-    def display_rt_plot(self):
-        min_time = self.times[-1] - self.time_window
+    def update_plot(self, current_time, left_velocity, right_velocity, left_target, right_target):
+        # Nur die Datenpunkte innerhalb des Zeitfensters anzeigen
+        self.times.append(current_time)
+        self.left_wheel_velocities.append(left_velocity)
+        self.right_wheel_velocities.append(right_velocity)
+        self.left_wheel_velocity_targets.append(left_target)
+        self.right_wheel_velocity_targets.append(right_target)
+
+        min_time = current_time - self.time_window
         indices = [i for i, t in enumerate(self.times) if t >= min_time]
 
         times_window = [self.times[i] for i in indices]
@@ -164,30 +161,17 @@ class RealTimePlotter:
         self.left_target_line.set_data(times_window, left_targets_window)
         self.right_target_line.set_data(times_window, right_targets_window)
 
-        self.ax.set_xlim(min_time, self.times[-1])
+        self.ax.set_xlim(min_time, current_time)
         self.ax.set_ylim(min(min(left_velocities_window), min(right_velocities_window)) - 0.1,
                          max(max(left_velocities_window), max(right_velocities_window)) + 0.1)
 
-        plt.draw
-        #self.fig.draw()
-        #self.fig.flush_events()
-        print()
-
-    def update_plot(self, current_time, left_velocity, right_velocity, left_target, right_target):
-        # Nur die Datenpunkte innerhalb des Zeitfensters anzeigen
-        self.times.append(current_time)
-        self.left_wheel_velocities.append(left_velocity)
-        self.right_wheel_velocities.append(right_velocity)
-        self.left_wheel_velocity_targets.append(left_target)
-        self.right_wheel_velocity_targets.append(right_target)
-        
-        self.display_rt_plot()
-
+        plt.draw()
+        #plt.pause(0.01)  # Pause für eine kurze Zeit, um den Plot zu aktualisieren
 
     def show(self):
         plt.show(block=False)  # Blockieren des Hauptprogramms vermeiden
-
-
+        
+        
 
 class LowPassFilter:
     def __init__(self, cutoff_freq):
@@ -611,8 +595,8 @@ def main():
     mc_right.set_max_deceleration(1, 500)
     mc_right.set_starting_speed(1,10)
 
-   # plotter = RealTimePlotter(time_window=10)
-   # plotter.show()
+    #plotter = RealTimePlotter(time_window=10)
+    #plotter.show()
     out = OutputManager()
     #out.start_console_output()
     out.start_rt_plot()
@@ -688,20 +672,9 @@ def main():
     
     try:
         out.stop_console_output()
-        out.start_rt_plot()
+        #out.stop_rt_plot()
     
-        # Plot anzeigen
-        plt.figure(figsize=(10, 6))
-        plt.plot(robot.times, robot.left_wheel_velocities, label="Left Wheel Velocity", color = 'b')
-        plt.plot(robot.times, robot.right_wheel_velocities, label="Right Wheel Velocity", linestyle='-', color = 'r')
-        plt.plot(robot.times, robot.left_wheel_velocity_targets, label="Left Wheel Target", linestyle='-.', color = 'c')
-        plt.plot(robot.times, robot.right_wheel_velocity_targets, label="Right Wheel Target", linestyle='-.', color = 'm')
-        plt.xlabel("Time (s)")
-        plt.ylabel("Velocity (m/s)")
-        plt.title("Wheel Velocity Over Time")
-        plt.legend()
-        plt.grid(True)
-        plt.show()
+        out.show_batch_plot(robot)
     
     except KeyboardInterrupt:
         print("Plot Closed")
