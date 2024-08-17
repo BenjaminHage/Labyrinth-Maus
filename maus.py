@@ -309,6 +309,7 @@ class PIDController:
         self.P = 0
         self.I = 0
         self.D = 0
+        self.PID = 0
         
         
         self.imax = i_max
@@ -327,10 +328,10 @@ class PIDController:
         self.D = self.kd * derivative
         
         
-        if self.I < 0:#-self.imax:
-            self.I = -0#self.imax
-            self.integral = -self.imax / self.ki
-        elif self.I > self.imax:
+        if (self.I < self.i_min) || (self.I < -self.i_minmax):#-self.imax:
+            self.I = 0#self.imax
+            self.integral = 0#s-self.imax / self.ki
+        elif (self.I > self.imax) || (self.I < -self.i_minmax):
             self.I = self.imax
             self.integral = self.imax / self.ki
         
@@ -339,8 +340,12 @@ class PIDController:
         elif self.D > self.d_max:
             self.D = self.d_max
         
+        self.PID = self.P + self.I + self.D
         
-        return self.P + self.I + self.D
+        if self.PID < self.pid_min:
+            self.PID = 0
+        
+        return self.PID
     
     def set_previous_error(self,error):
         self.previous_error = error
@@ -368,7 +373,7 @@ def handle_user_input(angle_setpoint, base_speed):
     return angle_setpoint, base_speed
 
 def print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed,
-                   angle_setpoint, left_motor_control, angle_control, pid_r):
+                   angle_setpoint, left_motor_control, angle_control, pid_r, pid_l):
     x, y, theta = robot.get_position_and_angle()
 
     info = [
@@ -376,6 +381,7 @@ def print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed,
             f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s",
             f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s",
             f"left_motor_control:          {left_motor_control:.2f}",
+            f"P: {pid_l.P:.2f}		I: {pid_l.I:.2f}		D: {pid_l.D:.2f}",
             f"",
             f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s",
             f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s",
@@ -472,7 +478,7 @@ def main():
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
            
             print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed,
-                   angle_setpoint, left_motor_control, angle_control, speed_pid_right)
+                   angle_setpoint, left_motor_control, angle_control, speed_pid_right, speed_pid_left)
 
 #             plotter.update_plot(current_time, 
 #                                 robot.get_left_wheel_velocity(), 
