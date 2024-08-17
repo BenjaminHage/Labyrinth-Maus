@@ -23,4 +23,6 @@ sudo pip3 install keyboard --break-system-packages
 
 chmod +x setup_pi_ap.sh
 
+chmod +x git-push-script.sh
+
 
