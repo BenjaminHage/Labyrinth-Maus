@@ -144,7 +144,7 @@ class RealTimePlotter:
         """Hält die Konsole am Laufen."""
         try:
             while self.is_running:
-                self.display_rt_plot()
+                #self.display_rt_plot()
                 time.sleep(0.1)  # Aktualisiere die Konsole alle 1 Sekunde
         except Exception as e:
             print(f"run fehler:	{e}")
@@ -168,8 +168,9 @@ class RealTimePlotter:
         self.ax.set_ylim(min(min(left_velocities_window), min(right_velocities_window)) - 0.1,
                          max(max(left_velocities_window), max(right_velocities_window)) + 0.1)
 
-        self.fig.draw()
-        self.fig.flush_events()
+        plt.draw
+        #self.fig.draw()
+        #self.fig.flush_events()
         print()
 
     def update_plot(self, current_time, left_velocity, right_velocity, left_target, right_target):
@@ -179,6 +180,8 @@ class RealTimePlotter:
         self.right_wheel_velocities.append(right_velocity)
         self.left_wheel_velocity_targets.append(left_target)
         self.right_wheel_velocity_targets.append(right_target)
+        
+        self.display_rt_plot()
 
 
     def show(self):
