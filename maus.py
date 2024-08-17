@@ -302,21 +302,38 @@ class Robot:
 
 class PIDController:
 
-    def __init__(self, kp, ki, kd, i_max = np.inf, d_max = np.inf):
-        self.kp = kp
-        self.ki = ki
-        self.kd = kd
+    def __init__(self, kp, ki, kd, p_max = np.inf, p_min = np.inf, p_minmax = np.inf, pid_max = np.inf, pid_min = np.inf, pid_minmax = np.inf,
+                 i_max = np.inf, i_min = np.inf, i_minmax = np.inf, d_max = np.inf, d_min = np.inf, d_minmax = np.inf):
+        
         self.P = 0
         self.I = 0
         self.D = 0
         self.PID = 0
         
-        
-        self.imax = i_max
-        self.d_max = d_max
         self.previous_error = 0 
         self.integral = 0
-
+        
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        
+        self.p_max = p_max
+        self.p_min = p_min
+        self.p_minmax = p_minmax
+        
+        self.i_max = i_max
+        self.i_min = i_min
+        self.i_minmax = i_minmax
+        
+        self.d_max = d_max
+        self.d_min = d_min
+        self.d_minmax = d_minmax
+        
+        self.pid_max = pid_max
+        self.pid_min = pid_min
+        self.pid_minmax = pid_minmax
+        
+        
     def update(self, setpoint, measurement, time_step):
         error = setpoint - measurement
         self.integral += error * time_step
@@ -328,22 +345,58 @@ class PIDController:
         self.D = self.kd * derivative
         
         
+        if (self.P < self.p_min) || (self.P < -self.p_minmax):#-self.imax:
+            if p_min >= -self.p_minmax:
+                self.P = self.p_min
+            else:
+                self.P = -self.p_minmax
+        elif (self.P > self.p_max) || (self.P > self.p_minmax):
+            if p_max >= self.p_minmax:
+                self.P = self.p_max
+            else:
+                self.P = self.p_minmax
+        
         if (self.I < self.i_min) || (self.I < -self.i_minmax):#-self.imax:
-            self.I = 0#self.imax
-            self.integral = 0#s-self.imax / self.ki
-        elif (self.I > self.imax) || (self.I < -self.i_minmax):
-            self.I = self.imax
-            self.integral = self.imax / self.ki
+            if i_min >= -self.i_minmax:
+                self.I = self.i_min
+                self.integral = self.i_min / self.ki
+            else:
+                self.I = -self.i_minmax
+                self.integral = -self.i_minmax / self.ki
+        elif (self.I > self.i_max) || (self.I > self.i_minmax):
+            if i_max >= self.i_minmax:
+                self.I = self.i_max
+                self.integral = self.imax / self.ki
+            else:
+                self.I = self.i_minmax
+                self.integral = self.i_minmax / self.ki
         
-        if self.D < -self.d_max:
-            self.D = -self.d_max
-        elif self.D > self.d_max:
-            self.D = self.d_max
         
+        if (self.D < self.d_min) || (self.D < -self.d_minmax):#-self.imax:
+            if d_min >= -self.d_minmax:
+                self.D = self.d_min
+            else:
+                self.D = -self.d_minmax
+        elif (self.D > self.d_max) || (self.D > self.d_minmax):
+            if d_max >= self.d_minmax:
+                self.D = self.d_max
+            else:
+                self.D = self.d_minmax
+                        
+                
         self.PID = self.P + self.I + self.D
         
-        if self.PID < self.pid_min:
-            self.PID = 0
+        
+        if (self.PID < self.pid_min) || (self.PID < -self.pid_minmax):#-self.imax:
+            if pid_min >= -self.pid_minmax:
+                self.PID = self.pid_min
+            else:
+                self.PID = -self.pid_minmax
+        elif (self.PID > self.pid_max) || (self.PID > self.pid_minmax):
+            if PID_max >= self.pid_minmax:
+                self.PID = self.pid_max
+            else:
+                self.PID = self.pid_minmax
         
         return self.PID
     
@@ -402,8 +455,8 @@ def print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed,
 
 def main():
     
-    speed_pid_left = PIDController(kp=450, ki=4000, kd=0, i_max = 550,d_max= 70) #4500 16000	
-    speed_pid_right = PIDController(kp=450, ki=4000, kd=0, i_max = 550, d_max= 70)
+    speed_pid_left = PIDController(kp=450, ki=4000, kd=0, i_max = 550,d_max= 70, i_min = 0) #4500 16000	
+    speed_pid_right = PIDController(kp=450, ki=4000, kd=0, i_max = 550, d_max= 70, i_min = 0)
     speed_pid_left.set_integral(0.00000000000000001)
     speed_pid_right.set_integral(0.00000000000000001)
     
