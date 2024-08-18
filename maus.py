@@ -35,6 +35,8 @@ def plot_process(queue):
     ax.legend()
     ax.grid(True)
 
+    background = fig.canvas.copy_from_bbox(ax.bbox)
+
     def update_plot(current_time, left_velocity, right_velocity, left_target, right_target):
         times.append(current_time)
         left_wheel_velocities.append(left_velocity)
@@ -60,8 +62,12 @@ def plot_process(queue):
         ax.set_ylim(min(min(left_velocities_window), min(right_velocities_window)) - 0.1,
                     max(max(left_velocities_window), max(right_velocities_window)) + 0.1)
 
-        plt.draw()
-        plt.pause(0.01)
+        fig.canvas.restore_region(background)
+        ax.draw_artist(left_wheel_line)
+        ax.draw_artist(right_wheel_line)
+        ax.draw_artist(left_target_line)
+        ax.draw_artist(right_target_line)
+        fig.canvas.blit(ax.bbox)
 
     start_time = time.time()
     while True:
@@ -210,6 +216,8 @@ class RealTimePlotter:
         self.ax.legend()
         self.ax.grid(True)
 
+        background = fig.canvas.copy_from_bbox(ax.bbox)
+
     def update_plot(self, current_time, left_velocity, right_velocity, left_target, right_target):
         # Nur die Datenpunkte innerhalb des Zeitfensters anzeigen
         self.times.append(current_time)
@@ -236,7 +244,12 @@ class RealTimePlotter:
         self.ax.set_ylim(min(min(left_velocities_window), min(right_velocities_window)) - 0.1,
                          max(max(left_velocities_window), max(right_velocities_window)) + 0.1)
 
-        plt.draw()
+        fig.canvas.restore_region(background)
+        ax.draw_artist(left_wheel_line)
+        ax.draw_artist(right_wheel_line)
+        ax.draw_artist(left_target_line)
+        ax.draw_artist(right_target_line)
+        fig.canvas.blit(ax.bbox)
         plt.pause(0.01)  # Pause für eine kurze Zeit, um den Plot zu aktualisieren
 
     def show(self):
