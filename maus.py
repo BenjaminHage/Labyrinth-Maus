@@ -6,13 +6,9 @@ import numpy as np
 import keyboard  # Modul für die Handhabung von Tastatureingaben
 from ADCDifferentialPi import ADCDifferentialPi
 import matplotlib.pyplot as plt
-#import matplotlib.animation as animation 
 from collections import deque
-#from rich.console import Console
-#from rich.text import Text
-#import curses
 import threading
-import multiprocessing
+
 
 
 
@@ -41,9 +37,6 @@ class OutputManager:
         
     def start_rt_plot(self):
         self.plotter = RealTimePlotter(self.rtp_window_size)
-        #self.plotter.show()
-        #self.plotter.start()
-        
 
     def stop_rt_plot(self):
         if self.plotter is not None:
@@ -170,7 +163,6 @@ class RealTimePlotter:
         self.ax.legend()
         self.ax.grid(True)
 
-        self.background = self.fig.canvas.copy_from_bbox(self.ax.bbox)
 
     def update_plot(self, current_time, left_velocity, right_velocity, left_target, right_target):
         # Nur die Datenpunkte innerhalb des Zeitfensters anzeigen
@@ -198,12 +190,7 @@ class RealTimePlotter:
         self.ax.set_ylim(min(min(left_velocities_window), min(right_velocities_window)) - 0.1,
                          max(max(left_velocities_window), max(right_velocities_window)) + 0.1)
 
-#         self.fig.canvas.restore_region(self.background)
-#         self.ax.draw_artist(self.left_wheel_line)
-#         self.ax.draw_artist(self.right_wheel_line)
-#         self.ax.draw_artist(self.left_target_line)
-#         self.ax.draw_artist(self.right_target_line)
-#         self.fig.canvas.blit(self.ax.bbox)
+
         self.show()
         plt.pause(0.0000000000001)  # Pause für eine kurze Zeit, um den Plot zu aktualisieren
 
@@ -300,7 +287,7 @@ class Robot:
         self.encoder_mode = 0
         # Interrupt on A pin
         if self.encoder_mode == 0:
-            GPIO.add_event_detect(self.pin_b_left, GPIO.RISING, callback=self._update_velocity_left)
+            GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_velocity_left)
             GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_velocity_right)
         elif self.encoder_mode == 1:
             GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_count_left)
@@ -646,11 +633,9 @@ def main():
     mc_right.set_max_deceleration(1, 500)
     mc_right.set_starting_speed(1,10)
 
-#     plotter = RealTimePlotter(time_window=10)
-#     plotter.show()
     out = OutputManager()
     out.start_console_output()
-    out.start_rt_plot()
+    #out.start_rt_plot()
 
     last_time = time.monotonic()
     angle_setpoint = 0
@@ -658,12 +643,12 @@ def main():
     close = False
     
     start_Time = time.monotonic()
-    duration = 5#np.inf
+    duration = np.inf
     
 
     try:
         while True:
-            current_time = time.monotonic()
+            current_time = time.monotonic() - start_Time
             time_step = current_time - last_time
             last_time = current_time
             
@@ -690,7 +675,7 @@ def main():
             
             if left_wheel_velocity == 0:
                 speed_pid_left.set_integral(0.00000000000000001)
-            left_motor_control = 400#speed_pid_left.update(abs(left_wheel_velocity), robot.get_left_wheel_velocity(), time_step)
+            left_motor_control = speed_pid_left.update(abs(left_wheel_velocity), robot.get_left_wheel_velocity(), time_step)
 
             mc.set_speed(1, int(left_motor_control * np.sign(left_wheel_velocity)))
             #mc.set_speed(1, int(left_motor_control * np.sign(right_wheel_velocity)))
@@ -707,32 +692,18 @@ def main():
             
 
 
-            #print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint, angle_control, speed_pid_right, speed_pid_left)
-
-#             plotter.update_plot(current_time, 
-#                                 robot.get_left_wheel_velocity(), 
-#                                 robot.get_right_wheel_velocity(), 
-#                                 left_wheel_velocity, 
-#                                 right_wheel_velocity)
-                
-
-
-            #time.sleep(0.01)  # Ggf. die Schleifenfrequenz anpassen
-
     except KeyboardInterrupt:
         print("main loop closed by keyboardInterupt")
         
     
     try:
         print("Messung beendet.")
+       
         out.stop_console_output()
         
-#         out.stop_rt_plot()
-        #out.show_final_rt_plot()    
-#     
-#         out.show_batch_plot(robot)
         out.aktivate_final_batch_plot()
         out.aktivate_final_rt_plot()
+        
         out.show_final_plots(robot)
         
     
