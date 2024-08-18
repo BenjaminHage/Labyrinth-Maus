@@ -21,6 +21,15 @@ class OutputManager:
         self.rtp_window_size = rtp_window_size
         self.plotter = None
         self.console_output = None
+        
+        self.final_rt_plot_aktive = False
+        self.final_batch_plot_aktive = False
+        
+    def aktivate_final_rt_plot(self):
+        self.final_rt_plot_aktive = True
+   
+    def aktivate_final_batch_plot(self):
+        self.final_batch_plot_aktive = True
 
     def start_console_output(self):
         self.console_output = ConsoleOutput()
@@ -32,12 +41,17 @@ class OutputManager:
         
     def start_rt_plot(self):
         self.plotter = RealTimePlotter(self.rtp_window_size)
-        self.plotter.show()
+        #self.plotter.show()
         #self.plotter.start()
         
 
     def stop_rt_plot(self):
-        self.plotter.stop()
+        if self.plotter is not None:
+            self.plotter.stop()
+        
+    def show_final_rt_plot(self):
+        if self.plotter is not None:
+            self.plotter.show_final_plot()
 
     def update_console_output(self, robot, left_wheel_velocity, right_wheel_velocity,
                               base_speed, angle_setpoint, angle_control, pid_r, pid_l):
@@ -51,6 +65,20 @@ class OutputManager:
         if self.plotter is not None:
             self.plotter.update_plot(current_time, left_wheel_velocity, right_wheel_velocity,
                                      left_wheel_velocity_target, right_wheel_velocity_target)
+            
+    def show_final_plots(self, robot = None):
+        plt.ioff()
+        if not self.final_rt_plot_aktive:
+            self.stop_rt_plot()
+        elif not self.final_batch_plot_aktive:
+            self.show_final_rt_plot()
+
+        if self.final_batch_plot_aktive:
+            self.show_batch_plot(robot)
+          
+            
+    
+        
 
     def show_batch_plot(self,robot):
         # Plot anzeigen
@@ -170,12 +198,13 @@ class RealTimePlotter:
         self.ax.set_ylim(min(min(left_velocities_window), min(right_velocities_window)) - 0.1,
                          max(max(left_velocities_window), max(right_velocities_window)) + 0.1)
 
-        self.fig.canvas.restore_region(self.background)
-        self.ax.draw_artist(self.left_wheel_line)
-        self.ax.draw_artist(self.right_wheel_line)
-        self.ax.draw_artist(self.left_target_line)
-        self.ax.draw_artist(self.right_target_line)
-        self.fig.canvas.blit(self.ax.bbox)
+#         self.fig.canvas.restore_region(self.background)
+#         self.ax.draw_artist(self.left_wheel_line)
+#         self.ax.draw_artist(self.right_wheel_line)
+#         self.ax.draw_artist(self.left_target_line)
+#         self.ax.draw_artist(self.right_target_line)
+#         self.fig.canvas.blit(self.ax.bbox)
+        self.show()
         plt.pause(0.0000000000001)  # Pause für eine kurze Zeit, um den Plot zu aktualisieren
 
     def show(self):
@@ -621,7 +650,7 @@ def main():
 #     plotter.show()
     out = OutputManager()
     out.start_console_output()
-    #out.start_rt_plot()
+    out.start_rt_plot()
 
     last_time = time.monotonic()
     angle_setpoint = 0
@@ -629,7 +658,7 @@ def main():
     close = False
     
     start_Time = time.monotonic()
-    duration = np.inf
+    duration = 5#np.inf
     
 
     try:
@@ -675,6 +704,7 @@ def main():
                                 robot.get_right_wheel_velocity(), 
                                 left_wheel_velocity, 
                                 right_wheel_velocity)
+            
 
 
             #print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint, angle_control, speed_pid_right, speed_pid_left)
@@ -690,17 +720,26 @@ def main():
             #time.sleep(0.01)  # Ggf. die Schleifenfrequenz anpassen
 
     except KeyboardInterrupt:
-        print("Messung beendet.")
+        print("main loop closed by keyboardInterupt")
         
     
     try:
+        print("Messung beendet.")
         out.stop_console_output()
-        out.stop_rt_plot()
-    
-        out.show_batch_plot(robot)
+        
+#         out.stop_rt_plot()
+        #out.show_final_rt_plot()    
+#     
+#         out.show_batch_plot(robot)
+        out.aktivate_final_batch_plot()
+        out.aktivate_final_rt_plot()
+        out.show_final_plots(robot)
+        
     
     except KeyboardInterrupt:
-        print("Plot Closed")
+        print("Plot Closed by keyboardInterupt")
+        
+    print("\nend of programm")    
         
 
 
