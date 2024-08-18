@@ -4,6 +4,7 @@ from collections import deque
 import threading
 import math
 import time
+import keyboard  # Modul für die Handhabung von Tastatureingaben
 
 
 
@@ -219,4 +220,21 @@ class RealTimePlotter:
   
     def __del__(self):
         self.stop()
+
+
+
+    def handle_user_input(angle_setpoint, base_speed, close = False):
+        base_speed = 0
+        angle_setpoint = 0
+        if keyboard.is_pressed('up'):  # Up arrow key
+            base_speed += 0.5
+        if keyboard.is_pressed('down'):  # Down arrow key
+            base_speed -= 0.5
+        if keyboard.is_pressed('left'):  # Left arrow key
+            angle_setpoint += 0.15
+        if keyboard.is_pressed('right'):  # Right arrow key
+            angle_setpoint -= 0.15
+        if keyboard.is_pressed('c'):
+            close = True
+        return angle_setpoint, base_speed, close
 

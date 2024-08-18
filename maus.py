@@ -10,28 +10,12 @@ from collections import deque
 import threading
 
 from controllers import PIDController
-from io_management import OutputManager
+import io_management as io
 from robot import DifferentialDriveRobot as Robot
 
         
 ################################################################################################################
 ################################################################################################################
-
-
-def handle_user_input(angle_setpoint, base_speed, close = False):
-    base_speed = 0
-    angle_setpoint = 0
-    if keyboard.is_pressed('up'):  # Up arrow key
-        base_speed += 0.5
-    if keyboard.is_pressed('down'):  # Down arrow key
-        base_speed -= 0.5
-    if keyboard.is_pressed('left'):  # Left arrow key
-        angle_setpoint += 0.15
-    if keyboard.is_pressed('right'):  # Right arrow key
-        angle_setpoint -= 0.15
-    if keyboard.is_pressed('c'):
-        close = True
-    return angle_setpoint, base_speed, close
 
 
 def print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed,
@@ -74,7 +58,7 @@ def main():
     
     robot = Robot()
     
-    out = OutputManager()
+    out = io.OutputManager()
     out.start_console_output()
     #out.start_rt_plot()
 
@@ -99,7 +83,7 @@ def main():
             
             x, y, theta = robot.get_position_and_angle()
             
-            angle_setpoint, base_speed, close = handle_user_input(angle_setpoint, base_speed, close)
+            angle_setpoint, base_speed, close = io.handle_user_input(angle_setpoint, base_speed, close)
 
 
             # PID controller to adjust wheel velocities
@@ -111,12 +95,12 @@ def main():
             if right_wheel_velocity == 0:
                 speed_pid_right.set_integral(0.00000000000000001)
             right_motor_control = speed_pid_right.update(abs(right_wheel_velocity), robot.get_right_wheel_velocity(), time_step)
-            robot.set_right_motor(int(-right_motor_control * np.sign(right_wheel_velocity))
+            robot.set_right_motor(int(-right_motor_control * np.sign(right_wheel_velocity)))
             
             if left_wheel_velocity == 0:
                 speed_pid_left.set_integral(0.00000000000000001)
             left_motor_control = speed_pid_left.update(abs(left_wheel_velocity), robot.get_left_wheel_velocity(), time_step)
-            robot.set_left_motor(int(left_motor_control * np.sign(left_wheel_velocity))
+            robot.set_left_motor(int(left_motor_control * np.sign(left_wheel_velocity)))
             
             
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
