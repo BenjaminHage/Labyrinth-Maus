@@ -5,6 +5,7 @@ from filter import LowPassFilter
 from ADCDifferentialPi import ADCDifferentialPi
 import RPi.GPIO as GPIO
 import time
+import motoron
 
 
 
@@ -78,6 +79,25 @@ class DifferentialDriveRobot:
             GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_count_right)
             
         self.adc = ADCDifferentialPi(0x68, 0x69, 14)
+        
+        self.mc_left = motoron.MotoronI2C()
+        self.mc_right = motoron.MotoronI2C(address=17)
+
+        self.mc_left.reinitialize()  
+        self.mc_left.disable_crc()
+        self.mc_left.clear_reset_flag()
+
+        self.mc_right.reinitialize()  
+        self.mc_right.disable_crc()
+        self.mc_right.clear_reset_flag()
+
+        self.mc_left.set_max_acceleration(1, 500)
+        self.mc_left.set_max_deceleration(1, 500)
+        self.mc_left.set_starting_speed(1,10)
+
+        self.mc_right.set_max_acceleration(1, 500)
+        self.mc_right.set_max_deceleration(1, 500)
+        self.mc_right.set_starting_speed(1,10)
         
 
     def get_robot_radius(self):
@@ -245,3 +265,9 @@ class DifferentialDriveRobot:
             self.right_wheel_velocity = self.lpf_speed_right.filter(right_wheel_velocity, time_step)
             
         self.last_right_time = current_time
+
+    def set_right_motor(self,speed):
+        self.mc_right.set_speed(1, speed)
+        
+    def set_left_motor(self,speed):
+        self.mc_left.set_speed(1, speed)   

@@ -18,7 +18,7 @@ from robot import DifferentialDriveRobot as Robot
 ################################################################################################################
 
 
-def handle_user_input(angle_setpoint, base_speed, close):
+def handle_user_input(angle_setpoint, base_speed, close = False):
     base_speed = 0
     angle_setpoint = 0
     if keyboard.is_pressed('up'):  # Up arrow key
@@ -73,36 +73,17 @@ def main():
     angle_pid = PIDController(kp=0.2, ki=0.000, kd=0)
     
     robot = Robot()
-    #lpf = LowPassFilter(1)
-
-    mc = motoron.MotoronI2C()
-    mc_right = motoron.MotoronI2C(address=17)
-
-    mc.reinitialize()  
-    mc.disable_crc()
-    mc.clear_reset_flag()
-
-    mc_right.reinitialize()  
-    mc_right.disable_crc()
-    mc_right.clear_reset_flag()
-
-    mc.set_max_acceleration(1, 500)
-    mc.set_max_deceleration(1, 500)
-    mc.set_starting_speed(1,10)
-
-    mc_right.set_max_acceleration(1, 500)
-    mc_right.set_max_deceleration(1, 500)
-    mc_right.set_starting_speed(1,10)
-
+    
     out = OutputManager()
     out.start_console_output()
     #out.start_rt_plot()
 
-    last_time = time.monotonic()
+    
     angle_setpoint = 0
     base_speed = 0
     close = False
     
+    last_time = time.monotonic()
     start_Time = time.monotonic()
     duration = np.inf
     
@@ -127,19 +108,16 @@ def main():
             left_wheel_velocity = base_speed - angle_setpoint#- angle_control
             right_wheel_velocity = base_speed + angle_setpoint#+ angle_control
             
-            
             if right_wheel_velocity == 0:
                 speed_pid_right.set_integral(0.00000000000000001)
             right_motor_control = speed_pid_right.update(abs(right_wheel_velocity), robot.get_right_wheel_velocity(), time_step)
-            mc_right.set_speed(1, int(-right_motor_control * np.sign(right_wheel_velocity)))
-            #mc_right.set_speed(1, 100 * -int(base_speed))
+            robot.set_right_motor(int(-right_motor_control * np.sign(right_wheel_velocity))
             
             if left_wheel_velocity == 0:
                 speed_pid_left.set_integral(0.00000000000000001)
             left_motor_control = speed_pid_left.update(abs(left_wheel_velocity), robot.get_left_wheel_velocity(), time_step)
-
-            mc.set_speed(1, int(left_motor_control * np.sign(left_wheel_velocity)))
-            #mc.set_speed(1, int(left_motor_control * np.sign(right_wheel_velocity)))
+            robot.set_left_motor(int(left_motor_control * np.sign(left_wheel_velocity))
+            
             
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
 
@@ -152,7 +130,6 @@ def main():
                                 right_wheel_velocity)
             
 
-
     except KeyboardInterrupt:
         print("main loop closed by keyboardInterupt")
         
@@ -164,14 +141,13 @@ def main():
         
         out.aktivate_final_batch_plot()
         out.aktivate_final_rt_plot()
-        
         out.show_final_plots(robot)
         
     
     except KeyboardInterrupt:
         print("Plot Closed by keyboardInterupt")
         
-    print("\nend of programm")    
+    print("\nEnd of Program")    
         
 
 
