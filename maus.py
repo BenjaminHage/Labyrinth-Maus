@@ -13,6 +13,70 @@ from collections import deque
 #import curses
 import threading
 
+def plot_process(queue):
+    plt.ion()
+    time_window = 10  # Zeitfenster in Sekunden
+    times = deque(maxlen=1000)
+    left_wheel_velocities = deque(maxlen=1000)
+    right_wheel_velocities = deque(maxlen=1000)
+    left_wheel_velocity_targets = deque(maxlen=1000)
+    right_wheel_velocity_targets = deque(maxlen=1000)
+
+    fig, ax = plt.subplots()
+    left_wheel_line, = ax.plot([], [], label="Left Wheel Velocity", color='b')
+    right_wheel_line, = ax.plot([], [], label="Right Wheel Velocity", color='r')
+    left_target_line, = ax.plot([], [], label="Left Wheel Target", linestyle='-.', color='c')
+    right_target_line, = ax.plot([], [], label="Right Wheel Target", linestyle='-.', color='m')
+
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Velocity (m/s)")
+    ax.set_title("Wheel Velocity Over Time")
+    ax.legend()
+    ax.grid(True)
+
+    def update_plot(current_time, left_velocity, right_velocity, left_target, right_target):
+        times.append(current_time)
+        left_wheel_velocities.append(left_velocity)
+        right_wheel_velocities.append(right_velocity)
+        left_wheel_velocity_targets.append(left_target)
+        right_wheel_velocity_targets.append(right_target)
+
+        min_time = current_time - time_window
+        indices = [i for i, t in enumerate(times) if t >= min_time]
+
+        times_window = [times[i] for i in indices]
+        left_velocities_window = [left_wheel_velocities[i] for i in indices]
+        right_velocities_window = [right_wheel_velocities[i] for i in indices]
+        left_targets_window = [left_wheel_velocity_targets[i] for i in indices]
+        right_targets_window = [right_wheel_velocity_targets[i] for i in indices]
+
+        left_wheel_line.set_data(times_window, left_velocities_window)
+        right_wheel_line.set_data(times_window, right_velocities_window)
+        left_target_line.set_data(times_window, left_targets_window)
+        right_target_line.set_data(times_window, right_targets_window)
+
+        ax.set_xlim(min_time, current_time)
+        ax.set_ylim(min(min(left_velocities_window), min(right_velocities_window)) - 0.1,
+                    max(max(left_velocities_window), max(right_velocities_window)) + 0.1)
+
+        plt.draw()
+        plt.pause(0.01)
+
+    start_time = time.time()
+    while True:
+        try:
+            data = queue.get_nowait()
+            current_time = data['current_time']
+            left_velocity = data['left_velocity']
+            right_velocity = data['right_velocity']
+            left_target = data['left_target']
+            right_target = data['right_target']
+            update_plot(current_time, left_velocity, right_velocity, left_target, right_target)
+        except multiprocessing.queues.Empty:
+            pass
+
+        time.sleep(0.1)
+
 class OutputManager:
     def __init__(self, rtp_window_size = 10):
         self.rtp_window_size = rtp_window_size
@@ -603,9 +667,12 @@ def main():
 #     plotter = RealTimePlotter(time_window=10)
 #     plotter.show()
     out = OutputManager()
-    out.start_console_output()
-    out.start_rt_plot()
-    
+    #out.start_console_output()
+    #out.start_rt_plot()
+
+    queue = multiprocessing.Queue()
+    plot_proc = multiprocessing.Process(target=plot_process, args=(queue,))
+    plot_proc.start()
 
     last_time = time.monotonic()
     angle_setpoint = 0
@@ -650,7 +717,16 @@ def main():
             #mc.set_speed(1, int(left_motor_control * np.sign(right_wheel_velocity)))
             
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
-           
+
+
+            queue.put({
+                'current_time': current_time,
+                'left_velocity': left_velocity,
+                'right_velocity': right_velocity,
+                'left_target': left_target,
+                'right_target': right_target
+            })
+            
             out.update_console_output(robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint, angle_control, speed_pid_right, speed_pid_left)
             out.update_plot(current_time, 
                                 robot.get_left_wheel_velocity(), 
