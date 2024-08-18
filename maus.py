@@ -170,6 +170,11 @@ class RealTimePlotter:
 
     def show(self):
         plt.show(block=False)  # Blockieren des Hauptprogramms vermeiden
+
+    def show_final_plot(self):
+        plt.ioff()
+        plt.show()
+
         
         
 
