@@ -98,6 +98,17 @@ class DifferentialDriveRobot:
         self.mc_right.set_max_acceleration(1, 500)
         self.mc_right.set_max_deceleration(1, 500)
         self.mc_right.set_starting_speed(1,10)
+
+        self.parameters = self.load_parameters(param_file)
+
+    def convert_voltage_to_distance(self, voltage):
+        a, b, c, d, e = self.parameters
+        return (a * voltage**2 + b * voltage + c) / (d * voltage + e)
+        
+    def load_parameters(self, filename):
+        with open(filename, 'r') as file:
+            parameters = [float(line.strip()) for line in file]
+        return parameters
         
 
     def get_robot_radius(self):
@@ -127,8 +138,9 @@ class DifferentialDriveRobot:
     def get_sensor_readings(self):   
         sensor_readings = []
         for i in range(5):
-            sensor_readings.append(self.adc.read_voltage(i+1))
-        
+            voltage = self.adc.read_voltage(i + 1)
+            distance = self.convert_voltage_to_distance(voltage)
+            sensor_readings.append(distance)
         return sensor_readings
 
   
