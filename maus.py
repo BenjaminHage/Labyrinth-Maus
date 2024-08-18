@@ -185,6 +185,12 @@ class RealTimePlotter:
         plt.ioff()
         plt.show()
 
+    def stop(self):
+        plt.close(self.fig)  # Schließe den Plot, wenn er nicht mehr benötigt wird
+
+    def __del__(self):
+        self.stop()
+
         
         
 
@@ -535,7 +541,7 @@ class PIDController:
 ################################################################################################################
 
 
-def handle_user_input(angle_setpoint, base_speed):
+def handle_user_input(angle_setpoint, base_speed, close):
     base_speed = 0
     angle_setpoint = 0
     if keyboard.is_pressed('up'):  # Up arrow key
@@ -546,8 +552,9 @@ def handle_user_input(angle_setpoint, base_speed):
         angle_setpoint += 0.15
     if keyboard.is_pressed('right'):  # Right arrow key
         angle_setpoint -= 0.15
-
-    return angle_setpoint, base_speed
+    if keyboard.is_pressed('c'):
+        close = True
+    return angle_setpoint, base_speed, close
 
 
 def print_terminal(robot, left_wheel_velocity, right_wheel_velocity, base_speed,
@@ -619,6 +626,7 @@ def main():
     last_time = time.monotonic()
     angle_setpoint = 0
     base_speed = 0
+    close = False
     
     start_Time = time.monotonic()
     duration = np.inf
@@ -630,12 +638,12 @@ def main():
             time_step = current_time - last_time
             last_time = current_time
             
-            if (current_time - start_Time) > duration:
+            if ((current_time - start_Time) > duration) or close:
                 break
             
             x, y, theta = robot.get_position_and_angle()
             
-            angle_setpoint, base_speed = handle_user_input(angle_setpoint, base_speed)
+            angle_setpoint, base_speed, close = handle_user_input(angle_setpoint, base_speed, close)
 
 
             # PID controller to adjust wheel velocities
@@ -687,7 +695,7 @@ def main():
     
     try:
         out.stop_console_output()
-        #out.stop_rt_plot()
+        out.stop_rt_plot()
     
         out.show_batch_plot(robot)
     
