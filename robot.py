@@ -1,11 +1,12 @@
 import numpy as np
 import random
 import math
+from filter import LowPassFilter
 
 
 
 
-class Robot:
+class DifferentialDriveRobot:
     def __init__ (self, mesurment_noise_mean = 0, mesurment_noise_standard_deviation = 1, system_noise_mean = 0, system_noise_standard_deviation = 1, init_robot_x = 0, init_robot_y = 0, init_robot_angle = 0):
         self.left_wheel_velocities = []  # Liste zur Speicherung der gemessenen Geschwindigkeiten
         self.right_wheel_velocities = []  # Liste zur Speicherung der gemessenen Geschwindigkeiten
