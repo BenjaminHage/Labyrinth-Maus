@@ -96,7 +96,7 @@ class PIDController:
             else:
                 self.PID = -self.pid_minmax
         elif (self.PID > self.pid_max) or (self.PID > self.pid_minmax):
-            if self.PID_max <= self.pid_minmax:
+            if self.pid_max <= self.pid_minmax:
                 self.PID = self.pid_max
             else:
                 self.PID = self.pid_minmax

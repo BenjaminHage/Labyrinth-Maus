@@ -20,6 +20,7 @@ sudo python3 setup.py install #--break-system-packages
 
 sudo pip3 install matplotlib --break-system-packages
 sudo pip3 install keyboard --break-system-packages
+sudo pip3 install scipy --break-system-package
 
 chmod +x setup_pi_ap.sh
 

@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 
 class DistanceSensor:
     def __init__(self):
-        self.adc = ADCDifferentialPi(0x68, 0x69, 14)
+        self.adc = ADCDifferentialPi(0x68, 0x69, 18)
         self.data = []
 
     def measure_voltage(self):
-        voltage = self.adc.read_voltage(1)  # Annahme: Kanal 1 wird verwendet
+        voltage = self.adc.read_voltage(5)  # Annahme: Kanal 1 wird verwendet
         return voltage
 
     def collect_data(self):
