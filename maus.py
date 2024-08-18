@@ -613,7 +613,7 @@ def main():
 #     plotter = RealTimePlotter(time_window=10)
 #     plotter.show()
     out = OutputManager()
-    #out.start_console_output()
+    out.start_console_output()
     #out.start_rt_plot()
 
     last_time = time.monotonic()
@@ -660,14 +660,6 @@ def main():
             
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
 
-
-            queue.put({
-                'current_time': current_time,
-                'left_velocity': robot.get_left_wheel_velocity(),
-                'right_velocity': robot.get_right_wheel_velocity(),
-                'left_target': left_wheel_velocity,
-                'right_target': right_wheel_velocity
-            })
              
             out.update_console_output(robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint, angle_control, speed_pid_right, speed_pid_left)
             out.update_plot(current_time, 
