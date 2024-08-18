@@ -12,6 +12,7 @@ from collections import deque
 #from rich.text import Text
 #import curses
 import threading
+import multiprocessing
 
 def plot_process(queue):
     plt.ion()
@@ -72,10 +73,11 @@ def plot_process(queue):
             left_target = data['left_target']
             right_target = data['right_target']
             update_plot(current_time, left_velocity, right_velocity, left_target, right_target)
+            print("update")
         except multiprocessing.queues.Empty:
             pass
 
-        time.sleep(0.1)
+        #time.sleep(0.1)
 
 class OutputManager:
     def __init__(self, rtp_window_size = 10):
@@ -721,10 +723,10 @@ def main():
 
             queue.put({
                 'current_time': current_time,
-                'left_velocity': left_velocity,
-                'right_velocity': right_velocity,
-                'left_target': left_target,
-                'right_target': right_target
+                'left_velocity': robot.get_left_wheel_velocity(),
+                'right_velocity': robot.get_right_wheel_velocity(),
+                'left_target': left_wheel_velocity,
+                'right_target': right_wheel_velocity
             })
             
             out.update_console_output(robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint, angle_control, speed_pid_right, speed_pid_left)
