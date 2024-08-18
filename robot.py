@@ -3,6 +3,7 @@ import random
 import math
 from filter import LowPassFilter
 from ADCDifferentialPi import ADCDifferentialPi
+import RPi.GPIO as GPIO
 
 
 
