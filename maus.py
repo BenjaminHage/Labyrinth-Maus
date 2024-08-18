@@ -66,18 +66,23 @@ def plot_process(queue):
     start_time = time.time()
     while True:
         try:
-            data = queue.get_nowait()
-            current_time = data['current_time']
-            left_velocity = data['left_velocity']
-            right_velocity = data['right_velocity']
-            left_target = data['left_target']
-            right_target = data['right_target']
-            update_plot(current_time, left_velocity, right_velocity, left_target, right_target)
-            print("update")
+            # Warte kurz, um sicherzustellen, dass mehrere Elemente in der Queue sind
+            time.sleep(0.01)
+            
+            while not queue.empty():
+                data = queue.get_nowait()
+                current_time = data['current_time']
+                left_velocity = data['left_velocity']
+                right_velocity = data['right_velocity']
+                left_target = data['left_target']
+                right_target = data['right_target']
+                update_plot(current_time, left_velocity, right_velocity, left_target, right_target)
+
+            # Sobald alle Daten verarbeitet sind, den Plot aktualisieren
+            plt.pause(0.001)
+            
         except multiprocessing.queues.Empty:
             pass
-
-        #time.sleep(0.1)
 
 class OutputManager:
     def __init__(self, rtp_window_size = 10):
