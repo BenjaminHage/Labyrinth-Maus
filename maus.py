@@ -216,7 +216,7 @@ class RealTimePlotter:
         self.ax.legend()
         self.ax.grid(True)
 
-        background = fig.canvas.copy_from_bbox(ax.bbox)
+        self.background = self.fig.canvas.copy_from_bbox(self.ax.bbox)
 
     def update_plot(self, current_time, left_velocity, right_velocity, left_target, right_target):
         # Nur die Datenpunkte innerhalb des Zeitfensters anzeigen
@@ -244,13 +244,13 @@ class RealTimePlotter:
         self.ax.set_ylim(min(min(left_velocities_window), min(right_velocities_window)) - 0.1,
                          max(max(left_velocities_window), max(right_velocities_window)) + 0.1)
 
-        fig.canvas.restore_region(background)
-        ax.draw_artist(left_wheel_line)
-        ax.draw_artist(right_wheel_line)
-        ax.draw_artist(left_target_line)
-        ax.draw_artist(right_target_line)
-        fig.canvas.blit(ax.bbox)
-        plt.pause(0.01)  # Pause für eine kurze Zeit, um den Plot zu aktualisieren
+        self.fig.canvas.restore_region(self.background)
+        self.ax.draw_artist(self.left_wheel_line)
+        self.ax.draw_artist(self.right_wheel_line)
+        self.ax.draw_artist(self.left_target_line)
+        self.ax.draw_artist(self.right_target_line)
+        self.fig.canvas.blit(self.ax.bbox)
+        plt.pause(0.0000000000001)  # Pause für eine kurze Zeit, um den Plot zu aktualisieren
 
     def show(self):
         plt.show(block=False)  # Blockieren des Hauptprogramms vermeiden
@@ -688,11 +688,11 @@ def main():
 #     plotter.show()
     out = OutputManager()
     #out.start_console_output()
-    #out.start_rt_plot()
+    out.start_rt_plot()
 
-    queue = multiprocessing.Queue()
-    plot_proc = multiprocessing.Process(target=plot_process, args=(queue,))
-    plot_proc.start()
+#     queue = multiprocessing.Queue()
+#     plot_proc = multiprocessing.Process(target=plot_process, args=(queue,))
+#     plot_proc.start()
 
     last_time = time.monotonic()
     angle_setpoint = 0
@@ -739,14 +739,14 @@ def main():
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
 
 
-            queue.put({
-                'current_time': current_time,
-                'left_velocity': robot.get_left_wheel_velocity(),
-                'right_velocity': robot.get_right_wheel_velocity(),
-                'left_target': left_wheel_velocity,
-                'right_target': right_wheel_velocity
-            })
-            
+#             queue.put({
+#                 'current_time': current_time,
+#                 'left_velocity': robot.get_left_wheel_velocity(),
+#                 'right_velocity': robot.get_right_wheel_velocity(),
+#                 'left_target': left_wheel_velocity,
+#                 'right_target': right_wheel_velocity
+#             })
+             
             out.update_console_output(robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint, angle_control, speed_pid_right, speed_pid_left)
             out.update_plot(current_time, 
                                 robot.get_left_wheel_velocity(), 
