@@ -5,10 +5,10 @@ from ADCDifferentialPi import ADCDifferentialPi
 import matplotlib.pyplot as plt
 
 class DistanceSensor:
-    def __init__(self, default_repetitions):
+    def __init__(self):
         self.adc = ADCDifferentialPi(0x68, 0x69, 18)
         self.data = []
-        self.default_repetitions = default_repetitions  # Standardwert für die Anzahl der Messungen, falls nicht angegeben
+        self.default_repetitions = 5  # Standardwert für die Anzahl der Messungen, falls nicht angegeben
 
     def measure_voltage(self):
         voltage = self.adc.read_voltage(5)  # Annahme: Kanal 1 wird verwendet
@@ -25,7 +25,6 @@ class DistanceSensor:
                 print("Bitte gib eine gültige Zahl ein.")
                 continue
 
-            # Wenn keine feste Wiederholungszahl vorgegeben ist, interaktiv abfragen
             if fixed_repetitions is None:
                 repetitions = input(f"Wie oft soll die Messung wiederholt werden? (Standard: {self.default_repetitions}) ")
                 repetitions = int(repetitions) if repetitions.isdigit() else self.default_repetitions
@@ -57,25 +56,36 @@ class DistanceSensor:
 
     def visualize_data(self, parameters):
         distances, voltages = zip(*self.data)
-        fitted_distances = [self.convert_voltage_to_distance(v, parameters) for v in voltages]
 
-        plt.scatter(voltages, distances, label='Gemessene Daten')
-        plt.plot(voltages, fitted_distances, color='red', label='Gefittete Kurve')
+        # Spannungswerte für die Interpolation
+        min_voltage = min(voltages)
+        max_voltage = max(voltages)
+        interpolated_voltages = np.linspace(min_voltage, max_voltage, 500)
+
+        # Entsprechende interpolierte Distanzen berechnen
+        fitted_distances = [self.convert_voltage_to_distance(v, parameters) for v in interpolated_voltages]
+
+        # Originale Datenpunkte plotten
+        plt.scatter(voltages, distances, label='Gemessene Daten', color='blue')
+
+        # Interpolierte gefittete Kurve plotten
+        plt.plot(interpolated_voltages, fitted_distances, color='red', label='Gefittete Kurve (interpoliert)')
+
         plt.xlabel('Spannung (V)')
         plt.ylabel('Distanz (cm)')
         plt.legend()
         plt.title('Spannung vs. Distanz')
+        plt.grid(True)
         plt.show()
 
 if __name__ == "__main__":
-    default_repetitions = 5
     parser = argparse.ArgumentParser(description="Distance Sensor Calibration Script")
     parser.add_argument('-f', '--filename', type=str, default='parameters.txt', help='Name der Datei, in die die Parameter gespeichert werden.')
-    parser.add_argument('-n', '--num_measurements', type=int, nargs='?', const=default_repetitions, help='Feste Anzahl von Messungen für jede Distanz (Standard: 5).')
+    parser.add_argument('-n', '--num_measurements', type=int, nargs='?', const=5, help='Feste Anzahl von Messungen für jede Distanz (Standard: 5).')
 
     args = parser.parse_args()
 
-    sensor = DistanceSensor(default_repetitions)
+    sensor = DistanceSensor()
 
     # Daten sammeln
     sensor.collect_data(fixed_repetitions=args.num_measurements)
