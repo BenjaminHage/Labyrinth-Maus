@@ -182,10 +182,7 @@ class DifferentialDriveRobot:
         return x, y, theta
 
   
-    def state_estimate(self, left_wheel_velocity, right_wheel_velocity): ######################################################################
-        current_time = time.monotonic()
-        time_step = current_time - self.last_time
-        self.last_time = current_time
+    def state_estimate(self, left_wheel_velocity, right_wheel_velocity, current_time, time_step): ######################################################################
 
         if self.encoder_mode == 0:
         # Geschwindigkeit auf 0 setzen, falls das Timeout überschritten wurde

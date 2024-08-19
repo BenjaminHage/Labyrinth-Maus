@@ -67,7 +67,7 @@ def main():
             left_motor_control = speed_pid_left.update(abs(left_wheel_velocity), robot.get_left_wheel_velocity(), time_step)
             robot.set_left_motor(int(left_motor_control * np.sign(left_wheel_velocity)))
             
-            robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
+            robot.state_estimate(left_wheel_velocity, right_wheel_velocity, current_time, time_step)
 
             out.update_console_output(robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint,
                                       angle_control, speed_pid_right, speed_pid_left, sensor_readings)
@@ -76,9 +76,17 @@ def main():
                             robot.get_right_wheel_velocity(), 
                             left_wheel_velocity, 
                             right_wheel_velocity)
+            
+            
+            
 
     except KeyboardInterrupt:
         print("main loop closed by keyboardInterupt")
+        
+    except Exception as e:
+        print(f"{type(e).__name__} in main Loop:  {e}")
+        
+    
         
     try:
         print("Messung beendet.")
