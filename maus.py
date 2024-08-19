@@ -47,6 +47,8 @@ def main():
                 break
             
             x, y, theta = robot.get_position_and_angle()
+            sensor_readings = robot.get_sensor_readings()
+            sensor_readings = robot.filter_sensor_readings(sensor_readings, time_step)
             
             angle_setpoint, base_speed, close = io.handle_user_input(angle_setpoint, base_speed, close)
 
@@ -67,7 +69,8 @@ def main():
             
             robot.state_estimate(left_wheel_velocity, right_wheel_velocity)
 
-            out.update_console_output(robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint, angle_control, speed_pid_right, speed_pid_left)
+            out.update_console_output(robot, left_wheel_velocity, right_wheel_velocity, base_speed, angle_setpoint,
+                                      angle_control, speed_pid_right, speed_pid_left, sensor_readings)
             out.update_plot(current_time, 
                             robot.get_left_wheel_velocity(), 
                             robot.get_right_wheel_velocity(), 

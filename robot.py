@@ -19,14 +19,14 @@ class DifferentialDriveRobot:
 
         self.times = []  # Liste zur Speicherung der Zeitpunkte
         
-        self.robot_radius = 20
-        self.wheel_distance = 89 /1000  # Distance between wheels
+        self.robot_radius = 114.1 / 2
+        self.wheel_distance = 89 /1000  # Distance between wheels m
         self.wheel_diameter = 40 / 1000
         self.wheel_circumference =self.wheel_diameter * 3.141592653589793
         
         # Sensor angles (in radians)
         self.sensor_angles = [0, math.pi / 4, math.pi / 2, -math.pi / 4, -math.pi / 2]
-        self.sensor_range = 200  # Max sensor range
+        self.sensor_range = 40  # Max sensor range cm
 
         self.mesurment_noise_mean = mesurment_noise_mean
         self.mesurment_noise_standard_deviation = mesurment_noise_standard_deviation
@@ -144,8 +144,8 @@ class DifferentialDriveRobot:
         return sensor_readings
 
   
-    def get_formatted_sensor_readings(self, decimal_places=2):
-        sensor_readings = self.get_sensor_readings()
+    def get_formatted_sensor_readings(self, sensor_readings, decimal_places=2):
+        #sensor_readings = self.get_sensor_readings()
         formatted_readings = [f"{value:.4f}".rjust(6) for value in sensor_readings]
         return formatted_readings    
 

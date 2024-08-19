@@ -53,11 +53,11 @@ class OutputManager:
 
   
     def update_console_output(self, robot, left_wheel_velocity, right_wheel_velocity,
-                              base_speed, angle_setpoint, angle_control, pid_r, pid_l):
+                              base_speed, angle_setpoint, angle_control, pid_r, pid_l, sensor_readings):
         
         if self.console_output is not None:
             self.console_output.update(robot, left_wheel_velocity, right_wheel_velocity,
-                                       base_speed, angle_setpoint, angle_control, pid_r, pid_l)
+                                       base_speed, angle_setpoint, angle_control, pid_r, pid_l, sensor_readings)
 
   
     def update_plot(self, current_time, left_wheel_velocity, right_wheel_velocity,
@@ -122,7 +122,7 @@ class ConsoleOutput:
 
   
     def update(self, robot, left_wheel_velocity, right_wheel_velocity, base_speed,
-               angle_setpoint, angle_control, pid_r, pid_l):
+               angle_setpoint, angle_control, pid_r, pid_l, sensor_readings):
         """Aktualisiert die Informationen für den Konsolenoutput."""
         x, y, theta = robot.get_position_and_angle()
 
@@ -140,7 +140,7 @@ class ConsoleOutput:
             f"Angle:                       {math.degrees(theta):.2f} °",
             f"Angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
             f"Angle_control:               {angle_control:.2f}",
-            f"ADC_Values:	{robot.get_formatted_sensor_readings(4)}"
+            f"Sensor Readings:	{robot.get_formatted_sensor_readings(sensor_readings, decimal_places=2)}"
         ]
 
   
