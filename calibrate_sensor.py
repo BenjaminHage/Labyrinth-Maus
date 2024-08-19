@@ -1,18 +1,20 @@
+import argparse
 import numpy as np
 from scipy.optimize import curve_fit
 from ADCDifferentialPi import ADCDifferentialPi
 import matplotlib.pyplot as plt
 
 class DistanceSensor:
-    def __init__(self):
+    def __init__(self, default_repetitions):
         self.adc = ADCDifferentialPi(0x68, 0x69, 18)
         self.data = []
+        self.default_repetitions = default_repetitions  # Standardwert für die Anzahl der Messungen, falls nicht angegeben
 
     def measure_voltage(self):
         voltage = self.adc.read_voltage(5)  # Annahme: Kanal 1 wird verwendet
         return voltage
 
-    def collect_data(self):
+    def collect_data(self, fixed_repetitions=None):
         while True:
             distance = input("Gib die Distanz des Objekts in cm ein (oder 'fertig' zum Beenden): ")
             if distance.lower() == 'fertig':
@@ -23,7 +25,13 @@ class DistanceSensor:
                 print("Bitte gib eine gültige Zahl ein.")
                 continue
 
-            repetitions = int(input("Wie oft soll die Messung wiederholt werden? "))
+            # Wenn keine feste Wiederholungszahl vorgegeben ist, interaktiv abfragen
+            if fixed_repetitions is None:
+                repetitions = input(f"Wie oft soll die Messung wiederholt werden? (Standard: {self.default_repetitions}) ")
+                repetitions = int(repetitions) if repetitions.isdigit() else self.default_repetitions
+            else:
+                repetitions = fixed_repetitions
+
             for _ in range(repetitions):
                 voltage = self.measure_voltage()
                 self.data.append((distance, voltage))
@@ -59,17 +67,24 @@ class DistanceSensor:
         plt.title('Spannung vs. Distanz')
         plt.show()
 
-# Beispielverwendung
-sensor = DistanceSensor()
+if __name__ == "__main__":
+    default_repetitions = 5
+    parser = argparse.ArgumentParser(description="Distance Sensor Calibration Script")
+    parser.add_argument('-f', '--filename', type=str, default='parameters.txt', help='Name der Datei, in die die Parameter gespeichert werden.')
+    parser.add_argument('-n', '--num_measurements', type=int, nargs='?', const=default_repetitions, help='Feste Anzahl von Messungen für jede Distanz (Standard: 5).')
 
-# Daten sammeln
-sensor.collect_data()
+    args = parser.parse_args()
 
-# Parameter bestimmen
-parameters = sensor.determine_parameters()
+    sensor = DistanceSensor(default_repetitions)
 
-# Parameter speichern
-sensor.save_parameters('parameters.txt', parameters)
+    # Daten sammeln
+    sensor.collect_data(fixed_repetitions=args.num_measurements)
 
-# Visualisierung der Daten und der gefitteten Kurve
-sensor.visualize_data(parameters)
+    # Parameter bestimmen
+    parameters = sensor.determine_parameters()
+
+    # Parameter speichern
+    sensor.save_parameters(args.filename, parameters)
+
+    # Visualisierung der Daten und der gefitteten Kurve
+    sensor.visualize_data(parameters)
