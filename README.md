@@ -26,9 +26,9 @@ sudo pip3 install keyboard --break-system-packages
 sudo pip3 install scipy --break-system-package
 
 
-chmod +x setup_pi_ap.sh
+sudo chmod +x setup_pi_ap.sh
 
-chmod +x git-push-script.sh
+sudo chmod +x git-push-script.sh
 
 
 
