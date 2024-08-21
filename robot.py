@@ -186,10 +186,10 @@ class DifferentialDriveRobot:
 
         if self.encoder_mode == 0:
         # Geschwindigkeit auf 0 setzen, falls das Timeout überschritten wurde
-            if current_time - self.last_left_time > self.velocity_timeout:
+            if time.monotonic() - self.last_left_time > self.velocity_timeout:
                 self.left_wheel_velocity = 0
     
-            if current_time - self.last_right_time > self.velocity_timeout:
+            if time.monotonic() - self.last_right_time > self.velocity_timeout:
                 self.right_wheel_velocity = 0
         elif self.encoder_mode == 1:
             # Calculate RPS (Revolutions Per Second)
