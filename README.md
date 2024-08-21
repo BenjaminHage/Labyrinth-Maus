@@ -10,11 +10,11 @@ sudo apt remove python3-rpi.gpio
 sudo apt update
 sudo apt install python3-rpi-lgpio
 
-git clone https://github.com/pololu/motoron-python.git
+sudo git clone https://github.com/pololu/motoron-python.git
 cd motoron-python
 sudo python3 setup.py install #--break-system-packages
 
-git clone https://github.com/abelectronicsuk/ABElectronics_Python_Libraries.git
+sudo git clone https://github.com/abelectronicsuk/ABElectronics_Python_Libraries.git
 cd ABElectronics_Python_Libraries
 sudo python3 setup.py install #--break-system-packages
 
