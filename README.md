@@ -18,9 +18,13 @@ git clone https://github.com/abelectronicsuk/ABElectronics_Python_Libraries.git
 cd ABElectronics_Python_Libraries
 sudo python3 setup.py install #--break-system-packages
 
+sudo pip3 install Adafruit-Blinka --break-system-packages #vielleicht unnötig weil nächster es mit installiert 
+sudo pip3 install adafruit-circuitpython-icm20x --break-system-packages
+
 sudo pip3 install matplotlib --break-system-packages
 sudo pip3 install keyboard --break-system-packages
 sudo pip3 install scipy --break-system-package
+
 
 chmod +x setup_pi_ap.sh
 
