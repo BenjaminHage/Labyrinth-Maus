@@ -78,7 +78,7 @@ class DifferentialDriveRobot:
             GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_count_left)
             GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_count_right)
             
-        self.adc = ADCDifferentialPi(0x68, 0x69, 14)
+        self.adc = ADCDifferentialPi(0x6E, 0x6F, 14)
         
         self.mc_left = motoron.MotoronI2C()
         self.mc_right = motoron.MotoronI2C(address=17)

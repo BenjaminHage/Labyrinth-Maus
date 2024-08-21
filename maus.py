@@ -83,7 +83,7 @@ def main():
             
 
     except KeyboardInterrupt:
-        print("main loop closed by keyboardInterupt")
+        print("\nmain loop closed by keyboardInterupt")
         
     except Exception as e:
         print(f"\033[91m{type(e).__name__} during main Loop:  {e}\033[0m")
