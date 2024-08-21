@@ -84,7 +84,7 @@ def main():
         print("main loop closed by keyboardInterupt")
         
     except Exception as e:
-        print(f"{type(e).__name__} in main Loop:  {e}")
+        print(f"\033[91m{type(e).__name__} during main Loop:  {e}\033[0m")
         
     
         
@@ -96,7 +96,7 @@ def main():
         out.show_final_plots(robot)
         
     except KeyboardInterrupt:
-        print("Plot Closed by keyboardInterupt")
+        print("\nPlot Closed by keyboardInterupt")
         
     print("\nEnd of Program")    
 
