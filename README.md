@@ -36,19 +36,20 @@ sudo chmod +x git-push-script.sh
 ###################### .env  #########################################
 
 sudo raspi-config nonint do_i2c 0
+sudo pigpiod
 
 python3 -m venv .env
 source .env/bin/activate
 
-pip3 install Adafruit-Blinka
-pip3 install adafruit-circuitpython-icm20x
+#pip3 install Adafruit-Blinka
+#pip3 install adafruit-circuitpython-icm20x
 
-sudo git clone https://github.com/abelectronicsuk/ABElectronics_Python_Libraries.git
+#sudo git clone https://github.com/abelectronicsuk/ABElectronics_Python_Libraries.git
 cd ABElectronics_Python_Libraries
 python3 setup.py install
 cd ../
 
-git clone https://github.com/pololu/motoron-python.git
+#git clone https://github.com/pololu/motoron-python.git
 cd motoron-python
 python3 setup.py install
 cd ../

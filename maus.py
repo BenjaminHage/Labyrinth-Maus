@@ -6,7 +6,7 @@ import numpy as np
 from controllers import PIDController
 import io_management as io
 from robot import DifferentialDriveRobot as Robot
-#import board test
+
 
 
 def main():
