@@ -1,5 +1,6 @@
 # Labyrinth-Maus
 
+sudo pigpiod
 sudo apt install git python3-dev python3-pip
 
 sudo pip3 install smbus2 --break-system-packages
@@ -19,7 +20,7 @@ cd ABElectronics_Python_Libraries
 sudo python3 setup.py install #--break-system-packages
 
 #sudo pip3 install Adafruit-Blinka --break-system-packages #vielleicht unnötig weil nächster es mit installiert 
-#sudo pip3 install adafruit-circuitpython-icm20x --break-system-packages
+sudo pip3 install adafruit-circuitpython-icm20x --break-system-packages
 
 sudo pip3 install matplotlib --break-system-packages
 sudo pip3 install keyboard --break-system-packages

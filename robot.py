@@ -7,7 +7,7 @@ from ADCDifferentialPi import ADCDifferentialPi
 import time
 import motoron
 
-# import adafruit_icm20x
+import adafruit_icm20x
 import pigpio
 
 

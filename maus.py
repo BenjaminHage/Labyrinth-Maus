@@ -29,7 +29,7 @@ def main():
         robot = Robot()
 
     out = io.OutputManager()
-    #out.start_console_output()
+    out.start_console_output()
     #out.start_rt_plot()
 
     angle_setpoint = 0
