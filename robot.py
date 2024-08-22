@@ -3,9 +3,12 @@ import random
 import math
 from filter import LowPassFilter
 from ADCDifferentialPi import ADCDifferentialPi
-import RPi.GPIO as GPIO
+#import RPi.GPIO as GPIO
 import time
 import motoron
+
+import adafruit_icm20x
+import pigpio
 
 
 
@@ -58,25 +61,41 @@ class DifferentialDriveRobot:
         self.counter_right = 0
         self.last_time = time.time()
         
-        GPIO.cleanup()
-
+#         GPIO.cleanup()
+# 
         # Setup GPIO
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.pin_a_left, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.setup(self.pin_b_left, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.setup(self.pin_a_right, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.setup(self.pin_b_right, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+#         GPIO.setmode(GPIO.BCM)
+#         GPIO.setup(self.pin_a_left, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+#         GPIO.setup(self.pin_b_left, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+#         GPIO.setup(self.pin_a_right, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+#         GPIO.setup(self.pin_b_right, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+        self.pi = pigpio.pi()
+        self.pi.set_mode(self.pin_a_left, pigpio.INPUT)
+        self.pi.set_mode(self.pin_b_left, pigpio.INPUT)
+        self.pi.set_mode(self.pin_a_right, pigpio.INPUT)
+        self.pi.set_mode(self.pin_b_right, pigpio.INPUT)
+        
+        self.pi.set_pull_up_down(self.pin_a_left, pigpio.PUD_UP)
+        self.pi.set_pull_up_down(self.pin_b_left, pigpio.PUD_UP)
+        self.pi.set_pull_up_down(self.pin_a_right, pigpio.PUD_UP)
+        self.pi.set_pull_up_down(self.pin_b_right, pigpio.PUD_UP)
+           
        
         time.sleep(0.2)
 
         self.encoder_mode = 0
         # Interrupt on A pin
         if self.encoder_mode == 0:
-            GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_velocity_left)
-            GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_velocity_right)
+#             GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_velocity_left)
+#             GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_velocity_right)
+            self.pi.callback(self.pin_a_left, pigpio.RISING_EDGE, self._update_velocity_left)
+            self.pi.callback(self.pin_a_right, pigpio.RISING_EDGE, self._update_velocity_right)
         elif self.encoder_mode == 1:
-            GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_count_left)
-            GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_count_right)
+#             GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_count_left)
+#             GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_count_right)
+            self.pi.callback(self.pin_a_left, pigpio.RISING_EDGE, self._update_count_left)
+            self.pi.callback(self.pin_a_right, pigpio.RISING_EDGE, self._update_count_right)
             
         self.adc = ADCDifferentialPi(0x6E, 0x6F, 14)
         

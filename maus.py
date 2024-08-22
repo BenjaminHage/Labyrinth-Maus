@@ -2,6 +2,7 @@ import argparse
 import time
 import math
 import numpy as np
+import traceback
 
 from controllers import PIDController
 import io_management as io
@@ -85,8 +86,10 @@ def main():
     except KeyboardInterrupt:
         print("\nmain loop closed by keyboardInterupt")
         
+        
     except Exception as e:
         print(f"\033[91m{type(e).__name__} during main Loop:  {e}\033[0m")
+        traceback.print_exc()
         
     
         
