@@ -7,7 +7,7 @@ from ADCDifferentialPi import ADCDifferentialPi
 import time
 import motoron
 
-import adafruit_icm20x
+# import adafruit_icm20x
 import pigpio
 
 
@@ -253,25 +253,25 @@ class DifferentialDriveRobot:
         return filtered_readings 
 
   
-    def _update_count_left(self, channel):
+    def _update_count_left(self, gpio, level, tick):
         #a_state = GPIO.input(self.pin_a_left)
-        b_state = GPIO.input(self.pin_b_left)
+        #b_state = GPIO.input(self.pin_b_left)
         if True:#b_state:
             self.counter_left += 1
         else:
             self.counter_left -= 1
 
   
-    def _update_count_right(self, channel):
+    def _update_count_right(self, gpio, level, tick):
         #a_state = GPIO.input(self.pin_a_right)
-        b_state = GPIO.input(self.pin_b_right)
+        #b_state = GPIO.input(self.pin_b_right)
         if True:#b_state:
             self.counter_right += 1
         else:
             self.counter_right -= 1
 
   
-    def _update_velocity_left(self, channel):
+    def _update_velocity_left(self, gpio, level, tick):
         current_time = time.monotonic()
         time_step = current_time - self.last_left_time
         if time_step > 0:
@@ -281,9 +281,10 @@ class DifferentialDriveRobot:
             self.left_wheel_velocity = self.lpf_speed.filter(left_wheel_velocity, time_step)
             
         self.last_left_time = current_time
+        
 
   
-    def _update_velocity_right(self, channel):
+    def _update_velocity_right(self, gpio, level, tick):
         current_time = time.monotonic()
         time_step = current_time - self.last_right_time
         if time_step > 0:
