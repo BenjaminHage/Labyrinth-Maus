@@ -8,6 +8,7 @@ import time
 import motoron
 
 import adafruit_icm20x
+import board
 import pigpio
 
 
@@ -119,6 +120,10 @@ class DifferentialDriveRobot:
         self.mc_right.set_starting_speed(1,10)
 
         self.parameters = self.load_parameters(param_file)
+        
+        self.i2c = board.I2C()
+        self.icm = adafruit_icm20x.ICM20948(self.i2c)
+        self.gyro_w_bias = 0.00005
 
     def convert_voltage_to_distance(self, voltage):
         a, b, c, d, e = self.parameters
@@ -169,10 +174,10 @@ class DifferentialDriveRobot:
         return formatted_readings    
 
   
-    def update_robot(self, x, y, theta, left_wheel_velocity, right_wheel_velocity, time_step):
+    def update_robot(self, x, y, theta, left_wheel_velocity, right_wheel_velocity, gyro_w, time_step):
         """Update the robot's position and orientation based on wheel velocities."""
         v = (left_wheel_velocity + right_wheel_velocity) / 2
-        omega = (right_wheel_velocity - left_wheel_velocity) / self.wheel_distance
+        omega = gyro_w
         new_x = x + v * math.cos(theta) * time_step
         new_y = y + v * math.sin(theta) * time_step
         new_theta = theta + omega * time_step
@@ -201,7 +206,7 @@ class DifferentialDriveRobot:
         return x, y, theta
 
   
-    def state_estimate(self, left_wheel_velocity, right_wheel_velocity, current_time, time_step): ######################################################################
+    def state_estimate(self, left_wheel_velocity, right_wheel_velocity, gyro_w, current_time, time_step): ######################################################################
 
         if self.encoder_mode == 0:
         # Geschwindigkeit auf 0 setzen, falls das Timeout überschritten wurde
@@ -227,7 +232,8 @@ class DifferentialDriveRobot:
             
         # Positions-Update basierend auf der aktuellen Geschwindigkeit
         
-        self.robot_x, self.robot_y, self.robot_angle = self.update_robot(self.robot_x, self.robot_y, self.robot_angle, left_wheel_velocity, np.sign(right_wheel_velocity) * self.right_wheel_velocity, time_step)
+        self.robot_x, self.robot_y, self.robot_angle = self.update_robot(self.robot_x, self.robot_y, self.robot_angle, left_wheel_velocity,
+                                                                         np.sign(right_wheel_velocity) * self.right_wheel_velocity, gyro_w - self.gyro_w_bias, time_step)
 
         self.left_wheel_velocities.append(self.left_wheel_velocity)
         self.right_wheel_velocities.append(self.right_wheel_velocity)
@@ -299,4 +305,8 @@ class DifferentialDriveRobot:
         self.mc_right.set_speed(1, speed)
         
     def set_left_motor(self,speed):
-        self.mc_left.set_speed(1, speed)   
+        self.mc_left.set_speed(1, speed)
+        
+    def get_imu_readings(self):
+        return self.icm.gyro
+        
