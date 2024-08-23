@@ -125,10 +125,10 @@ class DifferentialDriveRobot:
             #measurement_noise = np.diag([mesurment_noise_standard_deviation] * 3)
         
         if motion_model is None:
-            motion_model = self.update
+            motion_model = self.ukf_motion_model
         
         if measurement_model is None:
-            measurement_model = self.measurement_model
+            measurement_model = self.ukf_measurement_model
             
         # UKF Initialisierung
         self.ukf_estimator = UKFEstimator(dt=dt, initial_state=initial_state, 
@@ -260,7 +260,7 @@ class DifferentialDriveRobot:
         self.right_wheel_velocity_targets.append(right_wheel_velocity)
 
         # UKF Vorhersage
-        self.ukf_estimator.predict()
+        self.ukf_estimator.predict(time_step)
 
         # Sensorwerte als Messungen
         z = np.array([self.left_wheel_velocity , self.right_wheel_velocity, gyro_w - self.gyro_w_bias])
@@ -339,4 +339,15 @@ class DifferentialDriveRobot:
         
     def get_imu_readings(self):
         return self.icm.gyro
+
+    def ukf_motion_model(self, state, dt):
+        x, y, theta, v, omega = state
+        dx = v * np.cos(theta) * dt
+        dy = v * np.sin(theta) * dt
+        dtheta = omega * dt
+        return np.array([x + dx, y + dy, theta + dtheta, v, omega])
+    
+    def ukf_measurement_model(self, state):
+        x, y, theta, v, omega = state
+        return np.array([x, y, theta])
         
