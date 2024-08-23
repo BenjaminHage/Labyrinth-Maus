@@ -41,6 +41,7 @@ class DifferentialDriveRobot:
         self.robot_x = init_robot_x
         self.robot_y = init_robot_y
         self.robot_angle = init_robot_angle
+        self.robot_v = 0
         
         self.left_wheel_velocity = 0
         self.right_wheel_velocity = 0
@@ -176,7 +177,7 @@ class DifferentialDriveRobot:
   
     def update_robot(self, x, y, theta, left_wheel_velocity, right_wheel_velocity, gyro_w, time_step):
         """Update the robot's position and orientation based on wheel velocities."""
-        v = (left_wheel_velocity + right_wheel_velocity) / 2
+        v = (self.left_wheel_velocity + self.right_wheel_velocity) / 2
         omega = gyro_w
         new_x = x + v * math.cos(theta) * time_step
         new_y = y + v * math.sin(theta) * time_step
@@ -184,7 +185,7 @@ class DifferentialDriveRobot:
         
         x, y, theta = new_x, new_y, new_theta
 
-        return x, y, theta
+        return x, y, theta, v
 
   
     def get_sensor_readings_with_noise(self, sensor_distances):
@@ -232,7 +233,7 @@ class DifferentialDriveRobot:
             
         # Positions-Update basierend auf der aktuellen Geschwindigkeit
         
-        self.robot_x, self.robot_y, self.robot_angle = self.update_robot(self.robot_x, self.robot_y, self.robot_angle, left_wheel_velocity,
+        self.robot_x, self.robot_y, self.robot_angle, self.robot_v = self.update_robot(self.robot_x, self.robot_y, self.robot_angle, left_wheel_velocity,
                                                                          np.sign(right_wheel_velocity) * self.right_wheel_velocity, gyro_w - self.gyro_w_bias, time_step)
 
         self.left_wheel_velocities.append(self.left_wheel_velocity)
@@ -243,7 +244,7 @@ class DifferentialDriveRobot:
 
   
     def get_position_and_angle(self):
-        return self.robot_x, self.robot_y, self.robot_angle
+        return self.robot_x, self.robot_y, self.robot_angle, self.robot_v
 
   
     def set_position_and_angle(self, x, y, theta):

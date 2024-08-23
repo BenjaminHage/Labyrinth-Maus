@@ -123,7 +123,7 @@ class ConsoleOutput:
     def update(self, robot, left_wheel_velocity, right_wheel_velocity, base_speed,
                angle_setpoint, angle_control, pid_r, pid_l, sensor_readings):
         """Aktualisiert die Informationen für den Konsolenoutput."""
-        x, y, theta = robot.get_position_and_angle()
+        x, y, theta, v = robot.get_position_and_angle()
 
         self.info_lines = [
             "---------------------------------------------------------------------",
@@ -225,7 +225,7 @@ class RealTimePlotter:
 
 def handle_user_input(angle_setpoint, base_speed, close = False):
     base_speed = 0
-    angle_setpoint = 0
+    #angle_setpoint = 0
     if keyboard.is_pressed('up'):  # Up arrow key
         base_speed += 0.5
     if keyboard.is_pressed('down'):  # Down arrow key

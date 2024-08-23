@@ -20,7 +20,7 @@ def main():
     speed_pid_left.set_integral(0.00000000000000001)
     speed_pid_right.set_integral(0.00000000000000001)
     
-    angle_pid = PIDController(kp=0.2, ki=0.000, kd=0)
+    angle_pid = PIDController(kp=200, ki=50.0, kd=10.00)
 
     # Initialisiere den Roboter mit dem gegebenen Dateinamen (falls angegeben)
     if args.filename:
@@ -51,7 +51,7 @@ def main():
             if ((current_time - start_Time) > duration) or close:
                 break
             
-            x, y, theta = robot.get_position_and_angle()
+            x, y, theta, v = robot.get_position_and_angle()
             sensor_readings = robot.get_sensor_readings()
             sensor_readings = robot.filter_sensor_readings(sensor_readings, time_step)
             imu_gyro_readings = robot.get_imu_readings()
@@ -61,18 +61,22 @@ def main():
 
             # PID controller to adjust wheel velocities
             angle_control = angle_pid.update(angle_setpoint, theta, time_step)
-            left_wheel_velocity_target = base_speed - angle_setpoint  # - angle_control
-            right_wheel_velocity_target = base_speed + angle_setpoint  # + angle_control
+            left_wheel_velocity_target = base_speed - angle_control #- angle_setpoint  # - angle_control
+            right_wheel_velocity_target = base_speed + angle_control #+ angle_setpoint  # + angle_control
             
             if right_wheel_velocity_target == 0:
                 speed_pid_right.set_integral(0.00000000000000001)
-            right_motor_control = speed_pid_right.update(abs(right_wheel_velocity_target), robot.get_right_wheel_velocity(), time_step)
-            robot.set_right_motor(int(-right_motor_control * np.sign(right_wheel_velocity_target)))
+            #right_motor_control = speed_pid_right.update(abs(right_wheel_velocity_target), robot.get_right_wheel_velocity(), time_step)
+            right_motor_control = speed_pid_right.update(abs(base_speed), v, time_step)
+            robot.set_right_motor(int((-right_motor_control * np.sign(base_speed)) - angle_control))
+            #robot.set_right_motor(int(- angle_control))
             
             if left_wheel_velocity_target == 0:
                 speed_pid_left.set_integral(0.00000000000000001)
-            left_motor_control = speed_pid_left.update(abs(left_wheel_velocity_target), robot.get_left_wheel_velocity(), time_step)
-            robot.set_left_motor(int(left_motor_control * np.sign(left_wheel_velocity_target)))
+            #left_motor_control = speed_pid_left.update(abs(left_wheel_velocity_target), robot.get_left_wheel_velocity(), time_step)
+            left_motor_control = speed_pid_left.update(abs(base_speed), v, time_step)
+            #robot.set_left_motor(int(- angle_control))
+            robot.set_left_motor(int((left_motor_control * np.sign(base_speed)) - angle_control))
             
             robot.state_estimate(left_wheel_velocity_target, right_wheel_velocity_target, gyro_w, current_time, time_step)
 
