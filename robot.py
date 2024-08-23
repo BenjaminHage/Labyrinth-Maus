@@ -269,7 +269,7 @@ class DifferentialDriveRobot:
         self.ukf_estimator.update(z)
 
         # Aktualisierung der Roboterzustände
-        self.k_robot_x, self.k_robot_y, self.k_robot_angle, self.k_robot_v, _ = self.ukf_estimator.get_state()
+        self.k_robot_x, self.k_robot_y, self.k_robot_angle, _, _, _, self.k_robot_v = self.ukf_estimator.get_state()
 
   
     def get_position_and_angle(self):
@@ -279,6 +279,12 @@ class DifferentialDriveRobot:
     def set_position_and_angle(self, x, y, theta):
         self.robot_x, self.robot_y, self.robot_angle = x, y, theta
 
+    def get_ukf_position_and_angle(self):
+        return self.k_robot_x, self.k_robot_y, self.k_robot_angle, self.k_robot_v
+
+    def set_ukf_position_and_angle(self, x, y, theta):
+        self.k_robot_x, self.k_robot_y, self.k_robot_angle, self.k_robot_v = x, y, theta, 0
+        self.ukf_estimator.set_state([x, y, theta, 0, 0, 0, 0])
   
     def filter_sensor_readings(self, sensor_readings, time_step):
         filtered_readings = []
@@ -341,13 +347,14 @@ class DifferentialDriveRobot:
         return self.icm.gyro
 
     def ukf_motion_model(self, state, dt):
-        x, y, theta, v, omega = state
+        x, y, theta, omega, vl, vr, v = state
         dx = v * np.cos(theta) * dt
         dy = v * np.sin(theta) * dt
         dtheta = omega * dt
-        return np.array([x + dx, y + dy, theta + dtheta, v, omega])
+        v = 0.5 * (vl + vr)
+        return np.array([x + dx, y + dy, theta + dtheta, omega, vl, vr, v])
     
     def ukf_measurement_model(self, state):
-        x, y, theta, v, omega = state
-        return np.array([x, y, theta])
+        x, y, theta, omega, vl, vr, v = state
+        return np.array([vl, vr, omega])
         
