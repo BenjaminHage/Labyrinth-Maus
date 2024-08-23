@@ -29,7 +29,7 @@ def main():
         robot = Robot()
 
     out = io.OutputManager()
-    out.start_console_output()
+    #out.start_console_output()
     #out.start_rt_plot()
     
 
@@ -52,6 +52,12 @@ def main():
                 break
             
             x, y, theta, v = robot.get_position_and_angle()
+            ukf_x, ukf_y, ukf_theta, ukf_v = robot.get_ukf_position_and_angle()
+            print(f"x    : {x:8.4f}    y    : {x:8.4f}    o    : {theta:8.4f}    v    : {v:8.4f}")
+            print(f"ukf_x: {ukf_x:8.4f}    ukf_y: {ukf_y:8.4f}    ukf_o: {ukf_theta:8.4f}    ukf_v: {ukf_v:8.4f}")
+            
+            
+            
             sensor_readings = robot.get_sensor_readings()
             sensor_readings = robot.filter_sensor_readings(sensor_readings, time_step)
             imu_gyro_readings = robot.get_imu_readings()

@@ -25,7 +25,7 @@ class UKFEstimator:
         self.ukf.R = measurement_noise
     
     def predict(self, dt):
-        self.ukf.predict(fx_args=(dt,))
+        self.ukf.predict(dt=dt)
     
     def update(self, measurements):
         self.ukf.update(measurements)

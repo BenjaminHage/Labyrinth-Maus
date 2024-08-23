@@ -2,6 +2,7 @@ import numpy as np
 import random
 import math
 from filter import LowPassFilter
+from filter import UKFEstimator
 from ADCDifferentialPi import ADCDifferentialPi
 #import RPi.GPIO as GPIO
 import time
@@ -279,12 +280,15 @@ class DifferentialDriveRobot:
     def set_position_and_angle(self, x, y, theta):
         self.robot_x, self.robot_y, self.robot_angle = x, y, theta
 
+
     def get_ukf_position_and_angle(self):
         return self.k_robot_x, self.k_robot_y, self.k_robot_angle, self.k_robot_v
+
 
     def set_ukf_position_and_angle(self, x, y, theta):
         self.k_robot_x, self.k_robot_y, self.k_robot_angle, self.k_robot_v = x, y, theta, 0
         self.ukf_estimator.set_state([x, y, theta, 0, 0, 0, 0])
+  
   
     def filter_sensor_readings(self, sensor_readings, time_step):
         filtered_readings = []
@@ -337,22 +341,27 @@ class DifferentialDriveRobot:
             
         self.last_right_time = current_time
 
+
     def set_right_motor(self,speed):
         self.mc_right.set_speed(1, speed)
+        
         
     def set_left_motor(self,speed):
         self.mc_left.set_speed(1, speed)
         
+        
     def get_imu_readings(self):
         return self.icm.gyro
 
+
     def ukf_motion_model(self, state, dt):
         x, y, theta, omega, vl, vr, v = state
-        dx = v * np.cos(theta) * dt
-        dy = v * np.sin(theta) * dt
+        dx = v * math.cos(theta) * dt
+        dy = v * math.sin(theta) * dt
         dtheta = omega * dt
         v = 0.5 * (vl + vr)
         return np.array([x + dx, y + dy, theta + dtheta, omega, vl, vr, v])
+    
     
     def ukf_measurement_model(self, state):
         x, y, theta, omega, vl, vr, v = state
