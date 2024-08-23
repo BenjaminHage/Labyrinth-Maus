@@ -15,7 +15,8 @@ import pigpio
 
 
 class DifferentialDriveRobot:
-    def __init__ (self, param_file = 'parameters.txt', mesurment_noise_mean = 0, mesurment_noise_standard_deviation = 1, system_noise_mean = 0, system_noise_standard_deviation = 1, init_robot_x = 0, init_robot_y = 0, init_robot_angle = 0):
+    def __init__ (self, param_file = 'parameters.txt', mesurment_noise_mean = 0, mesurment_noise_standard_deviation = 1, system_noise_mean = 0, system_noise_standard_deviation = 1, 
+                  init_robot_x = 0, init_robot_y = 0, init_robot_angle = 0, motion_model=None, measurement_model=None, process_noise=None, measurement_noise=None, dt=0.081):
         self.left_wheel_velocities = []  # Liste zur Speicherung der gemessenen Geschwindigkeiten
         self.right_wheel_velocities = []  # Liste zur Speicherung der gemessenen Geschwindigkeiten
         self.left_wheel_velocity_targets = []  # Liste zur Speicherung der Zielgeschwindigkeiten
@@ -62,15 +63,6 @@ class DifferentialDriveRobot:
         self.counter_left = 0
         self.counter_right = 0
         self.last_time = time.time()
-        
-#         GPIO.cleanup()
-# 
-        # Setup GPIO
-#         GPIO.setmode(GPIO.BCM)
-#         GPIO.setup(self.pin_a_left, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-#         GPIO.setup(self.pin_b_left, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-#         GPIO.setup(self.pin_a_right, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-#         GPIO.setup(self.pin_b_right, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
         self.pi = pigpio.pi()
         self.pi.set_mode(self.pin_a_left, pigpio.INPUT)
@@ -89,13 +81,9 @@ class DifferentialDriveRobot:
         self.encoder_mode = 0
         # Interrupt on A pin
         if self.encoder_mode == 0:
-#             GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_velocity_left)
-#             GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_velocity_right)
             self.pi.callback(self.pin_a_left, pigpio.RISING_EDGE, self._update_velocity_left)
             self.pi.callback(self.pin_a_right, pigpio.RISING_EDGE, self._update_velocity_right)
         elif self.encoder_mode == 1:
-#             GPIO.add_event_detect(self.pin_a_left, GPIO.RISING, callback=self._update_count_left)
-#             GPIO.add_event_detect(self.pin_a_right, GPIO.RISING, callback=self._update_count_right)
             self.pi.callback(self.pin_a_left, pigpio.RISING_EDGE, self._update_count_left)
             self.pi.callback(self.pin_a_right, pigpio.RISING_EDGE, self._update_count_right)
             
@@ -125,6 +113,28 @@ class DifferentialDriveRobot:
         self.i2c = board.I2C()
         self.icm = adafruit_icm20x.ICM20948(self.i2c)
         self.gyro_w_bias = 0.00005
+        
+        # Initialisierung von UKF spezifischen Variablen
+        initial_state = [init_robot_x, init_robot_y, init_robot_angle, 0, 0]
+        
+        if process_noise is None:
+            process_noise = np.eye(len(initial_state)) * system_noise_standard_deviation
+            
+        if measurement_noise is None:
+            measurement_noise = np.eye(4) * mesurment_noise_standard_deviation
+            #measurement_noise = np.diag([mesurment_noise_standard_deviation] * 3)
+        
+        if motion_model is None:
+            motion_model = self.update
+        
+        if measurement_model is None:
+            measurement_model = self.default_measurement_model
+            
+        # UKF Initialisierung
+        self.ukf_estimator = UKFEstimator(dt=dt, initial_state=initial_state, 
+                                          process_noise=process_noise, measurement_noise=measurement_noise,
+                                          motion_model=motion_model, measurement_model=measurement_model)
+        
 
     def convert_voltage_to_distance(self, voltage):
         a, b, c, d, e = self.parameters
@@ -177,7 +187,7 @@ class DifferentialDriveRobot:
   
     def update_robot(self, x, y, theta, left_wheel_velocity, right_wheel_velocity, gyro_w, time_step):
         """Update the robot's position and orientation based on wheel velocities."""
-        v = (self.left_wheel_velocity + self.right_wheel_velocity) / 2
+        v = (left_wheel_velocity + right_wheel_velocity) / 2
         omega = gyro_w
         new_x = x + v * math.cos(theta) * time_step
         new_y = y + v * math.sin(theta) * time_step
@@ -233,14 +243,26 @@ class DifferentialDriveRobot:
             
         # Positions-Update basierend auf der aktuellen Geschwindigkeit
         
-        self.robot_x, self.robot_y, self.robot_angle, self.robot_v = self.update_robot(self.robot_x, self.robot_y, self.robot_angle, left_wheel_velocity,
-                                                                         np.sign(right_wheel_velocity) * self.right_wheel_velocity, gyro_w - self.gyro_w_bias, time_step)
+        self.robot_x, self.robot_y, self.robot_angle, self.robot_v = self.update_robot(self.robot_x, self.robot_y, self.robot_angle, self.left_wheel_velocity,
+                                                                         self.right_wheel_velocity, gyro_w - self.gyro_w_bias, time_step)
 
         self.left_wheel_velocities.append(self.left_wheel_velocity)
         self.right_wheel_velocities.append(self.right_wheel_velocity)
         self.times.append(current_time)
         self.left_wheel_velocity_targets.append(left_wheel_velocity)
         self.right_wheel_velocity_targets.append(right_wheel_velocity)
+
+        # UKF Vorhersage
+        self.ukf_estimator.predict()
+
+        # Sensorwerte als Messungen
+        z = np.array([self.left_wheel_velocity , self.right_wheel_velocity, gyro_w - self.gyro_w_bias])
+
+        # UKF Update
+        self.ukf_estimator.update(z)
+
+        # Aktualisierung der Roboterzustände
+        self.k_robot_x, self.k_robot_y, self.k_robot_angle, self.k_robot_v, _ = self.ukf_estimator.get_state()
 
   
     def get_position_and_angle(self):
