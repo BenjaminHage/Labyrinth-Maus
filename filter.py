@@ -1,5 +1,42 @@
 import numpy as np
 
+import numpy as np
+from filterpy.kalman import UnscentedKalmanFilter as UKF
+from filterpy.kalman import MerweScaledSigmaPoints
+
+class UKFEstimator:
+    def __init__(self, dt, initial_state, process_noise, measurement_noise, motion_model, measurement_model):
+        self.dt = dt
+        self.motion_model = motion_model
+        self.measurement_model = measurement_model
+        self.sigma_points = MerweScaledSigmaPoints(n=len(initial_state), alpha=0.1, beta=2., kappa=0)
+        self.ukf = UKF(dim_x=len(initial_state), dim_z=3, dt=self.dt, fx=self.motion_model, hx=self.measurement_model, points=self.sigma_points)
+        
+        # Initialer Zustand
+        self.ukf.x = np.array(initial_state)
+        
+        # Initiale Kovarianzmatrix
+        self.ukf.P *= 0.1
+        
+        # Prozessrauschen Q
+        self.ukf.Q = process_noise
+        
+        # Messrauschen R
+        self.ukf.R = measurement_noise
+    
+    def predict(self):
+        self.ukf.predict(fx_args=(self.dt,))
+    
+    def update(self, measurements):
+        self.ukf.update(measurements)
+    
+    def get_state(self):
+        return self.ukf.x
+
+    def set_state(self, state):
+        self.ukf.x = np.array(state)
+
+
 class LowPassFilter:
     def __init__(self, cutoff_freq):
         self.cutoff_freq = cutoff_freq
