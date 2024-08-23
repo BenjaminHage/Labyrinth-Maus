@@ -201,7 +201,7 @@ class AutonomousController:
         self.front_right_sensor_active = False
 
         self.prev_state = 0
-        self.previous_time = pygame.time.get_ticks() / 1000.0  #überlegen zeit unabhängig von pygame machen
+        self.previous_time = 0#pygame.time.get_ticks() / 1000.0  #überlegen zeit unabhängig von pygame machen
         self.previous_theta = np.inf
         self.feature_list = np.empty((0, 2))
         self.change_feature_list = np.empty((0, 2))

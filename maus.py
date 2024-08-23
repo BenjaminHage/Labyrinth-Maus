@@ -18,10 +18,6 @@ def main():
     parser.add_argument('-f', '--filename', type=str, default=None, help='Name der Datei mit den parametern für die Distanzmessung')
     args = parser.parse_args()
     
-    out = io.OutputManager()
-    out.start_console_output()
-    #out.start_rt_plot()
-    
     
     # Initialisiere den Roboter mit dem gegebenen Dateinamen (falls angegeben)
     if args.filename:
@@ -62,12 +58,15 @@ def main():
     wall_distance_pid = PIDController(kp=0.006, ki=0.0065, kd=0.0, d_minmax=0.029, i_minmax=1)
     esc = ESCController(dither_frequency, dither_amplitude, learning_rate)
     
-#     auto = AutonomousController(angle_pid, wall_distance_pid, point_distance_pid, esc, base_speed,
-#                                         base_rotation_speed, desired_distance, sensor_activation_threshold,
-#                                         robot.get_wheel_distance(), robot.get_sensor_angles())
-#      
+    auto = AutonomousController(angle_pid, wall_distance_pid, point_distance_pid, esc, init_base_speed,
+                                        init_base_rotation_speed, desired_distance, sensor_activation_threshold,
+                                        robot.get_wheel_distance(), robot.get_sensor_angles())
+     
     ###### Auto #####
    
+    out = io.OutputManager()
+    out.start_console_output()
+    #out.start_rt_plot()
 
     angle_setpoint = 0
     base_speed = 0
