@@ -1,4 +1,6 @@
 import numpy as np
+from filter import HighPassFilter
+from filter import LowPassFilter
 
 
 
