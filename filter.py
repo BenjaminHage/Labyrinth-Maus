@@ -24,8 +24,8 @@ class UKFEstimator:
         # Messrauschen R
         self.ukf.R = measurement_noise
     
-    def predict(self):
-        self.ukf.predict(fx_args=(self.dt,))
+    def predict(self, dt):
+        self.ukf.predict(fx_args=(dt,))
     
     def update(self, measurements):
         self.ukf.update(measurements)
