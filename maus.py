@@ -11,27 +11,36 @@ from robot import DifferentialDriveRobot as Robot
 
 
 def main():
+    
     parser = argparse.ArgumentParser(description="Robot control script")
     parser.add_argument('-f', '--filename', type=str, default=None, help='Name der Datei mit den parametern für die Distanzmessung')
     args = parser.parse_args()
-
-    speed_pid_left = PIDController(kp=450, ki=4000, kd=0, i_max=550, d_max=70, i_min=0, pid_min=0)
-    speed_pid_right = PIDController(kp=450, ki=4000, kd=0, i_max=550, d_max=70, i_min=0, pid_min=0)
-    speed_pid_left.set_integral(0.00000000000000001)
-    speed_pid_right.set_integral(0.00000000000000001)
     
-    angle_pid = PIDController(kp=200, ki=50.0, kd=10.00)
-
+    out = io.OutputManager()
+    out.start_console_output()
+    #out.start_rt_plot()
+    
+    
     # Initialisiere den Roboter mit dem gegebenen Dateinamen (falls angegeben)
     if args.filename:
         robot = Robot(param_file=args.filename)
     else:
         robot = Robot()
 
-    out = io.OutputManager()
-    #out.start_console_output()
-    #out.start_rt_plot()
     
+    ###### Manuell #####
+    speed_pid_left = PIDController(kp=450, ki=4000, kd=0, i_max=550, d_max=70, i_min=0, pid_min=0)
+    speed_pid_right = PIDController(kp=450, ki=4000, kd=0, i_max=550, d_max=70, i_min=0, pid_min=0)
+    speed_pid_left.set_integral(0.00000000000000001)
+    speed_pid_right.set_integral(0.00000000000000001)
+    
+    angle_pid = PIDController(kp=110, ki=100.0, kd=10.00, d_minmax=100, i_minmax=100)
+    ###### Manuell #####
+    
+    
+    
+
+   
 
     angle_setpoint = 0
     base_speed = 0
@@ -53,9 +62,9 @@ def main():
             
             x, y, theta, v = robot.get_position_and_angle()
             ukf_x, ukf_y, ukf_theta, ukf_v = robot.get_ukf_position_and_angle()
-            print(f"x    : {x:8.4f}    y    : {x:8.4f}    o    : {theta:8.4f}    v    : {v:8.4f}")
-            print(f"ukf_x: {ukf_x:8.4f}    ukf_y: {ukf_y:8.4f}    ukf_o: {ukf_theta:8.4f}    ukf_v: {ukf_v:8.4f}")
-            
+#             print(f"x    : {x:8.4f}    y    : {x:8.4f}    o    : {theta:8.4f}    v    : {v:8.4f}")
+#             print(f"ukf_x: {ukf_x:8.4f}    ukf_y: {ukf_y:8.4f}    ukf_o: {ukf_theta:8.4f}    ukf_v: {ukf_v:8.4f}")
+#             
             
             
             sensor_readings = robot.get_sensor_readings()
@@ -66,6 +75,8 @@ def main():
             angle_setpoint, base_speed, close = io.handle_user_input(angle_setpoint, base_speed, close)
 
             # PID controller to adjust wheel velocities
+            if abs(angle_setpoint - theta) <= math.radians(1.5):
+                angle_pid.set_integral(0)
             angle_control = angle_pid.update(angle_setpoint, theta, time_step)
             left_wheel_velocity_target = base_speed - angle_control #- angle_setpoint  # - angle_control
             right_wheel_velocity_target = base_speed + angle_control #+ angle_setpoint  # + angle_control

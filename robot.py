@@ -117,14 +117,9 @@ class DifferentialDriveRobot:
         
         # Initialisierung von UKF spezifischen Variablen
         initial_state = [init_robot_x, init_robot_y, init_robot_angle, 0, 0, 0, 0]
-        
-        if process_noise is None:
-            process_noise = np.eye(len(initial_state)) * system_noise_standard_deviation
+        process_noise = np.diag([0.0001, 0.0001, 0.001, 0.001, 0.01, 0.01, 0.001]) 
+        measurement_noise = np.diag([0.1, 0.1, 0.015]) 
             
-        if measurement_noise is None:
-            measurement_noise = np.eye(3) * mesurment_noise_standard_deviation
-            #measurement_noise = np.diag([mesurment_noise_standard_deviation] * 3)
-        
         if motion_model is None:
             motion_model = self.ukf_motion_model
         
@@ -132,7 +127,8 @@ class DifferentialDriveRobot:
             measurement_model = self.ukf_measurement_model
             
         # UKF Initialisierung
-        self.ukf_estimator = UKFEstimator(dt=dt, initial_state=initial_state, 
+        self.ukf_estimator = UKFEstimator(dt=dt,
+                                          initial_state=[0,0,0,0,0,0,0], 
                                           process_noise=process_noise,
                                           measurement_noise=measurement_noise,
                                           motion_model=motion_model,
@@ -204,6 +200,8 @@ class DifferentialDriveRobot:
         x, y, theta = new_x, new_y, new_theta
 
         return x, y, theta, v
+    
+   
 
   
     def get_sensor_readings_with_noise(self, sensor_distances):
@@ -251,6 +249,21 @@ class DifferentialDriveRobot:
             
         # Positions-Update basierend auf der aktuellen Geschwindigkeit
         
+        
+
+        # UKF Vorhersage
+        self.ukf_estimator.predict(time_step)
+
+        # Sensorwerte als Messungen
+        z = np.array([self.left_wheel_velocity, self.right_wheel_velocity, gyro_w - self.gyro_w_bias])
+
+        # UKF Update
+        self.ukf_estimator.update(z)
+
+        # Aktualisierung der Roboterzustände
+        self.k_robot_x, self.k_robot_y, self.k_robot_angle, _, _, _, self.k_robot_v = self.ukf_estimator.get_state()
+
+        
         self.robot_x, self.robot_y, self.robot_angle, self.robot_v = self.update_robot(self.robot_x, self.robot_y, self.robot_angle, self.left_wheel_velocity,
                                                                          self.right_wheel_velocity, gyro_w - self.gyro_w_bias, time_step)
 
@@ -259,19 +272,6 @@ class DifferentialDriveRobot:
         self.times.append(current_time)
         self.left_wheel_velocity_targets.append(left_wheel_velocity)
         self.right_wheel_velocity_targets.append(right_wheel_velocity)
-
-        # UKF Vorhersage
-        self.ukf_estimator.predict(time_step)
-
-        # Sensorwerte als Messungen
-        z = np.array([self.left_wheel_velocity , self.right_wheel_velocity, gyro_w - self.gyro_w_bias])
-
-        # UKF Update
-        self.ukf_estimator.update(z)
-
-        # Aktualisierung der Roboterzustände
-        self.k_robot_x, self.k_robot_y, self.k_robot_angle, _, _, _, self.k_robot_v = self.ukf_estimator.get_state()
-
   
     def get_position_and_angle(self):
         return self.robot_x, self.robot_y, self.robot_angle, self.robot_v
@@ -356,14 +356,17 @@ class DifferentialDriveRobot:
 
     def ukf_motion_model(self, state, dt):
         x, y, theta, omega, vl, vr, v = state
+        
         dx = v * math.cos(theta) * dt
         dy = v * math.sin(theta) * dt
         dtheta = omega * dt
-        v = 0.5 * (vl + vr)
+        v = (vl + vr) / 2
+        #print(state)
         return np.array([x + dx, y + dy, theta + dtheta, omega, vl, vr, v])
     
     
     def ukf_measurement_model(self, state):
         x, y, theta, omega, vl, vr, v = state
+        #print(state)
         return np.array([vl, vr, omega])
         

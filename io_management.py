@@ -231,9 +231,9 @@ def handle_user_input(angle_setpoint, base_speed, close = False):
     if keyboard.is_pressed('down'):  # Down arrow key
         base_speed -= 0.5
     if keyboard.is_pressed('left'):  # Left arrow key
-        angle_setpoint += 0.15
+        angle_setpoint += 0.3
     if keyboard.is_pressed('right'):  # Right arrow key
-        angle_setpoint -= 0.15
+        angle_setpoint -= 0.3
     if keyboard.is_pressed('c'):
         close = True
     return angle_setpoint, base_speed, close

@@ -29,12 +29,14 @@ class UKFEstimator:
     
     def update(self, measurements):
         self.ukf.update(measurements)
+        #print(self.ukf.x)
     
     def get_state(self):
         return self.ukf.x
 
     def set_state(self, state):
         self.ukf.x = np.array(state)
+
 
 
 class LowPassFilter:
@@ -50,3 +52,22 @@ class LowPassFilter:
     
     def set_previous_output(self, output):
         self.prev_output = output
+        
+        
+        
+class HighPassFilter:
+    def __init__(self, cutoff_freq):
+        self.cutoff_freq = cutoff_freq
+        self.prev_input = 0
+        self.prev_output = 0
+
+    def filter(self, input_signal, sampling_period):
+        
+        alpha = (2 * np.pi * self.cutoff_freq * sampling_period) / (1 + 2 * np.pi * self.cutoff_freq * sampling_period)
+        output_signal = alpha * (self.prev_output + input_signal - self.prev_input)
+        self.prev_input = input_signal
+        self.prev_output = output_signal
+        return output_signal
+    
+    def set_previous_input(self,input):
+        self.prev_input = input

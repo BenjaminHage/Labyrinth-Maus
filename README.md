@@ -24,7 +24,8 @@ sudo pip3 install adafruit-circuitpython-icm20x --break-system-packages
 
 sudo pip3 install matplotlib --break-system-packages
 sudo pip3 install keyboard --break-system-packages
-sudo pip3 install scipy --break-system-package
+sudo pip3 install scipy --break-system-packages
+sudo pip3 install filterpy --break-system-packages
 
 
 sudo chmod +x setup_pi_ap.sh
