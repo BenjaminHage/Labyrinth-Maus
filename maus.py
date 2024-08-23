@@ -5,6 +5,7 @@ import numpy as np
 import traceback
 
 from controllers import PIDController
+from controllers import AutonomousController
 import io_management as io
 from robot import DifferentialDriveRobot as Robot
 
@@ -26,6 +27,7 @@ def main():
         robot = Robot(param_file=args.filename)
     else:
         robot = Robot()
+        
 
     
     ###### Manuell #####
@@ -35,9 +37,17 @@ def main():
     speed_pid_right.set_integral(0.00000000000000001)
     
     angle_pid = PIDController(kp=110, ki=100.0, kd=10.00, d_minmax=100, i_minmax=100)
+    #angle_pid = PIDController(kp=1, ki=0, kd=0.00, d_minmax=1, i_minmax=1)
+    ###### Manuell #####
+
     ###### Manuell #####
     
     
+    
+#     auto = AutonomousController__init__(self, angle_pid, wall_distance_pid, point_distance_pid, esc, base_speed,
+#                                                     base_rotation_speed, desired_distance, sensor_activation_threshold,
+#                                                     wheel_distance, sensor_angles,
+     
     
 
    
