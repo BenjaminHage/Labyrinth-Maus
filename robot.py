@@ -115,25 +115,32 @@ class DifferentialDriveRobot:
         self.gyro_w_bias = 0.00005
         
         # Initialisierung von UKF spezifischen Variablen
-        initial_state = [init_robot_x, init_robot_y, init_robot_angle, 0, 0]
+        initial_state = [init_robot_x, init_robot_y, init_robot_angle, 0, 0, 0, 0]
         
         if process_noise is None:
             process_noise = np.eye(len(initial_state)) * system_noise_standard_deviation
             
         if measurement_noise is None:
-            measurement_noise = np.eye(4) * mesurment_noise_standard_deviation
+            measurement_noise = np.eye(3) * mesurment_noise_standard_deviation
             #measurement_noise = np.diag([mesurment_noise_standard_deviation] * 3)
         
         if motion_model is None:
             motion_model = self.update
         
         if measurement_model is None:
-            measurement_model = self.default_measurement_model
+            measurement_model = self.measurement_model
             
         # UKF Initialisierung
         self.ukf_estimator = UKFEstimator(dt=dt, initial_state=initial_state, 
-                                          process_noise=process_noise, measurement_noise=measurement_noise,
-                                          motion_model=motion_model, measurement_model=measurement_model)
+                                          process_noise=process_noise,
+                                          measurement_noise=measurement_noise,
+                                          motion_model=motion_model,
+                                          measurement_model=measurement_model)
+        
+        self.k_robot_x = 0
+        self.k_robot_y = 0
+        self.k_robot_angle = 0
+        self.k_robot_v = 0
         
 
     def convert_voltage_to_distance(self, voltage):
