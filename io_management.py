@@ -223,7 +223,7 @@ class RealTimePlotter:
 
 
 
-def handle_user_input(angle_setpoint, base_speed, close = False):
+def handle_user_input(angle_setpoint, base_speed, autonomous_mode, close = False):
     base_speed = 0
     #angle_setpoint = 0
     if keyboard.is_pressed('up'):  # Up arrow key
@@ -236,5 +236,8 @@ def handle_user_input(angle_setpoint, base_speed, close = False):
         angle_setpoint -= 0.15
     if keyboard.is_pressed('c'):
         close = True
+    if keyboard.is_pressed('a'):
+        autonomous_mode = not autonomous_mode
+        
     return angle_setpoint, base_speed, close
 

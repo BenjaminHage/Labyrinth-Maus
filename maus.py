@@ -71,6 +71,7 @@ def main():
     angle_setpoint = 0
     base_speed = 0
     close = False
+    autonomous_mode = False
     
     
     start_Time = time.monotonic() 
@@ -99,16 +100,21 @@ def main():
             gyro_w = imu_gyro_readings[2]
             
             angle_setpoint, base_speed, close = io.handle_user_input(angle_setpoint, base_speed, close)
-
-
-
-            # PID controller to adjust wheel velocities
-            if abs(angle_setpoint - theta) <= math.radians(1.5):
-                angle_pid.set_integral(0)
-            angle_control = angle_pid.update(angle_setpoint, theta, time_step)
+        
             
-            left_wheel_velocity_target = base_speed - angle_control #- angle_setpoint  # - angle_control
-            right_wheel_velocity_target = base_speed + angle_control #+ angle_setpoint  # + angle_control
+            if autonomous_mode:
+                left_wheel_velocity_target, right_wheel_velocity_target = auto.autonomous_control_right_hand(sensor_readings, x, y, theta, current_time, time_step)
+
+            else:
+                # PID controller to adjust wheel velocities
+                if abs(angle_setpoint - theta) <= math.radians(1.5):
+                    angle_pid.set_integral(0)
+                angle_control = angle_pid.update(angle_setpoint, theta, time_step)
+                
+                left_wheel_velocity_target = base_speed - angle_control #- angle_setpoint  # - angle_control
+                right_wheel_velocity_target = base_speed + angle_control #+ angle_setpoint  # + angle_control
+                
+                        
             
             if abs(right_wheel_velocity_target) <= 0.01:
                 speed_pid_right.set_integral(0)
