@@ -113,6 +113,9 @@ class DifferentialDriveRobot:
         self.mc_right.set_max_acceleration(1, 500)
         self.mc_right.set_max_deceleration(1, 500)
         self.mc_right.set_starting_speed(1,10)
+        
+        self.mc_left.set_braking(1,00)
+        self.mc_right.set_braking(1,00)
 
 
         self.parameters = self.load_parameters(param_file)
