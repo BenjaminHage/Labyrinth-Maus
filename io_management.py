@@ -141,7 +141,7 @@ class ConsoleOutput:
             f"Angle_control:               {angle_control:.2f}",
             f"Sensor Readings:	{robot.get_formatted_sensor_readings(sensor_readings, decimal_places=2)}",
             "",
-            f"Percent:       {robot.get_power_percentage():3.0f}%"
+            #f"Percent:       {robot.get_power_percentage():3.0f}%"
             
         ]
 
@@ -240,7 +240,7 @@ def handle_user_input(angle_setpoint, base_speed, autonomous_mode, close = False
     if keyboard.is_pressed('c'):
         close = True
     if keyboard.is_pressed('a'):
-        autonomous_mode = not autonomous_mode
+        autonomous_mode = True#not autonomous_mode
         
     return angle_setpoint, base_speed, close, autonomous_mode
 

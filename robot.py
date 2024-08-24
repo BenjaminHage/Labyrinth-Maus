@@ -147,7 +147,7 @@ class DifferentialDriveRobot:
         self.k_robot_angle = 0
         self.k_robot_v = 0
         
-        self.akku = INA219()
+        #self.akku = INA219()
         
 
     def convert_voltage_to_distance(self, voltage):

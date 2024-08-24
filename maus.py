@@ -28,8 +28,8 @@ def main():
 
     
     ###### Manuell #####
-    speed_pid_left = PIDController(kp=450, ki=4000, kd=0, i_max=550, d_max=70, i_min=0, pid_min=0, pid_max=600)
-    speed_pid_right = PIDController(kp=450, ki=4000, kd=0, i_max=550, d_max=70, i_min=0, pid_min=0, pid_max=600)
+    speed_pid_left = PIDController(kp=420, ki=4000, kd=0, i_max=550, d_max=70, i_min=0, pid_min=0, pid_max=600)
+    speed_pid_right = PIDController(kp=420, ki=4000, kd=0, i_max=550, d_max=70, i_min=0, pid_min=0, pid_max=600)
     speed_pid_left.set_integral(0.00000000000000001)
     speed_pid_right.set_integral(0.00000000000000001)
     
@@ -41,8 +41,8 @@ def main():
     ###### Auto #####
     
     #Auto
-    init_base_speed = 0.5
-    init_base_rotation_speed = 0.2
+    init_base_speed = 0.25
+    init_base_rotation_speed = 0.6
     desired_distance = 10  # Desired distance from the wall
     sensor_activation_threshold = 35 #= robot.get_sensor_range() * 0.75 
     direkt_change_toleranz = 5
@@ -54,8 +54,8 @@ def main():
     esc_angle_comparison_interval = 1
     esc_angel_toleranz = 0.6
     
-    point_distance_pid = PIDController(kp=4.5, ki=40, kd=0, i_max=550, d_max=70, i_min=0, pid_min=0, pid_max=600)
-    wall_distance_pid = PIDController(kp=0.006, ki=0.0065, kd=0.0, d_minmax=0.029, i_minmax=1)
+    point_distance_pid = PIDController(kp=-0.3, ki=-0, kd=0, i_minmax=100, d_max=70, pid_minmax=300)
+    wall_distance_pid = PIDController(kp=0.002, ki=0.000, kd=0.0, d_minmax=0.029, i_minmax=1)
     esc = ESCController(dither_frequency, dither_amplitude, learning_rate)
     
     auto = AutonomousController(angle_pid, wall_distance_pid, point_distance_pid, esc, init_base_speed,
@@ -65,7 +65,7 @@ def main():
     ###### Auto #####
    
     out = io.OutputManager()
-    out.start_console_output()
+    #out.start_console_output()
     #out.start_rt_plot()
 
     angle_setpoint = 0
@@ -99,12 +99,11 @@ def main():
             imu_gyro_readings = robot.get_imu_readings()
             gyro_w = imu_gyro_readings[2]
             
-            angle_setpoint, base_speed, close, autonomous_mode = io.handle_user_input(angle_setpoint, base_speed, close)
-        
-            
+            angle_setpoint, base_speed, close, autonomous_mode = io.handle_user_input(angle_setpoint, base_speed,autonomous_mode, close=close)
+                        
             if autonomous_mode:
                 left_wheel_velocity_target, right_wheel_velocity_target = auto.autonomous_control_right_hand(sensor_readings, x, y, theta, current_time, time_step)
-
+                print(sensor_readings)
             else:
                 # PID controller to adjust wheel velocities
                 if abs(angle_setpoint - theta) <= math.radians(1.5):
