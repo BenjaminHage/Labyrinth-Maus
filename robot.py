@@ -1,16 +1,18 @@
+import time
 import numpy as np
 import random
 import math
+import pigpio
+
 from filter import LowPassFilter
 from filter import UKFEstimator
-from ADCDifferentialPi import ADCDifferentialPi
-#import RPi.GPIO as GPIO
-import time
-import motoron
 
+from ADCDifferentialPi import ADCDifferentialPi
+from INA219 import INA219 
+import motoron
 import adafruit_icm20x
 import board
-import pigpio
+
 
 
 
@@ -51,9 +53,11 @@ class DifferentialDriveRobot:
         self.last_right_time = time.monotonic()
         self.velocity_timeout = 0.17  # Sekundenschwelle, nach der die Geschwindigkeit auf 0 gesetzt wird
 
+
         self.lpf_sensors = [LowPassFilter(cutoff_freq=3) for _ in self.sensor_angles]
         self.lpf_speed = LowPassFilter(1)
         self.lpf_speed_right = LowPassFilter(1)
+
 
         self.pin_a_left = 17
         self.pin_b_left = 27
@@ -76,7 +80,6 @@ class DifferentialDriveRobot:
         self.pi.set_pull_up_down(self.pin_a_right, pigpio.PUD_UP)
         self.pi.set_pull_up_down(self.pin_b_right, pigpio.PUD_UP)
            
-       
         time.sleep(0.2)
 
         self.encoder_mode = 0
@@ -87,8 +90,10 @@ class DifferentialDriveRobot:
         elif self.encoder_mode == 1:
             self.pi.callback(self.pin_a_left, pigpio.RISING_EDGE, self._update_count_left)
             self.pi.callback(self.pin_a_right, pigpio.RISING_EDGE, self._update_count_right)
-            
+        
+        
         self.adc = ADCDifferentialPi(0x6E, 0x6F, 14)
+        
         
         self.mc_left = motoron.MotoronI2C()
         self.mc_right = motoron.MotoronI2C(address=17)
@@ -109,11 +114,14 @@ class DifferentialDriveRobot:
         self.mc_right.set_max_deceleration(1, 500)
         self.mc_right.set_starting_speed(1,10)
 
+
         self.parameters = self.load_parameters(param_file)
+        
         
         self.i2c = board.I2C()
         self.icm = adafruit_icm20x.ICM20948(self.i2c)
         self.gyro_w_bias = 0.00005
+        
         
         # Initialisierung von UKF spezifischen Variablen
         initial_state = [init_robot_x, init_robot_y, init_robot_angle, 0, 0, 0, 0]
@@ -138,6 +146,8 @@ class DifferentialDriveRobot:
         self.k_robot_y = 0
         self.k_robot_angle = 0
         self.k_robot_v = 0
+        
+        self.akku = INA219()
         
 
     def convert_voltage_to_distance(self, voltage):
@@ -369,4 +379,12 @@ class DifferentialDriveRobot:
         x, y, theta, omega, vl, vr, v = state
         #print(state)
         return np.array([vl, vr, omega])
+    
+    def get_power_percentage(self):
+        bus_voltage = self.akku.getBusVoltage_V()             # voltage on V- (load side)
+        p = (bus_voltage - 9)/3.6*100
+        if(p > 100):p = 100
+        if(p < 0):p = 0
+        return p
+        
         

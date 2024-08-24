@@ -139,7 +139,10 @@ class ConsoleOutput:
             f"Angle:                       {math.degrees(theta):.2f} °",
             f"Angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
             f"Angle_control:               {angle_control:.2f}",
-            f"Sensor Readings:	{robot.get_formatted_sensor_readings(sensor_readings, decimal_places=2)}"
+            f"Sensor Readings:	{robot.get_formatted_sensor_readings(sensor_readings, decimal_places=2)}",
+            "",
+            f"Percent:       {robot.get_power_percentage():3.0f}%"
+            
         ]
 
   

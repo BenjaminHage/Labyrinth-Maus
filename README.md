@@ -27,6 +27,8 @@ sudo pip3 install keyboard --break-system-packages
 sudo pip3 install scipy --break-system-packages
 sudo pip3 install filterpy --break-system-packages
 
+#wget https://files.waveshare.com/upload/e/ea/UPS_Module_3S_Code.zip
+
 
 sudo chmod +x setup_pi_ap.sh
 
