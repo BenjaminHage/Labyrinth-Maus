@@ -242,5 +242,5 @@ def handle_user_input(angle_setpoint, base_speed, autonomous_mode, close = False
     if keyboard.is_pressed('a'):
         autonomous_mode = not autonomous_mode
         
-    return angle_setpoint, base_speed, close
+    return angle_setpoint, base_speed, close, autonomous_mode
 

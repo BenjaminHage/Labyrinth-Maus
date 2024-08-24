@@ -99,7 +99,7 @@ def main():
             imu_gyro_readings = robot.get_imu_readings()
             gyro_w = imu_gyro_readings[2]
             
-            angle_setpoint, base_speed, close = io.handle_user_input(angle_setpoint, base_speed, close)
+            angle_setpoint, base_speed, close, autonomous_mode = io.handle_user_input(angle_setpoint, base_speed, close)
         
             
             if autonomous_mode:
