@@ -28,13 +28,13 @@ def main():
 
     
     ###### Manuell #####
-    speed_pid_left = PIDController(kp=450, ki=4000, kd=0, i_max=550, d_max=70, i_min=0, pid_min=0, pid_max=600)
-    speed_pid_right = PIDController(kp=450, ki=4000, kd=0, i_max=550, d_max=70, i_min=0, pid_min=0, pid_max=600)
+    speed_pid_left = PIDController(kp=500, ki=3500, kd=0, i_max=550, d_max=70, i_min=0, pid_min=-100, pid_max=600)
+    speed_pid_right = PIDController(kp=500, ki=3500, kd=0, i_max=550, d_max=70, i_min=0, pid_min=-100, pid_max=600)
     speed_pid_left.set_integral(0.00000000000000001)
     speed_pid_right.set_integral(0.00000000000000001)
     
-    #angle_pid = PIDController(kp=110, ki=100.0, kd=10.00, d_minmax=100, i_minmax=100)
-    angle_pid = PIDController(kp=0.04, ki=0.00, kd=0.0, d_minmax=0.029, i_minmax=0.1, pid_minmax=1)
+    #angle_pid = PIDController(kp=150, ki=100.0, kd=10.00, d_minmax=100, i_minmax=100)
+    angle_pid = PIDController(kp=0.045, ki=0.00, kd=0.0, d_minmax=0.029, i_minmax=0.1, pid_minmax=1)
     ###### Manuell #####
 
 
@@ -43,8 +43,8 @@ def main():
     #Auto
     init_base_speed = 0.25
     init_base_rotation_speed = 0.6
-    desired_distance = 10  # Desired distance from the wall
-    sensor_activation_threshold = 35 #= robot.get_sensor_range() * 0.75 
+    desired_distance = 8  # Desired distance from the wall
+    sensor_activation_threshold = 45 #= robot.get_sensor_range() * 0.75 
     direkt_change_toleranz = 5
     
     #ESC
@@ -55,7 +55,7 @@ def main():
     esc_angel_toleranz = 0.6
     
     point_distance_pid = PIDController(kp=-0.55, ki=-0.0, kd=0, i_minmax=100, d_max=70, pid_minmax=0.5)
-    wall_distance_pid = PIDController(kp=0.4, ki=0.000, kd=0.4, d_minmax=0.029, i_minmax=1)
+    wall_distance_pid = PIDController(kp=0.25, ki=0.000, kd=0.3, d_minmax=0.029, i_minmax=1)
     esc = ESCController(dither_frequency, dither_amplitude, learning_rate)
     
     auto = AutonomousController(angle_pid, wall_distance_pid, point_distance_pid, esc, init_base_speed,
@@ -65,7 +65,7 @@ def main():
     ###### Auto #####
    
     out = io.OutputManager()
-    #out.start_console_output()
+    out.start_console_output()
     #out.start_rt_plot()
 
 
@@ -111,29 +111,27 @@ def main():
                 # PID controller to adjust wheel velocities
                 if abs(angle_setpoint - theta) <= math.radians(1.5):
                     angle_pid.set_integral(0)
-                angle_control = angle_pid.update(angle_setpoint, theta, time_step)
+                angle_control = np.sign(angle_pid.previous_error)* 0.01 *(init_base_rotation_speed - abs(gyro_w)) + angle_pid.update(angle_setpoint, theta, time_step)
                 
-                left_wheel_velocity_target = base_speed - angle_control #- angle_setpoint  # - angle_control
-                right_wheel_velocity_target = base_speed + angle_control #+ angle_setpoint  # + angle_control
+                left_wheel_velocity_target = base_speed   - angle_control #- angle_setpoint
+                right_wheel_velocity_target = base_speed  + angle_control #+ angle_setpoint 
                 
                         
             
-            if abs(right_wheel_velocity_target) <= 0.01:
-                speed_pid_right.set_integral(0.001)
+            if abs(right_wheel_velocity_target) <= 0.005:
+                speed_pid_right.set_integral(0.00)
             right_motor_control = speed_pid_right.update(abs(right_wheel_velocity_target), robot.get_right_wheel_velocity(), time_step)
-            #right_motor_control = speed_pid_right.update(abs(base_speed), v, time_step)
-            if abs(right_wheel_velocity_target) <= 0.01:
-                speed_pid_right.set_integral(0)
+            #right_motor_control = speed_pid_right.update(abs(base_speed), abs(v), time_step)
                 
                 
-            if abs(left_wheel_velocity_target) <= 0.01:
-                speed_pid_left.set_integral(0.001)
+            if abs(left_wheel_velocity_target) <= 0.005:
+                speed_pid_left.set_integral(0.00)
             left_motor_control = speed_pid_left.update(abs(left_wheel_velocity_target), robot.get_left_wheel_velocity(), time_step)
-            #left_motor_control = speed_pid_left.update(abs(base_speed), v, time_step)
+            #left_motor_control = speed_pid_left.update(abs(base_speed), abs(v), time_step)
             
                 
             
-            robot.set_right_motor(int((-right_motor_control * np.sign(right_wheel_velocity_target))))# - angle_control))
+            robot.set_right_motor(int((-right_motor_control * np.sign(right_wheel_velocity_target)))) #- angle_control))
             robot.set_left_motor(int((left_motor_control * np.sign(left_wheel_velocity_target))))# - angle_control))
             
            

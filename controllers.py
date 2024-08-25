@@ -161,7 +161,7 @@ class ESCController:
         
 class AutonomousController:
     def __init__(self, angle_pid, wall_distance_pid, point_distance_pid, esc, base_speed, base_rotation_speed, desired_distance, sensor_activation_threshold, wheel_distance, sensor_angles,
-                 control_distance = 5, angle_toleranz = 3, distance_toleranz = 3, 
+                 control_distance = 7, angle_toleranz = 3, distance_toleranz = 1.5, 
                  esc_angle_comparison_interval = 1, esc_angel_toleranz = 0.8,  feature_toleranz = 3, direkt_change_toleranz = 15):
         
         self.state = 0
@@ -307,7 +307,7 @@ class AutonomousController:
                 self.control_message ="found front wall, start controling the distance to it"
                 self.prev_state = self.state
                 self.state = 9
-            elif not self.front_left_sensor_active and False:
+            elif not self.front_left_sensor_active:
                 self.control_message ="detekt edge, start driving forwoard"
                 self.prev_state = self.state
                 self.state = 6
@@ -317,7 +317,7 @@ class AutonomousController:
                 self.control_message ="found front wall, start controling the distance to it"
                 self.prev_state = self.state
                 self.state = 9
-            elif not self.front_right_sensor_active and False:
+            elif not self.front_right_sensor_active:
                 self.control_message ="detekt edge, start driving forwoard"
                 self.prev_state = self.state
                 self.state = 6    
@@ -395,11 +395,12 @@ class AutonomousController:
 
         elif self.state == 8: #regelung zum Punkt
             if self.distance_toleranz > self.get_distance_to_point(x, y, self.target_x, self.target_y):
-                if self.follow_sensor == self.left:
+                self.control_message ="got to point"
+                if self.follow_sensor == self.left and False:
                     self.control_message ="got to point, start set up left turn"
                     self.prev_state = self.state
                     self.state = 4
-                elif self.follow_sensor == self.right:
+                elif self.follow_sensor == self.right and False:
                     self.control_message ="got to point, start set up right turn"
                     self.prev_state = self.state
                     self.state = 3
@@ -496,7 +497,7 @@ class AutonomousController:
             self.follow_sensor = self.right
 
         elif self.state == 3: #set up 90° recht drehen
-            self.angle_setpoint = theta - math.radians(90)
+            self.angle_setpoint = theta - math.radians(85)
             if self.follow_sensor == self.front:
                 self.follow_sensor = self.left
             elif self.follow_sensor == self.left and self.prev_state == 9:
@@ -505,7 +506,7 @@ class AutonomousController:
             self.right_wheel_velocity = 0
 
         elif self.state == 4: #set up 90° links drehen 
-            self.angle_setpoint = theta + math.radians(90)
+            self.angle_setpoint = theta + math.radians(85)
             if self.follow_sensor == self.front:
                 self.follow_sensor = self.right
             elif self.follow_sensor == self.right and self.prev_state == 9:
@@ -525,8 +526,10 @@ class AutonomousController:
             self.right_wheel_velocity = self.base_speed
 
         elif self.state == 7: #set up forwoard point
-            self.target_x, self.target_y = self.get_forward_point(x, y, theta, self.desired_distance)
+            self.target_x, self.target_y = self.get_forward_point(x, y, theta, self.desired_distance + 5)
             self.check_features(x,y)
+#             self.left_wheel_velocity = 0
+#             self.right_wheel_velocity = 0
 
         elif self.state == 8: #regelung zum punkt
             distance_control = self.point_distance_pid.update(0, self.get_distance_to_point(x, y, self.target_x, self.target_y), time_step)
