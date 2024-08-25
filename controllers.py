@@ -242,9 +242,9 @@ class AutonomousController:
             "---------------------------------------------------------------------",
             f"State:             {self.state}",
             f"follow_sensor:     {self.follow_sensor}",
-            f"Desired_distance:  {self.desired_distance}",
-            f"aktivation_thres:  {self.activation_threshold}",
-            f"Base_Speed:        {self.base_speed:.2f} m/s",
+          #  f"Desired_distance:  {self.desired_distance}",
+          #  f"aktivation_thres:  {self.activation_threshold}",
+          #  f"Base_Speed:        {self.base_speed:.2f} m/s",
             "",
             f"front_sensor:      {front_sensor:.4}",
             f"front_left_sensor: {front_left_sensor:.4}    {self.front_left_sensor_active}",
@@ -252,13 +252,13 @@ class AutonomousController:
             f"front_right_sensor:{front_right_sensor:.4}    {self.front_right_sensor_active}",
             f"right_sensor:      {right_sensor:.4}    {self.right_sensor_active}",
             "",
-            f"Right Wheel Velocity:        {self.right_wheel_velocity:.2f} m/s",
-            f"left Wheel Velocity:        {self.left_wheel_velocity:.2f} m/s",
-            "",     
-            f"Angle:                       {math.degrees(theta):.2f} °",
-            f"Angle_setpoint:              {math.degrees(self.angle_setpoint):.2f} °",
-            f"x: {x} y:{y}   target_x: {self.target_x} targe_y: {self.target_y}",
-            "",
+         #   f"Right Wheel Velocity:        {self.right_wheel_velocity:.2f} m/s",
+         #   f"left Wheel Velocity:        {self.left_wheel_velocity:.2f} m/s",
+         #   "",     
+         #   f"Angle:                       {math.degrees(theta):.2f} °",
+         #   f"Angle_setpoint:              {math.degrees(self.angle_setpoint):.2f} °",
+         #   f"x: {x} y:{y}   target_x: {self.target_x} targe_y: {self.target_y}",
+         #   "",
             f"{self.control_message}"
 
             
@@ -307,7 +307,7 @@ class AutonomousController:
                 self.control_message ="found front wall, start controling the distance to it"
                 self.prev_state = self.state
                 self.state = 9
-            elif not self.front_left_sensor_active:
+            elif not self.front_left_sensor_active and self.left_sensor_active:
                 self.control_message ="detekt edge, start driving forwoard"
                 self.prev_state = self.state
                 self.state = 6
@@ -317,7 +317,7 @@ class AutonomousController:
                 self.control_message ="found front wall, start controling the distance to it"
                 self.prev_state = self.state
                 self.state = 9
-            elif not self.front_right_sensor_active:
+            elif not self.front_right_sensor_active and self.right_sensor_active:
                 self.control_message ="detekt edge, start driving forwoard"
                 self.prev_state = self.state
                 self.state = 6    
@@ -501,7 +501,7 @@ class AutonomousController:
             self.follow_sensor = self.right
 
         elif self.state == 3: #set up 90° recht drehen
-            self.angle_setpoint = theta - math.radians(85)
+            self.angle_setpoint = theta - math.radians(90)
             if self.follow_sensor == self.front:
                 self.follow_sensor = self.left
             elif self.follow_sensor == self.left and self.prev_state == 9:
@@ -510,7 +510,7 @@ class AutonomousController:
             self.right_wheel_velocity = 0
 
         elif self.state == 4: #set up 90° links drehen 
-            self.angle_setpoint = theta + math.radians(85)
+            self.angle_setpoint = theta + math.radians(90)
             if self.follow_sensor == self.front:
                 self.follow_sensor = self.right
             elif self.follow_sensor == self.right and self.prev_state == 9:
