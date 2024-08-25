@@ -354,7 +354,11 @@ class AutonomousController:
                 elif not((self.follow_sensor == self.right) or (self.follow_sensor == self.left)): #else mag ich nicht
                     self.control_message ="did turned start driving forward"
                     self.prev_state = self.state
-                    self.state = 6                  
+                    self.state = 6
+                elif ((self.follow_sensor == self.right) or (self.follow_sensor == self.left)): #else mag ich nicht
+                    self.control_message ="did on point turn, start driving forward"
+                    self.prev_state = self.state
+                    self.state = 6 
 
         elif self.state == 6: #ungeregelt gerade aus
             if (left_sensor_flanke and not self.left_sensor_active and self.follow_sensor == self.left) or \
@@ -396,11 +400,11 @@ class AutonomousController:
         elif self.state == 8: #regelung zum Punkt
             if self.distance_toleranz > self.get_distance_to_point(x, y, self.target_x, self.target_y):
                 self.control_message ="got to point"
-                if self.follow_sensor == self.left and False:
+                if self.follow_sensor == self.left:
                     self.control_message ="got to point, start set up left turn"
                     self.prev_state = self.state
                     self.state = 4
-                elif self.follow_sensor == self.right and False:
+                elif self.follow_sensor == self.right:
                     self.control_message ="got to point, start set up right turn"
                     self.prev_state = self.state
                     self.state = 3
@@ -522,11 +526,23 @@ class AutonomousController:
             self.right_wheel_velocity = angle_control
 
         elif self.state == 6: #ungeregelt gerade aus
-            self.left_wheel_velocity = self.base_speed
-            self.right_wheel_velocity = self.base_speed
+            angle_control = 0
+            base_speed = self.base_speed
+            if self.prev_state == 7:
+                relative_angle = self.relative_angle(x, y, theta, self.target_x, self.target_y)
+                angle_control = np.sign(self.angle_pid.previous_error)* 0.00 *(self.base_rotation_speed - abs(omega))
+                angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.3
+                base_speed = self.base_speed * 0.3
+            else:
+                angle_control = np.sign(self.angle_pid.previous_error)* 0.00 *(self.base_rotation_speed - abs(omega))
+                angle_control += self.angle_pid.update(self.angle_setpoint, theta, time_step) * 1
+                base_speed = self.base_speed * 0.5
+            
+            self.left_wheel_velocity = base_speed - angle_control
+            self.right_wheel_velocity = base_speed + angle_control
 
         elif self.state == 7: #set up forwoard point
-            self.target_x, self.target_y = self.get_forward_point(x, y, theta, self.desired_distance + 5)
+            self.target_x, self.target_y = self.get_forward_point(x, y, theta, self.desired_distance + 0.05)
             self.check_features(x,y)
 #             self.left_wheel_velocity = 0
 #             self.right_wheel_velocity = 0
@@ -583,6 +599,33 @@ class AutonomousController:
         ############################# V1 ####################################
 
         return self.left_wheel_velocity, self.right_wheel_velocity
+    
+    
+    def relative_angle(self, robot_x, robot_y, robot_orientation, target_x, target_y):
+        """
+        Berechnet den relativen Winkel zwischen der aktuellen Orientierung des Roboters und einem Zielpunkt.
+        
+        :param robot_x: Float - Die x-Position des Roboters.
+        :param robot_y: Float - Die y-Position des Roboters.
+        :param robot_orientation: Float - Die aktuelle Orientierung des Roboters in rad.
+        :param target_x: Float - Die x-Position des Zielpunkts.
+        :param target_y: Float - Die y-Position des Zielpunkts.
+        
+        :return: Float - Der relative Winkel zum Zielpunkt in rad (positiv = links, negativ = rechts).
+        """
+        
+        # Berechne den absoluten Winkel vom Roboter zum Zielpunkt
+        delta_x = target_x - robot_x
+        delta_y = target_y - robot_y
+        absolute_angle = math.atan2(delta_y, delta_x)
+        
+        # Berechne den relativen Winkel (absolute_angle - robot_orientation)
+        relative_angle = absolute_angle #- robot_orientation
+        
+        return relative_angle
+
+
+    
     
     def flanke_detektion(self, sensor_value, prev_value, threshold = 151):
         if sensor_value >= threshold:

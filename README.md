@@ -1,30 +1,3 @@
-def relative_angle(robot_x, robot_y, robot_orientation, target_x, target_y):
-    """
-    Berechnet den relativen Winkel zwischen der aktuellen Orientierung des Roboters und einem Zielpunkt.
-    
-    :param robot_x: Float - Die x-Position des Roboters.
-    :param robot_y: Float - Die y-Position des Roboters.
-    :param robot_orientation: Float - Die aktuelle Orientierung des Roboters in Grad (0 = rechts, 90 = oben).
-    :param target_x: Float - Die x-Position des Zielpunkts.
-    :param target_y: Float - Die y-Position des Zielpunkts.
-    
-    :return: Float - Der relative Winkel zum Zielpunkt in Grad (positiv = links, negativ = rechts).
-    """
-    
-    # Berechne den absoluten Winkel vom Roboter zum Zielpunkt
-    delta_x = target_x - robot_x
-    delta_y = target_y - robot_y
-    absolute_angle = math.degrees(math.atan2(delta_y, delta_x))
-    
-    # Berechne den relativen Winkel (absolute_angle - robot_orientation)
-    relative_angle = absolute_angle - robot_orientation
-    
-    # Normalisiere den Winkel auf den Bereich [-180, 180] Grad
-    relative_angle = (relative_angle + 180) % 360 - 180
-    
-    return relative_angle
-
-
 # Labyrinth-Maus
 
 sudo pigpiod

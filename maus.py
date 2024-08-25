@@ -41,7 +41,7 @@ def main():
     ###### Auto #####
     
     #Auto
-    init_base_speed = 0.25
+    init_base_speed = 0.2
     init_base_rotation_speed = 0.6
     desired_distance = 8  # Desired distance from the wall
     sensor_activation_threshold = 45 #= robot.get_sensor_range() * 0.75 
@@ -65,7 +65,7 @@ def main():
     ###### Auto #####
    
     out = io.OutputManager()
-    out.start_console_output()
+    #out.start_console_output()
     #out.start_rt_plot()
 
 
