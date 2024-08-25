@@ -219,7 +219,7 @@ class AutonomousController:
         
         self.control_message = ""
 
-    def autonomous_control_right_hand(self, sensor_readings, x, y, theta, current_time, time_step):
+    def autonomous_control_right_hand(self, sensor_readings, x, y, theta, omega, current_time, time_step):
         
 
         ############################# V1 ####################################
@@ -307,7 +307,7 @@ class AutonomousController:
                 self.control_message ="found front wall, start controling the distance to it"
                 self.prev_state = self.state
                 self.state = 9
-            elif not self.front_left_sensor_active:
+            elif not self.front_left_sensor_active and False:
                 self.control_message ="detekt edge, start driving forwoard"
                 self.prev_state = self.state
                 self.state = 6
@@ -317,7 +317,7 @@ class AutonomousController:
                 self.control_message ="found front wall, start controling the distance to it"
                 self.prev_state = self.state
                 self.state = 9
-            elif not self.front_right_sensor_active:
+            elif not self.front_right_sensor_active and False:
                 self.control_message ="detekt edge, start driving forwoard"
                 self.prev_state = self.state
                 self.state = 6    
@@ -333,19 +333,19 @@ class AutonomousController:
             self.state = 5
 
         elif self.state == 5: #geregelt drehen
-            if self.angle_toleranz > abs(self.angle_setpoint - theta):
+            if self.angle_toleranz > abs(math.degrees(self.angle_setpoint) - math.degrees(theta)):
                 if self.follow_sensor == []:
                     self.control_message ="turnd to front wall, start esc"
                     self.esc.set_previous_hpf_input(-front_sensor)
                     self.prev_state = self.state
                     self.state = 13
-                elif self.follow_sensor == self.right and self.right_sensor_active and False	:
+                elif self.follow_sensor == self.right and self.right_sensor_active:
                     self.control_message ="turned parallel to right wall, start folloing it"
                     self.prev_state = self.state
                     self.state = 2
                     error = self.desired_distance - right_sensor
                     self.wall_distance_pid.set_previous_error(error)    
-                elif self.follow_sensor == self.left and self.left_sensor_active and False:
+                elif self.follow_sensor == self.left and self.left_sensor_active:
                     self.control_message ="turned parallel to left wall, start folloing it"
                     self.prev_state = self.state
                     self.state = 1
@@ -407,11 +407,11 @@ class AutonomousController:
         elif self.state == 9: #regelung wand forne
             if abs(self.desired_distance - front_sensor) < self.distance_toleranz:
                 self.control_message ="got to wall distance"
-                if self.follow_sensor == self.left and False:
+                if self.follow_sensor == self.left:
                     self.control_message ="got to wall distance, start set up right turn"
                     self.prev_state = self.state
                     self.state = 3     
-                elif self.follow_sensor == self.right and False:
+                elif self.follow_sensor == self.right:
                     self.control_message ="got to wall distance, start set up left turn"
                     self.prev_state = self.state
                     self.state = 4  
@@ -514,9 +514,9 @@ class AutonomousController:
             self.right_wheel_velocity = 0
 
         elif self.state == 5: #geregelt drehen
-            if abs(self.angle_setpoint - theta) <= math.radians(1.5):
+            if abs(self.angle_setpoint - theta) <= math.radians(3):
                 self.angle_pid.set_integral(0)
-            angle_control = self.angle_pid.update(self.angle_setpoint, theta, time_step)
+            angle_control = np.sign(self.angle_pid.previous_error)* 0.05 *(self.base_rotation_speed - abs(omega)) + self.angle_pid.update(self.angle_setpoint, theta, time_step) 
             self.left_wheel_velocity = - angle_control
             self.right_wheel_velocity = angle_control
 

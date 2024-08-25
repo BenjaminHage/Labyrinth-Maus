@@ -34,7 +34,7 @@ def main():
     speed_pid_right.set_integral(0.00000000000000001)
     
     #angle_pid = PIDController(kp=110, ki=100.0, kd=10.00, d_minmax=100, i_minmax=100)
-    angle_pid = PIDController(kp=0.04, ki=0.055, kd=0.0, d_minmax=0.029, i_minmax=1, pid_minmax=1)
+    angle_pid = PIDController(kp=0.04, ki=0.00, kd=0.0, d_minmax=0.029, i_minmax=0.1, pid_minmax=1)
     ###### Manuell #####
 
 
@@ -42,7 +42,7 @@ def main():
     
     #Auto
     init_base_speed = 0.25
-    init_base_rotation_speed = -0.8
+    init_base_rotation_speed = 0.6
     desired_distance = 10  # Desired distance from the wall
     sensor_activation_threshold = 35 #= robot.get_sensor_range() * 0.75 
     direkt_change_toleranz = 5
@@ -55,7 +55,7 @@ def main():
     esc_angel_toleranz = 0.6
     
     point_distance_pid = PIDController(kp=-0.55, ki=-0.0, kd=0, i_minmax=100, d_max=70, pid_minmax=0.5)
-    wall_distance_pid = PIDController(kp=0.002, ki=0.000, kd=0.0, d_minmax=0.029, i_minmax=1)
+    wall_distance_pid = PIDController(kp=0.4, ki=0.000, kd=0.4, d_minmax=0.029, i_minmax=1)
     esc = ESCController(dither_frequency, dither_amplitude, learning_rate)
     
     auto = AutonomousController(angle_pid, wall_distance_pid, point_distance_pid, esc, init_base_speed,
@@ -65,7 +65,7 @@ def main():
     ###### Auto #####
    
     out = io.OutputManager()
-    out.start_console_output()
+    #out.start_console_output()
     #out.start_rt_plot()
 
 
@@ -105,7 +105,7 @@ def main():
             angle_setpoint, base_speed, close, autonomous_mode = io.handle_user_input(angle_setpoint, base_speed,autonomous_mode, close=close)
                         
             if autonomous_mode:
-                left_wheel_velocity_target, right_wheel_velocity_target = auto.autonomous_control_right_hand(sensor_readings, x, y, theta, current_time, time_step)
+                left_wheel_velocity_target, right_wheel_velocity_target = auto.autonomous_control_right_hand(sensor_readings, x, y, theta, gyro_w, current_time, time_step)
                 #print(sensor_readings)
             else:
                 # PID controller to adjust wheel velocities
@@ -119,7 +119,7 @@ def main():
                         
             
             if abs(right_wheel_velocity_target) <= 0.01:
-                speed_pid_right.set_integral(0)
+                speed_pid_right.set_integral(0.001)
             right_motor_control = speed_pid_right.update(abs(right_wheel_velocity_target), robot.get_right_wheel_velocity(), time_step)
             #right_motor_control = speed_pid_right.update(abs(base_speed), v, time_step)
             if abs(right_wheel_velocity_target) <= 0.01:
@@ -127,7 +127,7 @@ def main():
                 
                 
             if abs(left_wheel_velocity_target) <= 0.01:
-                speed_pid_left.set_integral(0)
+                speed_pid_left.set_integral(0.001)
             left_motor_control = speed_pid_left.update(abs(left_wheel_velocity_target), robot.get_left_wheel_velocity(), time_step)
             #left_motor_control = speed_pid_left.update(abs(base_speed), v, time_step)
             
