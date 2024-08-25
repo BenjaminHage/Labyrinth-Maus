@@ -602,28 +602,28 @@ class AutonomousController:
     
     
     def relative_angle(self, robot_x, robot_y, robot_orientation, target_x, target_y):
-        """
-        Berechnet den relativen Winkel zwischen der aktuellen Orientierung des Roboters und einem Zielpunkt.
-        
-        :param robot_x: Float - Die x-Position des Roboters.
-        :param robot_y: Float - Die y-Position des Roboters.
-        :param robot_orientation: Float - Die aktuelle Orientierung des Roboters in rad.
-        :param target_x: Float - Die x-Position des Zielpunkts.
-        :param target_y: Float - Die y-Position des Zielpunkts.
-        
-        :return: Float - Der relative Winkel zum Zielpunkt in rad (positiv = links, negativ = rechts).
-        """
-        
-        # Berechne den absoluten Winkel vom Roboter zum Zielpunkt
-        delta_x = target_x - robot_x
-        delta_y = target_y - robot_y
-        absolute_angle = math.atan2(delta_y, delta_x)
-        
-        # Berechne den relativen Winkel (absolute_angle - robot_orientation)
-        relative_angle = absolute_angle #- robot_orientation
-        
-        return relative_angle
-
+    """
+    Berechnet den absoluten Winkel zwischen der aktuellen Orientierung des Roboters und einem Zielpunkt,
+    wobei der Roboterwinkel nicht normiert wird und Rotationen des Roboters berücksichtigt werden.
+    
+    :param robot_x: Float - Die x-Position des Roboters.
+    :param robot_y: Float - Die y-Position des Roboters.
+    :param robot_orientation: Float - Die aktuelle Orientierung des Roboters in rad.
+    :param target_x: Float - Die x-Position des Zielpunkts.
+    :param target_y: Float - Die y-Position des Zielpunkts.
+    
+    :return: Float - Der absolute Winkel zum Zielpunkt in rad (über \(2\pi\) hinausgehend).
+    """
+    
+    # Berechne den absoluten Winkel vom Roboter zum Zielpunkt (normiert)
+    delta_x = target_x - robot_x
+    delta_y = target_y - robot_y
+    absolute_angle_norm = math.atan2(delta_y, delta_x)
+    
+    # Berechne den absoluten Winkel, der durch Rotationen des Roboters erweitert ist
+    absolute_angle = absolute_angle_norm + robot_orientation
+    
+    return absolute_angle
 
     
     
