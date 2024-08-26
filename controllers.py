@@ -160,7 +160,8 @@ class ESCController:
         
         
 class AutonomousController:
-    def __init__(self, angle_pid, wall_distance_pid, point_distance_pid, esc, base_speed, base_rotation_speed, desired_distance, sensor_activation_threshold, wheel_distance, sensor_angles,
+    def __init__(self, angle_pid, wall_distance_pid, point_distance_pid, esc, base_speed, base_rotation_speed, desired_distance, sensor_activation_threshold,
+                 wheel_distance, robot_radius, sensor_angles,
                  control_distance = 7, angle_toleranz = 3, distance_toleranz = 1.5, 
                  esc_angle_comparison_interval = 1, esc_angel_toleranz = 0.8,  feature_toleranz = 3, direkt_change_toleranz = 15):
         
@@ -174,6 +175,7 @@ class AutonomousController:
         self.control_distance = control_distance/100
         self.wheel_distance = wheel_distance
         self.sensor_angles = sensor_angles
+        self.robot_radius = robot_radius
 
         self.follow_sensor = []
         self.angle_setpoint = 0
@@ -307,7 +309,7 @@ class AutonomousController:
                 self.control_message ="found front wall, start controling the distance to it"
                 self.prev_state = self.state
                 self.state = 9
-            elif not self.front_left_sensor_active and self.left_sensor_active:
+            elif not self.front_left_sensor_active and front_left_sensor_flanke and self.left_sensor_active:
                 self.control_message ="detekt edge, start driving forwoard"
                 self.prev_state = self.state
                 self.state = 6
@@ -317,7 +319,7 @@ class AutonomousController:
                 self.control_message ="found front wall, start controling the distance to it"
                 self.prev_state = self.state
                 self.state = 9
-            elif not self.front_right_sensor_active and self.right_sensor_active:
+            elif not self.front_right_sensor_active and front_right_sensor_flanke and self.right_sensor_active:
                 self.control_message ="detekt edge, start driving forwoard"
                 self.prev_state = self.state
                 self.state = 6    
@@ -542,7 +544,7 @@ class AutonomousController:
             self.right_wheel_velocity = base_speed + angle_control
 
         elif self.state == 7: #set up forwoard point
-            self.target_x, self.target_y = self.get_forward_point(x, y, theta, self.desired_distance + 0.05)
+            self.target_x, self.target_y = self.get_forward_point(x, y, theta, self.desired_distance + self.robot_radius)
             self.check_features(x,y)
 #             self.left_wheel_velocity = 0
 #             self.right_wheel_velocity = 0

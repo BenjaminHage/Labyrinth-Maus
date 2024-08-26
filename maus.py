@@ -60,7 +60,7 @@ def main():
     
     auto = AutonomousController(angle_pid, wall_distance_pid, point_distance_pid, esc, init_base_speed,
                                         init_base_rotation_speed, desired_distance, sensor_activation_threshold,
-                                        robot.get_wheel_distance(), robot.get_sensor_angles())
+                                        robot.get_wheel_distance(), robot.get_robot_radius(),robot.get_sensor_angles())
      
     ###### Auto #####
    

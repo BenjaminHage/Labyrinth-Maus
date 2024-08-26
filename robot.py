@@ -27,7 +27,7 @@ class DifferentialDriveRobot:
 
         self.times = []  # Liste zur Speicherung der Zeitpunkte
         
-        self.robot_radius = 114.1 / 2
+        self.robot_radius = (114.1 / 2) / 1000 
         self.wheel_distance = 89 /1000  # Distance between wheels m
         self.wheel_diameter = 40 / 1000
         self.wheel_circumference =self.wheel_diameter * 3.141592653589793
