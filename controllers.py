@@ -368,7 +368,7 @@ class AutonomousController:
                 self.control_message ="over edge set target point"
                 self.prev_state = self.state
                 self.state = 7
-            elif self.control_distance > abs(self.get_distance_to_point(x, y, self.target_x, self.target_y)) and not self.prev_state == 5 and\
+            elif self.control_distance > abs(self.get_distance_to_point(x, y, theta, self.target_x, self.target_y)) and not self.prev_state == 5 and\
                     (self.follow_sensor == self.right or self.follow_sensor == self.left):
                 self.control_message ="near target point start controling to it"
                 self.prev_state = self.state
@@ -400,7 +400,7 @@ class AutonomousController:
             self.state = 6
 
         elif self.state == 8: #regelung zum Punkt
-            if self.distance_toleranz > self.get_distance_to_point(x, y, self.target_x, self.target_y):
+            if self.distance_toleranz > self.get_distance_to_point(x, y, theta,self.target_x, self.target_y):
                 self.control_message ="got to point"
                 if self.follow_sensor == self.left:
                     self.control_message ="got to point, start set up left turn"
@@ -550,7 +550,7 @@ class AutonomousController:
 #             self.right_wheel_velocity = 0
 
         elif self.state == 8: #regelung zum punkt
-            distance_control = self.point_distance_pid.update(0, self.get_distance_to_point(x, y, self.target_x, self.target_y), time_step)
+            distance_control = self.point_distance_pid.update(0, self.get_distance_to_point(x, y, theta, self.target_x, self.target_y), time_step)
             self.left_wheel_velocity = distance_control
             self.right_wheel_velocity = distance_control
 
@@ -645,18 +645,39 @@ class AutonomousController:
     
         return sensor_aktive, sensor_flanke
 
-    def get_distance_to_point(self, x, y, target_x, target_y):
-        """
-        Berechnet den Abstand zwischen dem Roboter und einem gegebenen Punkt.
+    def get_distance_to_point(robot_x, robot_y, robot_orientation, target_x, target_y):
+    """
+    Berechnet den Abstand zwischen dem Roboter und einem gegebenen Punkt.
+    Der Abstand wird negativ zurückgegeben, wenn der Punkt hinter dem Roboter liegt.
 
-        :param x1: x-Koordinate des Roboters
-        :param y1: y-Koordinate des Roboters
-        :param x2: x-Koordinate des Zielpunkts
-        :param y2: y-Koordinate des Zielpunkts
-        :return: Abstand zwischen den beiden Punkten
-        """
-        distance = math.sqrt((target_x - x) ** 2 + (target_y - y) ** 2)
-        return distance
+    :param robot_x: x-Koordinate des Roboters
+    :param robot_y: y-Koordinate des Roboters
+    :param robot_orientation: Orientierung des Roboters in rad
+    :param target_x: x-Koordinate des Zielpunkts
+    :param target_y: y-Koordinate des Zielpunkts
+    :return: Abstand zwischen dem Roboter und dem Zielpunkt (negativ, wenn hinter dem Roboter)
+    """
+    # Berechne die Differenzvektoren
+    delta_x = target_x - robot_x
+    delta_y = target_y - robot_y
+    
+    # Berechne den Abstand
+    distance = math.sqrt(delta_x ** 2 + delta_y ** 2)
+    
+    # Berechne den Winkel zum Zielpunkt relativ zur Roboterposition
+    absolute_angle = math.atan2(delta_y, delta_x)
+    
+    # Berechne den Winkel relativ zur Roboterorientierung
+    relative_angle = absolute_angle - robot_orientation
+    
+    # Normiere den relativen Winkel auf den Bereich [-pi, pi]
+    relative_angle = (relative_angle + math.pi) % (2 * math.pi) - math.pi
+    
+    # Wenn der Punkt hinter dem Roboter liegt, mache die Distanz negativ
+    if abs(relative_angle) > math.pi / 2:
+        distance = -distance
+    
+    return distance
 
     def get_forward_point(self, x, y, theta, distance):
         """
