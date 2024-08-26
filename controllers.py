@@ -624,11 +624,14 @@ class AutonomousController:
         delta_y = target_y - robot_y
         absolute_angle_norm = math.atan2(delta_y, delta_x)
         
-        # Berechne das Vielfache von 2pi, das der Roboter gedreht hat (positiv oder negativ)
-        full_rotations = round(robot_orientation / (2 * math.pi))
+        # Berechne den relativen Winkel zwischen Roboter-Orientierung und Zielpunkt
+        relative_angle = absolute_angle_norm - robot_orientation
         
-        # Berücksichtige die vollen Umdrehungen in der Berechnung des absoluten Winkels
-        absolute_angle = absolute_angle_norm + full_rotations * 2 * math.pi
+        # Normiere den relativen Winkel auf den Bereich [-pi, pi]
+        relative_angle = (relative_angle + math.pi) % (2 * math.pi) - math.pi
+        
+        # Berechne den absoluten Winkel unter Berücksichtigung der Roboterorientierung
+        absolute_angle = robot_orientation + relative_angle
         
         return absolute_angle
 
