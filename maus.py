@@ -44,7 +44,7 @@ def main():
     init_base_speed = 0.18
     init_base_rotation_speed = 0.6
     desired_distance = 8  # Desired distance from the wall
-    sensor_activation_threshold = 50 #= robot.get_sensor_range() * 0.75 
+    sensor_activation_threshold = 45 #= robot.get_sensor_range() * 0.75 
     direkt_change_toleranz = 5
     
     #ESC

@@ -430,7 +430,7 @@ class AutonomousController:
                     self.control_message ="got to wall distance, detect wall font right, start set up right turn"
                     self.prev_state = self.state
                     self.state = 3     
-                elif self.follow_sensor == self.front and False:
+                elif self.follow_sensor == self.front:
                     self.control_message ="got to wall distance, no front left, font right wall, start set up light left turn"
                     self.prev_state = self.state
                     self.state = 11    
