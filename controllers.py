@@ -507,7 +507,8 @@ class AutonomousController:
             if self.follow_sensor == self.front:
                 self.follow_sensor = self.left
             elif self.follow_sensor == self.left and self.prev_state == 9:
-                self.check_features(x,y)
+                #self.check_features(x,y)
+                pass
             self.left_wheel_velocity = 0
             self.right_wheel_velocity = 0
 
@@ -516,7 +517,8 @@ class AutonomousController:
             if self.follow_sensor == self.front:
                 self.follow_sensor = self.right
             elif self.follow_sensor == self.right and self.prev_state == 9:
-                self.check_features(x,y)
+                #self.check_features(x,y)
+                pass
             self.left_wheel_velocity = 0
             self.right_wheel_velocity = 0
 
@@ -545,7 +547,7 @@ class AutonomousController:
 
         elif self.state == 7: #set up forwoard point
             self.target_x, self.target_y = self.get_forward_point(x, y, theta, self.desired_distance + self.robot_radius)
-            self.check_features(x,y)
+            #self.check_features(x,y)
 #             self.left_wheel_velocity = 0
 #             self.right_wheel_velocity = 0
 
@@ -645,39 +647,39 @@ class AutonomousController:
     
         return sensor_aktive, sensor_flanke
 
-    def get_distance_to_point(robot_x, robot_y, robot_orientation, target_x, target_y):
-    """
-    Berechnet den Abstand zwischen dem Roboter und einem gegebenen Punkt.
-    Der Abstand wird negativ zurückgegeben, wenn der Punkt hinter dem Roboter liegt.
+    def get_distance_to_point(self, robot_x, robot_y, robot_orientation, target_x, target_y):
+        """
+        Berechnet den Abstand zwischen dem Roboter und einem gegebenen Punkt.
+        Der Abstand wird negativ zurückgegeben, wenn der Punkt hinter dem Roboter liegt.
 
-    :param robot_x: x-Koordinate des Roboters
-    :param robot_y: y-Koordinate des Roboters
-    :param robot_orientation: Orientierung des Roboters in rad
-    :param target_x: x-Koordinate des Zielpunkts
-    :param target_y: y-Koordinate des Zielpunkts
-    :return: Abstand zwischen dem Roboter und dem Zielpunkt (negativ, wenn hinter dem Roboter)
-    """
-    # Berechne die Differenzvektoren
-    delta_x = target_x - robot_x
-    delta_y = target_y - robot_y
-    
-    # Berechne den Abstand
-    distance = math.sqrt(delta_x ** 2 + delta_y ** 2)
-    
-    # Berechne den Winkel zum Zielpunkt relativ zur Roboterposition
-    absolute_angle = math.atan2(delta_y, delta_x)
-    
-    # Berechne den Winkel relativ zur Roboterorientierung
-    relative_angle = absolute_angle - robot_orientation
-    
-    # Normiere den relativen Winkel auf den Bereich [-pi, pi]
-    relative_angle = (relative_angle + math.pi) % (2 * math.pi) - math.pi
-    
-    # Wenn der Punkt hinter dem Roboter liegt, mache die Distanz negativ
-    if abs(relative_angle) > math.pi / 2:
-        distance = -distance
-    
-    return distance
+        :param robot_x: x-Koordinate des Roboters
+        :param robot_y: y-Koordinate des Roboters
+        :param robot_orientation: Orientierung des Roboters in rad
+        :param target_x: x-Koordinate des Zielpunkts
+        :param target_y: y-Koordinate des Zielpunkts
+        :return: Abstand zwischen dem Roboter und dem Zielpunkt (negativ, wenn hinter dem Roboter)
+        """
+        # Berechne die Differenzvektoren
+        delta_x = target_x - robot_x
+        delta_y = target_y - robot_y
+        
+        # Berechne den Abstand
+        distance = math.sqrt(delta_x ** 2 + delta_y ** 2)
+        
+        # Berechne den Winkel zum Zielpunkt relativ zur Roboterposition
+        absolute_angle = math.atan2(delta_y, delta_x)
+        
+        # Berechne den Winkel relativ zur Roboterorientierung
+        relative_angle = absolute_angle - robot_orientation
+        
+        # Normiere den relativen Winkel auf den Bereich [-pi, pi]
+        relative_angle = (relative_angle + math.pi) % (2 * math.pi) - math.pi
+        
+        # Wenn der Punkt hinter dem Roboter liegt, mache die Distanz negativ
+        if abs(relative_angle) > math.pi / 2:
+            distance = -distance
+        
+        return distance
 
     def get_forward_point(self, x, y, theta, distance):
         """
@@ -712,9 +714,9 @@ class AutonomousController:
     def set_base_speed(self, base_speed):
         self.base_speed = base_speed
 
-    def check_features(self,x,y):
+    def check_features(self,x,y,theta):
         
-        if all(self.feature_toleranz < self.get_distance_to_point(x, y, feature[0], feature[1]) for feature in self.feature_list):
+        if all(self.feature_toleranz < abs(self.get_distance_to_point(x, y, theta, feature[0], feature[1])) for feature in self.feature_list):
             # Koordinaten als 2D-Array hinzufügen / das aktuelle feature ist kein zuvor besuchtes feature
             self.feature_list = np.append(self.feature_list, [[x, y]], axis=0)
         else:
