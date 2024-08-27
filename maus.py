@@ -28,8 +28,8 @@ def main():
 
     
     ###### Manuell #####
-    speed_pid_left = PIDController(kp=500, ki=3500, kd=0, i_max=550, d_max=70, i_min=0, pid_min=-100, pid_max=600)
-    speed_pid_right = PIDController(kp=500, ki=3500, kd=0, i_max=550, d_max=70, i_min=0, pid_min=-100, pid_max=600)
+    speed_pid_left = PIDController(kp=700, ki=3500, kd=0, i_max=550, d_max=70, i_min=0, pid_min=-100, pid_max=600)
+    speed_pid_right = PIDController(kp=700, ki=3500, kd=0, i_max=550, d_max=70, i_min=0, pid_min=-100, pid_max=600)
     speed_pid_left.set_integral(0.00000000000000001)
     speed_pid_right.set_integral(0.00000000000000001)
     
@@ -48,11 +48,11 @@ def main():
     direkt_change_toleranz = 5
     
     #ESC
-    dither_frequency = 0.8  # Frequency of dither signal (Hz)
-    dither_amplitude = 0.1   # Amplitude of dither signal
-    learning_rate = 0.13  # Learning rate for ESC
+    dither_frequency = 0.0007  # Frequency of dither signal (Hz)
+    dither_amplitude = 1.3   # Amplitude of dither signal
+    learning_rate = 0.4  # Learning rate for ESC
     esc_angle_comparison_interval = 1
-    esc_angel_toleranz = 0.6
+    esc_angel_toleranz = 1
     
     point_distance_pid = PIDController(kp=-0.55, ki=-0.0, kd=0, i_minmax=100, d_max=70, pid_minmax=0.5)
     wall_distance_pid = PIDController(kp=0.25, ki=0.000, kd=0.3, d_minmax=0.029, i_minmax=1)
@@ -118,13 +118,13 @@ def main():
                 
                         
             
-            if abs(right_wheel_velocity_target) <= 0.005:
+            if abs(right_wheel_velocity_target) <= 0.00:
                 speed_pid_right.set_integral(0.00)
             right_motor_control = speed_pid_right.update(abs(right_wheel_velocity_target), robot.get_right_wheel_velocity(), time_step)
             #right_motor_control = speed_pid_right.update(abs(base_speed), abs(v), time_step)
                 
                 
-            if abs(left_wheel_velocity_target) <= 0.005:
+            if abs(left_wheel_velocity_target) <= 0.00:
                 speed_pid_left.set_integral(0.00)
             left_motor_control = speed_pid_left.update(abs(left_wheel_velocity_target), robot.get_left_wheel_velocity(), time_step)
             #left_motor_control = speed_pid_left.update(abs(base_speed), abs(v), time_step)

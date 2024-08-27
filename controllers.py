@@ -451,15 +451,15 @@ class AutonomousController:
             self.state = 5       
 
         elif self.state == 13: #esc
-            self.state = 6
-            self.control_message ="ESC übersprungen, start driving forwoard"
+#             self.state = 6
+#             self.control_message ="ESC übersprungen, start driving forwoard"
             
             if current_time - self.previous_time >= self.esc_angle_comparison_interval:
                 
                 if self.has_angle_changed_less_than_threshold(self.previous_theta, theta, self.esc_angel_toleranz):
-                    self.control_message ="ortogonal to front wall, start driving forwoard"
+                    #self.control_message ="ortogonal to front wall, start driving forwoard"
                     self.prev_state = self.state
-                    self.state = 6
+#                     self.state = 6
                 self.previous_theta = theta
                 self.previous_time = current_time
 
@@ -525,7 +525,8 @@ class AutonomousController:
         elif self.state == 5: #geregelt drehen
             if abs(self.angle_setpoint - theta) <= math.radians(3):
                 self.angle_pid.set_integral(0)
-            angle_control = np.sign(self.angle_pid.previous_error)* 0.05 *(self.base_rotation_speed - abs(omega)) + self.angle_pid.update(self.angle_setpoint, theta, time_step) 
+            angle_control = np.sign(self.angle_pid.previous_error)* 0.05 *(self.base_rotation_speed - abs(omega))
+            angle_control += self.angle_pid.update(self.angle_setpoint, theta, time_step) 
             self.left_wheel_velocity = - angle_control
             self.right_wheel_velocity = angle_control
 
@@ -584,7 +585,8 @@ class AutonomousController:
             control_input = self.esc.update(-front_sensor, time_step)
 
             # Apply the control input to the robot's rotation
-            angle_control = self.angle_pid.update(self.angle_setpoint + control_input, theta, time_step)
+            angle_control = np.sign(self.angle_pid.previous_error)* 0.06 *(self.base_rotation_speed - abs(omega))
+            angle_control += self.angle_pid.update(self.angle_setpoint + control_input, theta, time_step)
             self.left_wheel_velocity = -angle_control
             self.right_wheel_velocity = angle_control
 
