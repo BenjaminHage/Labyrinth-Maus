@@ -73,7 +73,7 @@ def main():
     angle_setpoint = 0
     base_speed = 0
     close = False
-    autonomous_mode = False
+    autonomous_mode = True
     
     
     start_Time = time.monotonic() 
