@@ -393,10 +393,11 @@ class AutonomousController:
                 self.control_message ="front wall is near, start to controll the distance"
                 self.prev_state = self.state
                 self.state = 9
-            elif (self.follow_sensor == self.right or self.followsensor == self.left) and front_left_sensor < (self.desired_distance / 4):
+            elif (self.follow_sensor == self.right or self.followsensor == self.left) and front_sensor < (self.desired_distance / 4):
                 self.control_message ="error unenspectet front wall, restart init"
                 self.prev_state = self.state
                 self.state = 0
+                
         elif self.state == 7: #set up forwoard point
             self.control_message ="set up forwoard point, start driving forwoard to it"
             self.prev_state = self.state
