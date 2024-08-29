@@ -64,7 +64,7 @@ class DifferentialDriveRobot:
         self.pin_a_right = 21
         self.pin_b_right = 20
         
-        self.ppr = 140 # Pulses Per Revolution ############
+        self.ppr = 150 # Pulses Per Revolution ############
         self.counter_left = 0
         self.counter_right = 0
         self.last_time = time.time()

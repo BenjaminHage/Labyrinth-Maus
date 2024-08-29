@@ -41,10 +41,10 @@ def main():
     ###### Auto #####
     
     #Auto
-    init_base_speed = 0.18
+    init_base_speed = 0.15
     init_base_rotation_speed = 0.6
-    desired_distance = 8  # Desired distance from the wall
-    sensor_activation_threshold = 45 #= robot.get_sensor_range() * 0.75 
+    desired_distance = 9  # Desired distance from the wall
+    sensor_activation_threshold = 35 #= robot.get_sensor_range() * 0.75 
     direkt_change_toleranz = 5
     
     #ESC
@@ -160,6 +160,9 @@ def main():
     
         
     try:
+        robot.set_right_motor(0) 
+        robot.set_left_motor(0)
+            
         print("Messung beendet.")
         out.stop_console_output()
         out.aktivate_final_batch_plot()

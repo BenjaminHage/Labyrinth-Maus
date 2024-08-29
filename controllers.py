@@ -162,7 +162,7 @@ class ESCController:
 class AutonomousController:
     def __init__(self, angle_pid, wall_distance_pid, point_distance_pid, esc, base_speed, base_rotation_speed, desired_distance, sensor_activation_threshold,
                  wheel_distance, robot_radius, sensor_angles,
-                 control_distance = 7, angle_toleranz = 3, distance_toleranz = 1.5, 
+                 control_distance = 10, angle_toleranz = 3, distance_toleranz = 3, 
                  esc_angle_comparison_interval = 1, esc_angel_toleranz = 0.8,  feature_toleranz = 3, direkt_change_toleranz = 15):
         
         self.state = 0
@@ -173,6 +173,7 @@ class AutonomousController:
         self.base_rotation_speed = base_rotation_speed
         self.desired_distance = desired_distance/100
         self.control_distance = control_distance/100
+        
         self.wheel_distance = wheel_distance
         self.sensor_angles = sensor_angles
         self.robot_radius = robot_radius
@@ -181,6 +182,7 @@ class AutonomousController:
         self.angle_setpoint = 0
         self.target_x = 0
         self.target_y = 0
+        
         self.angle_toleranz = angle_toleranz
         self.distance_toleranz = distance_toleranz/100
         self.feature_toleranz = feature_toleranz/100 
@@ -220,6 +222,7 @@ class AutonomousController:
         self.esc = esc
         
         self.control_message = ""
+        self.undercut = 10
 
     def autonomous_control_right_hand(self, sensor_readings, x, y, theta, omega, current_time, time_step):
         
@@ -237,8 +240,8 @@ class AutonomousController:
 
         self.left_sensor_active, left_sensor_flanke = self.flanke_detektion(left_sensor, self.left_sensor_active, self.activation_threshold )
         self.right_sensor_active, right_sensor_flanke = self.flanke_detektion(right_sensor, self.right_sensor_active, self.activation_threshold )
-        self.front_left_sensor_active, front_left_sensor_flanke = self.flanke_detektion(front_left_sensor, self.front_left_sensor_active, self.activation_threshold ) #
-        self.front_right_sensor_active, front_right_sensor_flanke = self.flanke_detektion(front_right_sensor, self.front_right_sensor_active, self.activation_threshold ) #
+        self.front_left_sensor_active, front_left_sensor_flanke = self.flanke_detektion(front_left_sensor, self.front_left_sensor_active, self.activation_threshold + 0.05) #
+        self.front_right_sensor_active, front_right_sensor_flanke = self.flanke_detektion(front_right_sensor, self.front_right_sensor_active, self.activation_threshold + 0.05) #
     
         self.info_lines = [
             "---------------------------------------------------------------------",
@@ -364,8 +367,11 @@ class AutonomousController:
 
         elif self.state == 6: #ungeregelt gerade aus
             if (left_sensor_flanke and not self.left_sensor_active and self.follow_sensor == self.left) or \
-                    (right_sensor_flanke and not self.right_sensor_active and self.follow_sensor == self.right):
-                self.control_message ="over edge set target point"
+                    (right_sensor_flanke and not self.right_sensor_active and self.follow_sensor == self.right) and \
+                    (self.prev_state == 2 or self.prev_state == 1):
+#             if (left_sensor > self.near_activation_threshold and self.follow_sensor == self.left) or \
+#                     (right_sensor > self.near_activation_threshold and self.follow_sensor == self.right):   
+#                 self.control_message ="over edge set target point"
                 self.prev_state = self.state
                 self.state = 7
             elif self.control_distance > abs(self.get_distance_to_point(x, y, theta, self.target_x, self.target_y)) and not self.prev_state == 5 and\
@@ -393,7 +399,7 @@ class AutonomousController:
                 self.control_message ="front wall is near, start to controll the distance"
                 self.prev_state = self.state
                 self.state = 9
-            elif (self.follow_sensor == self.right or self.followsensor == self.left) and front_sensor < (self.desired_distance / 4):
+            elif (self.follow_sensor == self.right or self.follow_sensor == self.left) and front_sensor < (self.desired_distance / 2.5):
                 self.control_message ="error unenspectet front wall, restart init"
                 self.prev_state = self.state
                 self.state = 0
@@ -487,6 +493,7 @@ class AutonomousController:
         # Calculate control action for maintaining a constant distance to the wall
 
         if self.state == 0: #init
+            self.follow_sensor = []
             self.left_wheel_velocity = 0
             self.right_wheel_velocity = 0
         
@@ -507,7 +514,12 @@ class AutonomousController:
             self.follow_sensor = self.right
 
         elif self.state == 3: #set up 90° recht drehen
-            self.angle_setpoint = theta - math.radians(90)
+            if self.prev_state == 9:
+                self.angle_setpoint = theta - math.radians(90 - self.undercut)
+            elif self.prev_state == 8:
+                self.angle_setpoint = self.angle_setpoint - math.radians(90)
+            else:
+                self.angle_setpoint = theta - math.radians(90)
             if self.follow_sensor == self.front:
                 self.follow_sensor = self.left
             elif self.follow_sensor == self.left and self.prev_state == 9:
@@ -516,8 +528,13 @@ class AutonomousController:
             self.left_wheel_velocity = 0
             self.right_wheel_velocity = 0
 
-        elif self.state == 4: #set up 90° links drehen 
-            self.angle_setpoint = theta + math.radians(90)
+        elif self.state == 4: #set up 90° links drehen
+            if self.prev_state == 9:
+                self.angle_setpoint = theta + math.radians(90 - self.undercut)
+            elif self.prev_state == 8:
+                self.angle_setpoint = self.angle_setpoint + math.radians(90)
+            else:
+                self.angle_setpoint = theta + math.radians(90)
             if self.follow_sensor == self.front:
                 self.follow_sensor = self.right
             elif self.follow_sensor == self.right and self.prev_state == 9:
@@ -558,8 +575,13 @@ class AutonomousController:
 
         elif self.state == 8: #regelung zum punkt
             distance_control = self.point_distance_pid.update(0, self.get_distance_to_point(x, y, theta, self.target_x, self.target_y), time_step)
-            self.left_wheel_velocity = distance_control
-            self.right_wheel_velocity = distance_control
+            
+            relative_angle = self.relative_angle(x, y, theta, self.target_x, self.target_y)
+            angle_control = np.sign(self.angle_pid.previous_error)* 0.00 *(self.base_rotation_speed - abs(omega))
+            angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.3
+            
+            self.left_wheel_velocity = distance_control - angle_control
+            self.right_wheel_velocity = distance_control + angle_control
 
         elif self.state == 9: #regelung wandabstand forne
             distance_control = self.point_distance_pid.update(self.desired_distance, front_sensor, time_step)
