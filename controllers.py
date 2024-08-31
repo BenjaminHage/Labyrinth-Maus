@@ -162,7 +162,7 @@ class ESCController:
 class AutonomousController:
     def __init__(self, angle_pid, wall_distance_pid, point_distance_pid, esc, base_speed, base_rotation_speed, desired_distance, sensor_activation_threshold,
                  wheel_distance, robot_radius, sensor_angles, robot,
-                 control_distance = 10, angle_toleranz = 3, distance_toleranz = 3, 
+                 control_distance = 5, angle_toleranz = 3, distance_toleranz = 3, 
                  esc_angle_comparison_interval = 1, esc_angel_toleranz = 0.8,  feature_toleranz = 3, direkt_change_toleranz = 15):
         
         self.state = 0
@@ -189,6 +189,7 @@ class AutonomousController:
         self.feature_toleranz = feature_toleranz/100 
         self.direkt_change_toleranz = direkt_change_toleranz/100
         self.activation_threshold = sensor_activation_threshold/100
+        self.diagonal_activation_threshold = 40/100
         self.near_activation_threshold = 20/100 
 
         self.esc_angle_comparison_interval = esc_angle_comparison_interval
@@ -223,7 +224,7 @@ class AutonomousController:
         self.esc = esc
         
         self.control_message = ""
-        self.undercut = 10
+        self.undercut = 0
 
     def autonomous_control_right_hand(self, sensor_readings, x, y, theta, omega, current_time, time_step):
         
@@ -241,8 +242,8 @@ class AutonomousController:
 
         self.left_sensor_active, left_sensor_flanke = self.flanke_detektion(left_sensor, self.left_sensor_active, self.activation_threshold )
         self.right_sensor_active, right_sensor_flanke = self.flanke_detektion(right_sensor, self.right_sensor_active, self.activation_threshold )
-        self.front_left_sensor_active, front_left_sensor_flanke = self.flanke_detektion(front_left_sensor, self.front_left_sensor_active, self.activation_threshold + 0.05) #
-        self.front_right_sensor_active, front_right_sensor_flanke = self.flanke_detektion(front_right_sensor, self.front_right_sensor_active, self.activation_threshold + 0.05) #
+        self.front_left_sensor_active, front_left_sensor_flanke = self.flanke_detektion(front_left_sensor, self.front_left_sensor_active, self.diagonal_activation_threshold ) #
+        self.front_right_sensor_active, front_right_sensor_flanke = self.flanke_detektion(front_right_sensor, self.front_right_sensor_active, self.diagonal_activation_threshold ) #
     
         self.info_lines = [
             "---------------------------------------------------------------------",
@@ -595,11 +596,11 @@ class AutonomousController:
                 relative_angle = self.relative_angle(x, y, theta, self.target_x, self.target_y)
                 angle_control = np.sign(self.angle_pid.previous_error)* 0.00 *(self.base_rotation_speed - abs(omega))
                 angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.3
-                base_speed = self.base_speed * 0.3
+                base_speed = self.base_speed * 1
             else:
                 angle_control = np.sign(self.angle_pid.previous_error)* 0.00 *(self.base_rotation_speed - abs(omega))
                 angle_control += self.angle_pid.update(self.angle_setpoint, theta, time_step) * 1
-                base_speed = self.base_speed * 0.5
+                base_speed = self.base_speed * 1
             
             self.left_wheel_velocity = base_speed - angle_control
             self.right_wheel_velocity = base_speed + angle_control
@@ -607,7 +608,7 @@ class AutonomousController:
         elif self.state == 7: #set up forwoard point
             self.robot.set_position_and_angle(0,0,0)
             self.angle_setpoint = 0
-            self.target_x, self.target_y = self.get_forward_point(0, 0, 0, self.desired_distance + self.robot_radius)
+            self.target_x, self.target_y = self.get_forward_point(0, 0, 0, self.desired_distance + self.robot_radius + 0.03)
             # self.check_features(x,y)
             # self.left_wheel_velocity = 0
             # self.right_wheel_velocity = 0

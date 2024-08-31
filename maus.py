@@ -34,17 +34,17 @@ def main():
     speed_pid_right.set_integral(0.00000000000000001)
     
     #angle_pid = PIDController(kp=150, ki=100.0, kd=10.00, d_minmax=100, i_minmax=100)
-    angle_pid = PIDController(kp=0.045, ki=0.00, kd=0.0, d_minmax=0.029, i_minmax=0.1, pid_minmax=1)
+    angle_pid = PIDController(kp=0.045, ki=0.00, kd=0.0, d_minmax=0.029, i_minmax=0.1, pid_minmax=1, pid_min = -0.5)
     ###### Manuell #####
 
 
     ###### Auto #####
     
     #Auto
-    init_base_speed = 0.15
+    init_base_speed = 0.12
     init_base_rotation_speed = 0.6
-    desired_distance = 9  # Desired distance from the wall
-    sensor_activation_threshold = 35 #= robot.get_sensor_range() * 0.75 
+    desired_distance = 3  # Desired distance from the wall
+    sensor_activation_threshold = 30 #= robot.get_sensor_range() * 0.75 
     direkt_change_toleranz = 5
     
     #ESC
@@ -55,7 +55,7 @@ def main():
     esc_angel_toleranz = 1
     
     point_distance_pid = PIDController(kp=-0.55, ki=-0.0, kd=0, i_minmax=100, d_max=70, pid_minmax=0.5)
-    wall_distance_pid = PIDController(kp=0.25, ki=0.000, kd=0.3, d_minmax=0.029, i_minmax=1, pid_minmax = 10)
+    wall_distance_pid = PIDController(kp=0.25, ki=0.000, kd=0.35, d_minmax=0.029, i_minmax=1, pid_minmax = 10)
     esc = ESCController(dither_frequency, dither_amplitude, learning_rate)
     
     auto = AutonomousController(angle_pid, wall_distance_pid, point_distance_pid, esc, init_base_speed,
