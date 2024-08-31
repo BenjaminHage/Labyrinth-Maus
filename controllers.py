@@ -177,7 +177,7 @@ class AutonomousController:
         self.wheel_distance = wheel_distance
         self.sensor_angles = sensor_angles
         self.robot_radius = robot_radius
-        self.robot
+        self.robot = robot
 
         self.follow_sensor = []
         self.angle_setpoint = 0
@@ -413,6 +413,7 @@ class AutonomousController:
                 self.control_message ="error unenspectet front wall, restart init"
                 self.prev_state = self.state
                 self.state = 0
+                self.follow_sensor = []
                 
         elif self.state == 7: #set up forwoard point
             self.control_message ="set up forwoard point, start driving forwoard to it"
@@ -510,6 +511,7 @@ class AutonomousController:
                 self.control_message ="error unenspectet front wall, restart init"
                 self.prev_state = self.state
                 self.state = 0
+                self.follow_sensor = []
             
         
         elif self.state == 22:  
@@ -523,6 +525,7 @@ class AutonomousController:
                 self.control_message ="error unenspectet front wall, restart init"
                 self.prev_state = self.state
                 self.state = 0
+                self.follow_sensor = []
 
         ############################# V1 ####################################
 
@@ -603,6 +606,7 @@ class AutonomousController:
 
         elif self.state == 7: #set up forwoard point
             self.robot.set_position_and_angle(0,0,0)
+            self.angle_setpoint = 0
             self.target_x, self.target_y = self.get_forward_point(0, 0, 0, self.desired_distance + self.robot_radius)
             # self.check_features(x,y)
             # self.left_wheel_velocity = 0
