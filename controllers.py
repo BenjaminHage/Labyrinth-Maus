@@ -413,7 +413,7 @@ class AutonomousController:
                 self.control_message ="error unenspectet front wall, restart init"
                 self.prev_state = self.state
                 self.state = 0
-                self.follow_sensor = []
+                
                 
         elif self.state == 7: #set up forwoard point
             self.control_message ="set up forwoard point, start driving forwoard to it"
@@ -511,7 +511,7 @@ class AutonomousController:
                 self.control_message ="error unenspectet front wall, restart init"
                 self.prev_state = self.state
                 self.state = 0
-                self.follow_sensor = []
+                
             
         
         elif self.state == 22:  
@@ -525,7 +525,7 @@ class AutonomousController:
                 self.control_message ="error unenspectet front wall, restart init"
                 self.prev_state = self.state
                 self.state = 0
-                self.follow_sensor = []
+                
 
         ############################# V1 ####################################
 
