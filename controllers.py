@@ -161,7 +161,7 @@ class ESCController:
         
 class AutonomousController:
     def __init__(self, angle_pid, wall_distance_pid, point_distance_pid, esc, base_speed, base_rotation_speed, desired_distance, sensor_activation_threshold,
-                 wheel_distance, robot_radius, sensor_angles,
+                 wheel_distance, robot_radius, sensor_angles, robot,
                  control_distance = 10, angle_toleranz = 3, distance_toleranz = 3, 
                  esc_angle_comparison_interval = 1, esc_angel_toleranz = 0.8,  feature_toleranz = 3, direkt_change_toleranz = 15):
         
@@ -177,6 +177,7 @@ class AutonomousController:
         self.wheel_distance = wheel_distance
         self.sensor_angles = sensor_angles
         self.robot_radius = robot_radius
+        self.robot
 
         self.follow_sensor = []
         self.angle_setpoint = 0
@@ -251,11 +252,11 @@ class AutonomousController:
           #  f"aktivation_thres:  {self.activation_threshold}",
           #  f"Base_Speed:        {self.base_speed:.2f} m/s",
             "",
-            f"front_sensor:      {front_sensor:.4}",
-            f"front_left_sensor: {front_left_sensor:.4}    {self.front_left_sensor_active}",
-            f"left_sensor:       {left_sensor:.4}    {self.left_sensor_active}",
-            f"front_right_sensor:{front_right_sensor:.4}    {self.front_right_sensor_active}",
-            f"right_sensor:      {right_sensor:.4}    {self.right_sensor_active}",
+            f"front_sensor:      {front_sensor:.4f}",
+            f"front_left_sensor: {front_left_sensor:.4f}    {self.front_left_sensor_active}",
+            f"left_sensor:       {left_sensor:.4f}    {self.left_sensor_active}",
+            f"front_right_sensor:{front_right_sensor:.4f}    {self.front_right_sensor_active}",
+            f"right_sensor:      {right_sensor:.4f}    {self.right_sensor_active}",
             "",
          #   f"Right Wheel Velocity:        {self.right_wheel_velocity:.2f} m/s",
          #   f"left Wheel Velocity:        {self.left_wheel_velocity:.2f} m/s",
@@ -368,10 +369,8 @@ class AutonomousController:
         elif self.state == 6: #ungeregelt gerade aus
             if (left_sensor_flanke and not self.left_sensor_active and self.follow_sensor == self.left) or \
                     (right_sensor_flanke and not self.right_sensor_active and self.follow_sensor == self.right) and \
-                    (self.prev_state == 2 or self.prev_state == 1):
-#             if (left_sensor > self.near_activation_threshold and self.follow_sensor == self.left) or \
-#                     (right_sensor > self.near_activation_threshold and self.follow_sensor == self.right):   
-#                 self.control_message ="over edge set target point"
+                    (self.prev_state == 2 or self.prev_state == 1):  
+                self.control_message ="over edge set target point"
                 self.prev_state = self.state
                 self.state = 7
             elif self.control_distance > abs(self.get_distance_to_point(x, y, theta, self.target_x, self.target_y)) and not self.prev_state == 5 and\
@@ -379,18 +378,29 @@ class AutonomousController:
                 self.control_message ="near target point start controling to it"
                 self.prev_state = self.state
                 self.state = 8
-            elif left_sensor <= self.near_activation_threshold and self.follow_sensor == self.left and self.prev_state != 7 and self.prev_state != 1:
-                self.control_message ="arraived at letf wall"
+
+            elif front_left_sensor <= (self.near_activation_threshold * 1)  and self.follow_sensor == self.left and self.prev_state != 7 and self.prev_state != 1:
+                self.control_message ="arraived at front_letf wall, start controlling to it"
                 self.prev_state = self.state
-                self.state = 1
-                error = self.desired_distance - left_sensor
-                self.wall_distance_pid.set_previous_error(error)   
-            elif right_sensor <= self.near_activation_threshold and self.follow_sensor == self.right and self.prev_state != 7 and self.prev_state != 2:
-                self.control_message ="arraived at right wall"
+                self.state = 21
+            elif front_right_sensor <= (self.near_activation_threshold * 1) and self.follow_sensor == self.right and self.prev_state != 7 and self.prev_state != 2:
+                self.control_message ="arraived at front_right wall, start controlling to it"
                 self.prev_state = self.state
-                self.state = 2
-                error = self.desired_distance - right_sensor
-                self.wall_distance_pid.set_previous_error(error)     
+                self.state = 22
+
+            # elif left_sensor <= self.near_activation_threshold and self.follow_sensor == self.left and self.prev_state != 7 and self.prev_state != 1:
+            #     self.control_message ="arraived at letf wall"
+            #     self.prev_state = self.state
+            #     self.state = 1
+            #     error = self.desired_distance - left_sensor
+            #     self.wall_distance_pid.set_previous_error(error)   
+            # elif right_sensor <= self.near_activation_threshold and self.follow_sensor == self.right and self.prev_state != 7 and self.prev_state != 2:
+            #     self.control_message ="arraived at right wall"
+            #     self.prev_state = self.state
+            #     self.state = 2
+            #     error = self.desired_distance - right_sensor
+            #     self.wall_distance_pid.set_previous_error(error) 
+
             elif self.follow_sensor == [] and not all(x >= self.activation_threshold  for x in sensor_readings):
                 self.control_message ="found a wall, restart init"
                 self.prev_state = self.state
@@ -461,8 +471,8 @@ class AutonomousController:
             self.state = 5       
 
         elif self.state == 13: #esc
-#             self.state = 6
-#             self.control_message ="ESC übersprungen, start driving forwoard"
+            # self.state = 6
+            # self.control_message ="ESC übersprungen, start driving forwoard"
             
             if current_time - self.previous_time >= self.esc_angle_comparison_interval:
                 
@@ -489,8 +499,32 @@ class AutonomousController:
             self.state = 14
 
 
+        elif self.state == 21:
+            if left_sensor <= self.near_activation_threshold and self.follow_sensor == self.left and self.prev_state != 7 and self.prev_state != 1:
+                self.control_message ="arraived at letf wall, start controlling to it"
+                self.prev_state = self.state
+                self.state = 1
+                error = self.desired_distance - left_sensor
+                self.wall_distance_pid.set_previous_error(error)
+            elif (self.follow_sensor == self.right or self.follow_sensor == self.left) and front_sensor < (self.desired_distance / 2.5):
+                self.control_message ="error unenspectet front wall, restart init"
+                self.prev_state = self.state
+                self.state = 0
+            
+        
+        elif self.state == 22:  
+            if right_sensor <= self.near_activation_threshold and self.follow_sensor == self.right and self.prev_state != 7 and self.prev_state != 2:
+                self.control_message ="arraived at right wall, start controlling to it"
+                self.prev_state = self.state
+                self.state = 2
+                error = self.desired_distance - right_sensor
+                self.wall_distance_pid.set_previous_error(error)
+            elif (self.follow_sensor == self.right or self.follow_sensor == self.left) and front_sensor < (self.desired_distance / 2.5):
+                self.control_message ="error unenspectet front wall, restart init"
+                self.prev_state = self.state
+                self.state = 0
+
         ############################# V1 ####################################
-        # Calculate control action for maintaining a constant distance to the wall
 
         if self.state == 0: #init
             self.follow_sensor = []
@@ -568,10 +602,11 @@ class AutonomousController:
             self.right_wheel_velocity = base_speed + angle_control
 
         elif self.state == 7: #set up forwoard point
-            self.target_x, self.target_y = self.get_forward_point(x, y, theta, self.desired_distance + self.robot_radius)
-            #self.check_features(x,y)
-#             self.left_wheel_velocity = 0
-#             self.right_wheel_velocity = 0
+            self.robot.set_position_and_angle(0,0,0)
+            self.target_x, self.target_y = self.get_forward_point(0, 0, 0, self.desired_distance + self.robot_radius)
+            # self.check_features(x,y)
+            # self.left_wheel_velocity = 0
+            # self.right_wheel_velocity = 0
 
         elif self.state == 8: #regelung zum punkt
             distance_control = self.point_distance_pid.update(0, self.get_distance_to_point(x, y, theta, self.target_x, self.target_y), time_step)
@@ -627,7 +662,21 @@ class AutonomousController:
             self.left_wheel_velocity = 0
             self.right_wheel_velocity = 0
 
-       
+        elif self.state == 21: #links diagonal folgen
+                angle_control = 1 * self.wall_distance_pid.update(self.desired_distance / math.cos(math.pi / 4), front_left_sensor, time_step)
+
+                # Adjust wheel velocities
+                self.left_wheel_velocity = self.base_speed + angle_control
+                self.right_wheel_velocity = self.base_speed - angle_control
+                self.follow_sensor = self.left
+
+        elif self.state == 22: #rechts diagonal folgen
+                angle_control = 1 * self.wall_distance_pid.update(self.desired_distance / math.cos(math.pi / 4), front_right_sensor, time_step)
+
+                # Adjust wheel velocities
+                self.left_wheel_velocity = self.base_speed - angle_control
+                self.right_wheel_velocity = self.base_speed + angle_control
+                self.follow_sensor = self.right
         ############################# V1 ####################################
 
         return self.left_wheel_velocity, self.right_wheel_velocity

@@ -55,12 +55,12 @@ def main():
     esc_angel_toleranz = 1
     
     point_distance_pid = PIDController(kp=-0.55, ki=-0.0, kd=0, i_minmax=100, d_max=70, pid_minmax=0.5)
-    wall_distance_pid = PIDController(kp=0.25, ki=0.000, kd=0.3, d_minmax=0.029, i_minmax=1)
+    wall_distance_pid = PIDController(kp=0.25, ki=0.000, kd=0.3, d_minmax=0.029, i_minmax=1, pid_minmax = 10)
     esc = ESCController(dither_frequency, dither_amplitude, learning_rate)
     
     auto = AutonomousController(angle_pid, wall_distance_pid, point_distance_pid, esc, init_base_speed,
                                         init_base_rotation_speed, desired_distance, sensor_activation_threshold,
-                                        robot.get_wheel_distance(), robot.get_robot_radius(),robot.get_sensor_angles())
+                                        robot.get_wheel_distance(), robot.get_robot_radius(),robot.get_sensor_angles(),robot)
      
     ###### Auto #####
    
@@ -92,9 +92,9 @@ def main():
             
             x, y, theta, v = robot.get_position_and_angle()
             ukf_x, ukf_y, ukf_theta, ukf_v = robot.get_ukf_position_and_angle()
-#             print(f"x    : {x:8.4f}    y    : {x:8.4f}    o    : {theta:8.4f}    v    : {v:8.4f}")
-#             print(f"ukf_x: {ukf_x:8.4f}    ukf_y: {ukf_y:8.4f}    ukf_o: {ukf_theta:8.4f}    ukf_v: {ukf_v:8.4f}")
-#             
+            # print(f"x    : {x:8.4f}    y    : {x:8.4f}    o    : {theta:8.4f}    v    : {v:8.4f}")
+            # print(f"ukf_x: {ukf_x:8.4f}    ukf_y: {ukf_y:8.4f}    ukf_o: {ukf_theta:8.4f}    ukf_v: {ukf_v:8.4f}")
+            
             
             
             sensor_readings = robot.get_sensor_readings()
@@ -165,8 +165,8 @@ def main():
             
         print("Messung beendet.")
         out.stop_console_output()
-        out.aktivate_final_batch_plot()
-        out.aktivate_final_rt_plot()
+       # out.aktivate_final_batch_plot()
+       # out.aktivate_final_rt_plot()
         out.show_final_plots(robot)
         
     except KeyboardInterrupt:
