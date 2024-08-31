@@ -189,7 +189,7 @@ class AutonomousController:
         self.feature_toleranz = feature_toleranz/100 
         self.direkt_change_toleranz = direkt_change_toleranz/100
         self.activation_threshold = sensor_activation_threshold/100
-        self.diagonal_activation_threshold = 40/100
+        self.diagonal_activation_threshold = 30/100
         self.near_activation_threshold = 20/100 
 
         self.esc_angle_comparison_interval = esc_angle_comparison_interval
@@ -314,7 +314,7 @@ class AutonomousController:
                 self.control_message ="found front wall, start controling the distance to it"
                 self.prev_state = self.state
                 self.state = 9
-            elif not self.front_left_sensor_active and front_left_sensor_flanke and self.left_sensor_active:
+            elif not self.front_left_sensor_active:# and front_left_sensor_flanke:
                 self.control_message ="detekt edge, start driving forwoard"
                 self.prev_state = self.state
                 self.state = 6
@@ -324,7 +324,7 @@ class AutonomousController:
                 self.control_message ="found front wall, start controling the distance to it"
                 self.prev_state = self.state
                 self.state = 9
-            elif not self.front_right_sensor_active and front_right_sensor_flanke and self.right_sensor_active:
+            elif not self.front_right_sensor_active:# and front_right_sensor_flanke:
                 self.control_message ="detekt edge, start driving forwoard"
                 self.prev_state = self.state
                 self.state = 6    
@@ -389,18 +389,18 @@ class AutonomousController:
                 self.prev_state = self.state
                 self.state = 22
 
-            # elif left_sensor <= self.near_activation_threshold and self.follow_sensor == self.left and self.prev_state != 7 and self.prev_state != 1:
-            #     self.control_message ="arraived at letf wall"
-            #     self.prev_state = self.state
-            #     self.state = 1
-            #     error = self.desired_distance - left_sensor
-            #     self.wall_distance_pid.set_previous_error(error)   
-            # elif right_sensor <= self.near_activation_threshold and self.follow_sensor == self.right and self.prev_state != 7 and self.prev_state != 2:
-            #     self.control_message ="arraived at right wall"
-            #     self.prev_state = self.state
-            #     self.state = 2
-            #     error = self.desired_distance - right_sensor
-            #     self.wall_distance_pid.set_previous_error(error) 
+            elif left_sensor <= self.near_activation_threshold and self.follow_sensor == self.left and self.prev_state != 7 and self.prev_state != 1:
+                self.control_message ="arraived at letf wall"
+                self.prev_state = self.state
+                self.state = 1
+                error = self.desired_distance - left_sensor
+                self.wall_distance_pid.set_previous_error(error)   
+            elif right_sensor <= self.near_activation_threshold and self.follow_sensor == self.right and self.prev_state != 7 and self.prev_state != 2:
+                self.control_message ="arraived at right wall"
+                self.prev_state = self.state
+                self.state = 2
+                error = self.desired_distance - right_sensor
+                self.wall_distance_pid.set_previous_error(error) 
 
             elif self.follow_sensor == [] and not all(x >= self.activation_threshold  for x in sensor_readings):
                 self.control_message ="found a wall, restart init"
@@ -410,7 +410,7 @@ class AutonomousController:
                 self.control_message ="front wall is near, start to controll the distance"
                 self.prev_state = self.state
                 self.state = 9
-            elif (self.follow_sensor == self.right or self.follow_sensor == self.left) and front_sensor < (self.desired_distance / 2.5):
+            elif (self.follow_sensor == self.right or self.follow_sensor == self.left) and front_sensor < (self.desired_distance ):
                 self.control_message ="error unenspectet front wall, restart init"
                 self.prev_state = self.state
                 self.state = 0
@@ -512,6 +512,11 @@ class AutonomousController:
                 self.control_message ="error unenspectet front wall, restart init"
                 self.prev_state = self.state
                 self.state = 0
+            elif not self.front_left_sensor_active and front_left_sensor_flanke:
+                self.control_message ="detekt edge, start driving forwoard"
+                self.prev_state = self.state
+                self.state = 6
+            
                 
             
         
@@ -526,6 +531,10 @@ class AutonomousController:
                 self.control_message ="error unenspectet front wall, restart init"
                 self.prev_state = self.state
                 self.state = 0
+            elif not self.front_right_sensor_active and front_right_sensor_flanke:
+                self.control_message ="detekt edge, start driving forwoard"
+                self.prev_state = self.state
+                self.state = 6
                 
 
         ############################# V1 ####################################
@@ -608,7 +617,7 @@ class AutonomousController:
         elif self.state == 7: #set up forwoard point
             self.robot.set_position_and_angle(0,0,0)
             self.angle_setpoint = 0
-            self.target_x, self.target_y = self.get_forward_point(0, 0, 0, self.desired_distance + self.robot_radius + 0.03)
+            self.target_x, self.target_y = self.get_forward_point(0, 0, 0, self.desired_distance + self.robot_radius + 0.01)
             # self.check_features(x,y)
             # self.left_wheel_velocity = 0
             # self.right_wheel_velocity = 0

@@ -55,7 +55,7 @@ def main():
     esc_angel_toleranz = 1
     
     point_distance_pid = PIDController(kp=-0.55, ki=-0.0, kd=0, i_minmax=100, d_max=70, pid_minmax=0.5)
-    wall_distance_pid = PIDController(kp=0.25, ki=0.000, kd=0.35, d_minmax=0.029, i_minmax=1, pid_minmax = 10)
+    wall_distance_pid = PIDController(kp=0.35, ki=0.000, kd=0.35, d_minmax=0.029, i_minmax=1, pid_minmax = 10, pid_min=-5)
     esc = ESCController(dither_frequency, dither_amplitude, learning_rate)
     
     auto = AutonomousController(angle_pid, wall_distance_pid, point_distance_pid, esc, init_base_speed,
