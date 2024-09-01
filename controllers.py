@@ -230,6 +230,8 @@ class AutonomousController:
         
         self.control_message = ""
         self.undercut = 1
+        self.min_distance = np.inf
+        self.min_distance_angle = 0
 
     def autonomous_control_right_hand(self, sensor_readings, x, y, theta, omega, current_time, time_step):
         
@@ -351,7 +353,8 @@ class AutonomousController:
                     self.esc.set_previous_hpf_input(-front_sensor)
                     self.esc.set_integrator(self.angle_setpoint)
                     self.prev_state = self.state
-                    self.state = 13
+                    #self.state = 13
+                    self.state = 14
                 elif self.follow_sensor == self.right and self.right_sensor_active:
                     self.control_message ="turned parallel to right wall, start folloing it"
                     self.prev_state = self.state
@@ -496,15 +499,25 @@ class AutonomousController:
                 self.control_message ="found a wall restart init"
                 self.prev_state = self.state
                 self.state = 0
+            elif theta >= self.angle_setpoint and self.prev_state == 5:
+                self.control_message ="did 360° turn, set angel_setpoint to smalest front distance"
+                self.prev_state = self.state
+                self.state = 16 
             elif theta >= self.angle_setpoint:
                 self.control_message ="found no wall after 360° turn, start driving forward"
                 self.prev_state = self.state
-                self.state = 6    
+                self.state = 6
 
         elif self.state == 15:#set up 360° recht drehen
             self.control_message ="set up 360° turn, start turning"
             self.prev_state = self.state
             self.state = 14
+
+        elif self.state == 16:
+            self.control_message ="set smalest distance angel, statr turning"
+            self.prev_state = self.state
+            self.state = 5
+            
 
 
         elif self.state == 21:
@@ -678,10 +691,23 @@ class AutonomousController:
             self.left_wheel_velocity = -(self.wheel_distance / 2.0) * self.base_rotation_speed
             self.right_wheel_velocity = (self.wheel_distance / 2.0) * self.base_rotation_speed
 
+            if front_sensor < self.min_distance and self.prev_state == 5:
+                self.min_distance = front_sensor
+                self.min_distance_angle = theta
+                self.follow_sensor = self.front
+                
+
         elif self.state == 15: #set up 360° recht drehen
             self.angle_setpoint = theta + math.radians(360)
             self.left_wheel_velocity = 0
             self.right_wheel_velocity = 0
+            
+        elif self.state == 16: #set up 360° recht drehen
+            self.angle_setpoint = self.min_distance_angle
+            self.min_distance = np.inf
+            self.left_wheel_velocity = 0
+            self.right_wheel_velocity = 0
+        
 
         elif self.state == 21: #links diagonal folgen
                 angle_control = 1 * self.wall_distance_pid.update(self.desired_distance / math.cos(math.pi / 4), front_left_sensor, time_step)
