@@ -189,7 +189,7 @@ class AutonomousController:
         self.feature_toleranz = feature_toleranz/100 
         self.direkt_change_toleranz = direkt_change_toleranz/100
         self.activation_threshold = sensor_activation_threshold/100
-        self.diagonal_activation_threshold = 30/100
+        self.diagonal_activation_threshold = 35/100
         self.near_activation_threshold = 20/100 
 
         self.esc_angle_comparison_interval = esc_angle_comparison_interval
@@ -224,7 +224,7 @@ class AutonomousController:
         self.esc = esc
         
         self.control_message = ""
-        self.undercut = 0
+        self.undercut = 1
 
     def autonomous_control_right_hand(self, sensor_readings, x, y, theta, omega, current_time, time_step):
         
@@ -380,11 +380,11 @@ class AutonomousController:
                 self.prev_state = self.state
                 self.state = 8
 
-            elif front_left_sensor <= (self.near_activation_threshold * 1)  and self.follow_sensor == self.left and self.prev_state != 7 and self.prev_state != 1:
+            elif front_left_sensor <= self.desired_distance / math.cos(math.pi / 4)  and self.follow_sensor == self.left and self.prev_state != 7 and self.prev_state != 1:
                 self.control_message ="arraived at front_letf wall, start controlling to it"
                 self.prev_state = self.state
                 self.state = 21
-            elif front_right_sensor <= (self.near_activation_threshold * 1) and self.follow_sensor == self.right and self.prev_state != 7 and self.prev_state != 2:
+            elif front_right_sensor <= self.desired_distance / math.cos(math.pi / 4) and self.follow_sensor == self.right and self.prev_state != 7 and self.prev_state != 2:
                 self.control_message ="arraived at front_right wall, start controlling to it"
                 self.prev_state = self.state
                 self.state = 22
@@ -617,7 +617,7 @@ class AutonomousController:
         elif self.state == 7: #set up forwoard point
             self.robot.set_position_and_angle(0,0,0)
             self.angle_setpoint = 0
-            self.target_x, self.target_y = self.get_forward_point(0, 0, 0, self.desired_distance + self.robot_radius + 0.01)
+            self.target_x, self.target_y = self.get_forward_point(0, 0, 0, self.desired_distance + self.robot_radius + 0.015)
             # self.check_features(x,y)
             # self.left_wheel_velocity = 0
             # self.right_wheel_velocity = 0
