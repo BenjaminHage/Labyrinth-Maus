@@ -151,8 +151,13 @@ class ESCController:
 
         return self.control_signal 
     
+    
     def set_previous_hpf_input(self, cost):
         self.hpf.set_previous_input(cost)
+        
+        
+    def set_integrator(self, integrator):
+        self.integrator = integrator
         
         
         
@@ -270,9 +275,9 @@ class AutonomousController:
 # 
 #             
 #         ]
-        
-        #print("\033[H\033[J", end="")  # Lösche die Konsole
-        print("\n".join(self.info_lines))
+#         
+#         #print("\033[H\033[J", end="")  # Lösche die Konsole
+#         print("\n".join(self.info_lines))
 
         
         
@@ -344,6 +349,7 @@ class AutonomousController:
                 if self.follow_sensor == []:
                     self.control_message ="turnd to front wall, start esc"
                     self.esc.set_previous_hpf_input(-front_sensor)
+                    self.esc.set_integrator(self.angle_setpoint)
                     self.prev_state = self.state
                     self.state = 13
                 elif self.follow_sensor == self.right and self.right_sensor_active:
@@ -479,9 +485,9 @@ class AutonomousController:
             if current_time - self.previous_time >= self.esc_angle_comparison_interval:
                 
                 if self.has_angle_changed_less_than_threshold(self.previous_theta, theta, self.esc_angel_toleranz):
-                    #self.control_message ="ortogonal to front wall, start driving forwoard"
+                    self.control_message ="ortogonal to front wall, start driving forwoard"
                     self.prev_state = self.state
-                    self.state = 6
+                    #self.state = 6
                 self.previous_theta = theta
                 self.previous_time = current_time
 
@@ -658,10 +664,11 @@ class AutonomousController:
         elif self.state == 13: #esc front
             # Update the control input using ESC
             control_input = self.esc.update(-front_sensor, time_step)
+            self.angle_setpoint = control_input
 
             # Apply the control input to the robot's rotation
-            angle_control = np.sign(self.angle_pid.previous_error)* 0.06 *(self.base_rotation_speed - abs(omega))
-            angle_control += self.angle_pid.update(self.angle_setpoint + control_input, theta, time_step)
+            angle_control = np.sign(self.angle_pid.previous_error)* 0.01 *(self.base_rotation_speed - abs(omega))
+            angle_control += 4 * self.angle_pid.update(self.angle_setpoint, theta, time_step)
             self.left_wheel_velocity = -angle_control
             self.right_wheel_velocity = angle_control
 

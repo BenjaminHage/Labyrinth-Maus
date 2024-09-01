@@ -48,8 +48,8 @@ def main():
     direkt_change_toleranz = 5
     
     #ESC
-    dither_frequency = 0.0007  # Frequency of dither signal (Hz)
-    dither_amplitude = 1.3   # Amplitude of dither signal
+    dither_frequency = 0.1  # Frequency of dither signal (Hz)
+    dither_amplitude = 0.3   # Amplitude of dither signal
     learning_rate = 0.4  # Learning rate for ESC
     esc_angle_comparison_interval = 1
     esc_angel_toleranz = 1

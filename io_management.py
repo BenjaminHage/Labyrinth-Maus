@@ -154,10 +154,10 @@ class ConsoleOutput:
          #   f"Right Wheel Velocity:        {self.auto.right_wheel_velocity:.2f} m/s",
          #   f"left Wheel Velocity:        {self.auto.left_wheel_velocity:.2f} m/s",
          #   "",     
-         #   f"Angle:                       {math.degrees(theta):.2f} °",
-         #   f"Angle_setpoint:              {math.degrees(self.auto.angle_setpoint):.2f} °",
+           f"Angle:                       {math.degrees(theta):.2f} °",
+           f"Angle_setpoint:              {math.degrees(self.auto.angle_setpoint):.2f} °",
          #   f"x: {x} y:{y}   target_x: {self.auto.target_x} targe_y: {self.auto.target_y}",
-         #   "",
+           "",
             f"{self.auto.control_message}"
             ]
         else:
