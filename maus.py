@@ -65,7 +65,7 @@ def main():
     ###### Auto #####
    
     out = io.OutputManager()
-    out.start_console_output(auto)
+    #out.start_console_output(auto)
     #out.start_rt_plot()
 
 

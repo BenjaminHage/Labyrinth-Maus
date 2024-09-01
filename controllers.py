@@ -252,34 +252,34 @@ class AutonomousController:
         self.front_left_sensor_active, front_left_sensor_flanke = self.flanke_detektion(front_left_sensor, self.front_left_sensor_active, self.diagonal_activation_threshold ) #
         self.front_right_sensor_active, front_right_sensor_flanke = self.flanke_detektion(front_right_sensor, self.front_right_sensor_active, self.diagonal_activation_threshold ) #
     
-#         self.info_lines = [
-#             "---------------------------------------------------------------------",
-#             f"State:             {self.state}",
-#             f"follow_sensor:     {self.follow_sensor}",
-#           #  f"Desired_distance:  {self.desired_distance}",
-#           #  f"aktivation_thres:  {self.activation_threshold}",
-#           #  f"Base_Speed:        {self.base_speed:.2f} m/s",
-#             "",
-#             f"front_sensor:      {front_sensor:.4f}",
-#             f"front_left_sensor: {front_left_sensor:.4f}    {self.front_left_sensor_active}",
-#             f"left_sensor:       {left_sensor:.4f}    {self.left_sensor_active}",
-#             f"front_right_sensor:{front_right_sensor:.4f}    {self.front_right_sensor_active}",
-#             f"right_sensor:      {right_sensor:.4f}    {self.right_sensor_active}",
-#             "",
-#          #   f"Right Wheel Velocity:        {self.right_wheel_velocity:.2f} m/s",
-#          #   f"left Wheel Velocity:        {self.left_wheel_velocity:.2f} m/s",
-#          #   "",     
-#          #   f"Angle:                       {math.degrees(theta):.2f} °",
-#          #   f"Angle_setpoint:              {math.degrees(self.angle_setpoint):.2f} °",
-#          #   f"x: {x} y:{y}   target_x: {self.target_x} targe_y: {self.target_y}",
-#          #   "",
-#             f"{self.control_message}"
-# 
-#             
-#         ]
-#         
-#         #print("\033[H\033[J", end="")  # Lösche die Konsole
-#         print("\n".join(self.info_lines))
+        self.info_lines = [
+            "---------------------------------------------------------------------",
+            f"State:             {self.state}",
+            f"follow_sensor:     {self.follow_sensor}",
+          #  f"Desired_distance:  {self.desired_distance}",
+          #  f"aktivation_thres:  {self.activation_threshold}",
+          #  f"Base_Speed:        {self.base_speed:.2f} m/s",
+            "",
+            f"front_sensor:      {front_sensor:.4f}",
+            f"front_left_sensor: {front_left_sensor:.4f}    {self.front_left_sensor_active}",
+            f"left_sensor:       {left_sensor:.4f}    {self.left_sensor_active}",
+            f"front_right_sensor:{front_right_sensor:.4f}    {self.front_right_sensor_active}",
+            f"right_sensor:      {right_sensor:.4f}    {self.right_sensor_active}",
+            "",
+         #   f"Right Wheel Velocity:        {self.right_wheel_velocity:.2f} m/s",
+         #   f"left Wheel Velocity:        {self.left_wheel_velocity:.2f} m/s",
+           "",     
+           f"Angle:                       {math.degrees(theta):.2f} °",
+           f"Angle_setpoint:              {math.degrees(self.angle_setpoint):.2f} °",
+           f"x: {x} y:{y}   target_x: {self.target_x} targe_y: {self.target_y}",
+         #   "",
+            f"{self.control_message}"
+
+            
+        ]
+        
+        #print("\033[H\033[J", end="")  # Lösche die Konsole
+        print("\n".join(self.info_lines))
 
         
         
@@ -354,7 +354,7 @@ class AutonomousController:
                     self.esc.set_integrator(self.angle_setpoint)
                     self.prev_state = self.state
                     #self.state = 13
-                    self.state = 14
+                    self.state = 15
                 elif self.follow_sensor == self.right and self.right_sensor_active:
                     self.control_message ="turned parallel to right wall, start folloing it"
                     self.prev_state = self.state
@@ -495,11 +495,11 @@ class AutonomousController:
                 self.previous_time = current_time
 
         elif self.state == 14:#ungeregelt drehen
-            if not all(x >= self.activation_threshold  for x in sensor_readings):
+            if not all(x >= self.activation_threshold  for x in sensor_readings) and not self.follow_sensor == self.front:
                 self.control_message ="found a wall restart init"
                 self.prev_state = self.state
                 self.state = 0
-            elif theta >= self.angle_setpoint and self.prev_state == 5:
+            elif theta >= self.angle_setpoint and self.follow_sensor == self.front:
                 self.control_message ="did 360° turn, set angel_setpoint to smalest front distance"
                 self.prev_state = self.state
                 self.state = 16 
@@ -691,16 +691,18 @@ class AutonomousController:
             self.left_wheel_velocity = -(self.wheel_distance / 2.0) * self.base_rotation_speed
             self.right_wheel_velocity = (self.wheel_distance / 2.0) * self.base_rotation_speed
 
-            if front_sensor < self.min_distance and self.prev_state == 5:
+            if front_sensor < self.min_distance and self.follow_sensor == self.front:
                 self.min_distance = front_sensor
                 self.min_distance_angle = theta
-                self.follow_sensor = self.front
+                #self.follow_sensor = self.front
                 
 
         elif self.state == 15: #set up 360° recht drehen
             self.angle_setpoint = theta + math.radians(360)
             self.left_wheel_velocity = 0
             self.right_wheel_velocity = 0
+            if self.prev_state == 5:
+                self.follow_sensor = self.front
             
         elif self.state == 16: #set up 360° recht drehen
             angle_diff = self.min_distance_angel - theta
