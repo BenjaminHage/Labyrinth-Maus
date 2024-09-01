@@ -703,6 +703,9 @@ class AutonomousController:
             self.right_wheel_velocity = 0
             
         elif self.state == 16: #set up 360° recht drehen
+            angle_diff = self.min_distance_angel - theta
+            if angle_diff < math.radians(-180)
+                self.min_distance_angle = theta + angle_diff + math.radians(360)
             self.angle_setpoint = self.min_distance_angle
             self.min_distance = np.inf
             self.left_wheel_velocity = 0
