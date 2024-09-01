@@ -65,7 +65,7 @@ def main():
     ###### Auto #####
    
     out = io.OutputManager()
-    #out.start_console_output()
+    out.start_console_output(auto)
     #out.start_rt_plot()
 
 
@@ -73,7 +73,7 @@ def main():
     angle_setpoint = 0
     base_speed = 0
     close = False
-    autonomous_mode = True
+    autonomous_mode = False
     
     
     start_Time = time.monotonic() 
@@ -113,8 +113,10 @@ def main():
                     angle_pid.set_integral(0)
                 angle_control = np.sign(angle_pid.previous_error)* 0.01 *(init_base_rotation_speed - abs(gyro_w)) + angle_pid.update(angle_setpoint, theta, time_step)
                 
-                left_wheel_velocity_target = base_speed   - angle_control #- angle_setpoint
-                right_wheel_velocity_target = base_speed  + angle_control #+ angle_setpoint 
+#                 left_wheel_velocity_target = base_speed   - angle_control #- angle_setpoint
+#                 right_wheel_velocity_target = base_speed  + angle_control #+ angle_setpoint
+                left_wheel_velocity_target = base_speed   - angle_setpoint
+                right_wheel_velocity_target = base_speed  + angle_setpoint
                 
                         
             
@@ -139,7 +141,7 @@ def main():
             robot.state_estimate(left_wheel_velocity_target, right_wheel_velocity_target, gyro_w, current_time, time_step)
 
             out.update_console_output(robot, left_wheel_velocity_target, right_wheel_velocity_target, base_speed, angle_setpoint,
-                                      angle_control, speed_pid_right, speed_pid_left, sensor_readings)
+                                      angle_control, speed_pid_right, speed_pid_left, sensor_readings, auto_active=autonomous_mode)
             out.update_plot(current_time, 
                             robot.get_left_wheel_velocity(), 
                             robot.get_right_wheel_velocity(), 

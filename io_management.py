@@ -10,8 +10,7 @@ import keyboard  # Modul für die Handhabung von Tastatureingaben
 
 
 class OutputManager:
-    def __init__(self, rtp_window_size = 10):
-        self.rtp_window_size = rtp_window_size
+    def __init__(self):
         self.plotter = None
         self.console_output = None
         
@@ -27,9 +26,10 @@ class OutputManager:
         self.final_batch_plot_aktive = True
 
   
-    def start_console_output(self):
-        self.console_output = ConsoleOutput()
-        self.console_output.start()
+    def start_console_output(self,auto_controller=None, extra_thread=True):
+        self.console_output = ConsoleOutput(auto_controller)
+        if extra_thread:
+            self.console_output.start()
 
   
     def stop_console_output(self):
@@ -37,8 +37,8 @@ class OutputManager:
             self.console_output.stop()
 
   
-    def start_rt_plot(self):
-        self.plotter = RealTimePlotter(self.rtp_window_size)
+    def start_rt_plot(self, rtp_window_size = 10):
+        self.plotter = RealTimePlotter(rtp_window_size)
 
   
     def stop_rt_plot(self):
@@ -52,11 +52,13 @@ class OutputManager:
 
   
     def update_console_output(self, robot, left_wheel_velocity, right_wheel_velocity,
-                              base_speed, angle_setpoint, angle_control, pid_r, pid_l, sensor_readings):
+                              base_speed, angle_setpoint, angle_control, pid_r, pid_l, sensor_readings,
+                              auto_active=False):
         
         if self.console_output is not None:
             self.console_output.update(robot, left_wheel_velocity, right_wheel_velocity,
-                                       base_speed, angle_setpoint, angle_control, pid_r, pid_l, sensor_readings)
+                                       base_speed, angle_setpoint, angle_control, pid_r, pid_l, sensor_readings,
+                                       auto_active=auto_active)
 
   
     def update_plot(self, current_time, left_wheel_velocity, right_wheel_velocity,
@@ -93,10 +95,11 @@ class OutputManager:
 
 
 class ConsoleOutput:
-    def __init__(self):
+    def __init__(self,auto_controller):
         self.is_running = False
         self.console_thread = None
         self.info_lines = []
+        self.auto = auto_controller
 
   
     def start(self):
@@ -121,29 +124,62 @@ class ConsoleOutput:
 
   
     def update(self, robot, left_wheel_velocity, right_wheel_velocity, base_speed,
-               angle_setpoint, angle_control, pid_r, pid_l, sensor_readings):
+               angle_setpoint, angle_control, pid_r, pid_l, sensor_readings,
+               auto_active=False):
         """Aktualisiert die Informationen für den Konsolenoutput."""
         x, y, theta, v = robot.get_position_and_angle()
 
-        self.info_lines = [
-            "---------------------------------------------------------------------",
-            f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s",
-            f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s",
-            f"P: {pid_l.P:6.2f}    I: {pid_l.I:6.2f}    D: {pid_l.D:6.2f}    PID: {pid_l.PID:6.2f}",
-            "",
-            f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s",
-            f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s",
-            f"P: {pid_r.P:6.2f}    I: {pid_r.I:6.2f}    D: {pid_r.D:6.2f}    PID: {pid_r.PID:6.2f}",
-            "",
-            f"Base_Speed:                  {base_speed:.2f} m/s",
-            f"Angle:                       {math.degrees(theta):.2f} °",
-            f"Angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
-            f"Angle_control:               {angle_control:.2f}",
-            f"Sensor Readings:	{robot.get_formatted_sensor_readings(sensor_readings, decimal_places=2)}",
-            "",
-            #f"Percent:       {robot.get_power_percentage():3.0f}%"
+        if auto_active:
             
-        ]
+            front_sensor = sensor_readings[self.auto.front]/100
+            left_sensor = sensor_readings[self.auto.left]/100
+            front_left_sensor = sensor_readings[self.auto.front_left]/100
+            right_sensor = sensor_readings[self.auto.right]/100
+            front_right_sensor = sensor_readings[self.auto.front_right]/100
+            
+            self.info_lines = [
+            "---------------------------------------------------------------------",
+            f"State:             {self.auto.state}",
+            f"follow_sensor:     {self.auto.follow_sensor}",
+          #  f"Desired_distance:  {self.desired_distance}",
+          #  f"aktivation_thres:  {self.activation_threshold}",
+          #  f"Base_Speed:        {self.base_speed:.2f} m/s",
+            "",
+            f"front_sensor:      {front_sensor:.4f}",
+            f"front_left_sensor: {front_left_sensor:.4f}    {self.auto.front_left_sensor_active}",
+            f"left_sensor:       {left_sensor:.4f}    {self.auto.left_sensor_active}",
+            f"front_right_sensor:{front_right_sensor:.4f}    {self.auto.front_right_sensor_active}",
+            f"right_sensor:      {right_sensor:.4f}    {self.auto.right_sensor_active}",
+            "",
+         #   f"Right Wheel Velocity:        {self.auto.right_wheel_velocity:.2f} m/s",
+         #   f"left Wheel Velocity:        {self.auto.left_wheel_velocity:.2f} m/s",
+         #   "",     
+         #   f"Angle:                       {math.degrees(theta):.2f} °",
+         #   f"Angle_setpoint:              {math.degrees(self.auto.angle_setpoint):.2f} °",
+         #   f"x: {x} y:{y}   target_x: {self.auto.target_x} targe_y: {self.auto.target_y}",
+         #   "",
+            f"{self.auto.control_message}"
+            ]
+        else:
+            self.info_lines = [
+                "---------------------------------------------------------------------",
+                f"Left Wheel Velocity:         {robot.get_left_wheel_velocity():.2f} m/s",
+                f"Left Wheel Velocity target:  {left_wheel_velocity:.2f} m/s",
+                f"P: {pid_l.P:6.2f}    I: {pid_l.I:6.2f}    D: {pid_l.D:6.2f}    PID: {pid_l.PID:6.2f}",
+                "",
+                f"Right Wheel Velocity:        {robot.get_right_wheel_velocity():.2f} m/s",
+                f"Right Wheel Velocity target: {right_wheel_velocity:.2f} m/s",
+                f"P: {pid_r.P:6.2f}    I: {pid_r.I:6.2f}    D: {pid_r.D:6.2f}    PID: {pid_r.PID:6.2f}",
+                "",
+                f"Base_Speed:                  {base_speed:.2f} m/s",
+                f"Angle:                       {math.degrees(theta):.2f} °",
+                f"Angle_setpoint:              {math.degrees(angle_setpoint):.2f} °",
+                f"Angle_control:               {angle_control:.2f}",
+                f"Sensor Readings:	{robot.get_formatted_sensor_readings(sensor_readings, decimal_places=2)}",
+                "",
+                #f"Percent:       {robot.get_power_percentage():3.0f}%"
+                
+            ]
 
   
     def display_console_output(self):
@@ -228,7 +264,7 @@ class RealTimePlotter:
 
 def handle_user_input(angle_setpoint, base_speed, autonomous_mode, close = False):
     base_speed = 0
-    #angle_setpoint = 0
+    angle_setpoint = 0
     if keyboard.is_pressed('up'):  # Up arrow key
         base_speed += 0.5
     if keyboard.is_pressed('down'):  # Down arrow key
@@ -240,7 +276,7 @@ def handle_user_input(angle_setpoint, base_speed, autonomous_mode, close = False
     if keyboard.is_pressed('c'):
         close = True
     if keyboard.is_pressed('a'):
-        autonomous_mode = True#not autonomous_mode
+        autonomous_mode = not autonomous_mode
         
     return angle_setpoint, base_speed, close, autonomous_mode
 

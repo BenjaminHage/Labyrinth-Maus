@@ -245,31 +245,31 @@ class AutonomousController:
         self.front_left_sensor_active, front_left_sensor_flanke = self.flanke_detektion(front_left_sensor, self.front_left_sensor_active, self.diagonal_activation_threshold ) #
         self.front_right_sensor_active, front_right_sensor_flanke = self.flanke_detektion(front_right_sensor, self.front_right_sensor_active, self.diagonal_activation_threshold ) #
     
-        self.info_lines = [
-            "---------------------------------------------------------------------",
-            f"State:             {self.state}",
-            f"follow_sensor:     {self.follow_sensor}",
-          #  f"Desired_distance:  {self.desired_distance}",
-          #  f"aktivation_thres:  {self.activation_threshold}",
-          #  f"Base_Speed:        {self.base_speed:.2f} m/s",
-            "",
-            f"front_sensor:      {front_sensor:.4f}",
-            f"front_left_sensor: {front_left_sensor:.4f}    {self.front_left_sensor_active}",
-            f"left_sensor:       {left_sensor:.4f}    {self.left_sensor_active}",
-            f"front_right_sensor:{front_right_sensor:.4f}    {self.front_right_sensor_active}",
-            f"right_sensor:      {right_sensor:.4f}    {self.right_sensor_active}",
-            "",
-         #   f"Right Wheel Velocity:        {self.right_wheel_velocity:.2f} m/s",
-         #   f"left Wheel Velocity:        {self.left_wheel_velocity:.2f} m/s",
-         #   "",     
-         #   f"Angle:                       {math.degrees(theta):.2f} °",
-         #   f"Angle_setpoint:              {math.degrees(self.angle_setpoint):.2f} °",
-         #   f"x: {x} y:{y}   target_x: {self.target_x} targe_y: {self.target_y}",
-         #   "",
-            f"{self.control_message}"
-
-            
-        ]
+#         self.info_lines = [
+#             "---------------------------------------------------------------------",
+#             f"State:             {self.state}",
+#             f"follow_sensor:     {self.follow_sensor}",
+#           #  f"Desired_distance:  {self.desired_distance}",
+#           #  f"aktivation_thres:  {self.activation_threshold}",
+#           #  f"Base_Speed:        {self.base_speed:.2f} m/s",
+#             "",
+#             f"front_sensor:      {front_sensor:.4f}",
+#             f"front_left_sensor: {front_left_sensor:.4f}    {self.front_left_sensor_active}",
+#             f"left_sensor:       {left_sensor:.4f}    {self.left_sensor_active}",
+#             f"front_right_sensor:{front_right_sensor:.4f}    {self.front_right_sensor_active}",
+#             f"right_sensor:      {right_sensor:.4f}    {self.right_sensor_active}",
+#             "",
+#          #   f"Right Wheel Velocity:        {self.right_wheel_velocity:.2f} m/s",
+#          #   f"left Wheel Velocity:        {self.left_wheel_velocity:.2f} m/s",
+#          #   "",     
+#          #   f"Angle:                       {math.degrees(theta):.2f} °",
+#          #   f"Angle_setpoint:              {math.degrees(self.angle_setpoint):.2f} °",
+#          #   f"x: {x} y:{y}   target_x: {self.target_x} targe_y: {self.target_y}",
+#          #   "",
+#             f"{self.control_message}"
+# 
+#             
+#         ]
         
         #print("\033[H\033[J", end="")  # Lösche die Konsole
         print("\n".join(self.info_lines))
