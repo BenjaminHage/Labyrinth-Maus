@@ -268,11 +268,11 @@ class AutonomousController:
             "",
          #   f"Right Wheel Velocity:        {self.right_wheel_velocity:.2f} m/s",
          #   f"left Wheel Velocity:        {self.left_wheel_velocity:.2f} m/s",
-           "",     
-           f"Angle:                       {math.degrees(theta):.2f} °",
-           f"Angle_setpoint:              {math.degrees(self.angle_setpoint):.2f} °",
-           f"x: {x} y:{y}   target_x: {self.target_x} targe_y: {self.target_y}",
-         #   "",
+            "",     
+            f"Angle:                       {math.degrees(theta):.2f} °",
+            f"Angle_setpoint:              {math.degrees(self.angle_setpoint):.2f} °",
+         #  f"x: {x} y:{y}   target_x: {self.target_x} targe_y: {self.target_y}",
+            "",
             f"{self.control_message}"
 
             
@@ -688,8 +688,8 @@ class AutonomousController:
             self.follow_sensor = self.front
         
         elif self.state == 14: #ungeregelt drehen
-            self.left_wheel_velocity = -(self.wheel_distance / 2.0) * self.base_rotation_speed
-            self.right_wheel_velocity = (self.wheel_distance / 2.0) * self.base_rotation_speed
+            self.left_wheel_velocity = -0.1#-(self.wheel_distance / 2.0) * self.base_rotation_speed
+            self.right_wheel_velocity = 0.1#(self.wheel_distance / 2.0) * self.base_rotation_speed
 
             if front_sensor < self.min_distance and self.follow_sensor == self.front:
                 self.min_distance = front_sensor
@@ -705,8 +705,8 @@ class AutonomousController:
                 self.follow_sensor = self.front
             
         elif self.state == 16: #set up 360° recht drehen
-            angle_diff = self.min_distance_angel - theta
-            if angle_diff < math.radians(-180)
+            angle_diff = self.min_distance_angle - theta
+            if angle_diff < math.radians(-180):
                 self.min_distance_angle = theta + angle_diff + math.radians(360)
             self.angle_setpoint = self.min_distance_angle
             self.min_distance = np.inf
