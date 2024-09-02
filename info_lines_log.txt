@@ -1978,3 +1978,213 @@ Angle_setpoint:              2983.57 °
 x: 3.1273 y:-1.6497   target_x: 2.8182 targe_y: -1.4241
 
 turned parallel to right wall, start folloing it
+---------------------------------------------------------------------
+State:             9
+follow_sensor:     4
+
+front_sensor:      0.0792
+front_left_sensor: 0.1396    True
+left_sensor:       0.6269    False
+front_right_sensor:0.0656    True
+right_sensor:      0.0315    True
+
+Angle:                       2985.23 °
+Angle_setpoint:              2983.57 °
+x: 2.9638 y:-1.0142   target_x: 2.8182 targe_y: -1.4241
+
+found front wall, start controling the distance to it
+---------------------------------------------------------------------
+State:             4
+follow_sensor:     4
+
+front_sensor:      0.0541
+front_left_sensor: 0.1059    True
+left_sensor:       0.6278    False
+front_right_sensor:0.0656    True
+right_sensor:      0.0251    True
+
+Angle:                       2984.60 °
+Angle_setpoint:              3074.67 °
+x: 2.9577 y:-0.9914   target_x: 2.8182 targe_y: -1.4241
+
+got to wall distance, start set up left turn
+---------------------------------------------------------------------
+State:             5
+follow_sensor:     4
+
+front_sensor:      0.0518
+front_left_sensor: 0.1017    True
+left_sensor:       0.6269    False
+front_right_sensor:0.0642    True
+right_sensor:      0.0248    True
+
+Angle:                       2984.63 °
+Angle_setpoint:              3074.67 °
+x: 2.9577 y:-0.9914   target_x: 2.8182 targe_y: -1.4241
+
+set up 90° left turn, start turning
+---------------------------------------------------------------------
+State:             2
+follow_sensor:     4
+
+front_sensor:      0.5972
+front_left_sensor: 0.6415    False
+left_sensor:       0.6269    False
+front_right_sensor:0.0685    True
+right_sensor:      0.0372    True
+
+Angle:                       3077.51 °
+Angle_setpoint:              3074.67 °
+x: 2.8917 y:-0.9550   target_x: 2.8182 targe_y: -1.4241
+
+turned parallel to right wall, start folloing it
+---------------------------------------------------------------------
+State:             9
+follow_sensor:     4
+
+front_sensor:      0.0800
+front_left_sensor: 0.1622    True
+left_sensor:       0.3092    False
+front_right_sensor:0.0822    True
+right_sensor:      0.0355    True
+
+Angle:                       3079.75 °
+Angle_setpoint:              3074.67 °
+x: 2.3397 y:-1.1753   target_x: 2.8182 targe_y: -1.4241
+
+found front wall, start controling the distance to it
+---------------------------------------------------------------------
+State:             4
+follow_sensor:     4
+
+front_sensor:      0.0569
+front_left_sensor: 0.1171    True
+left_sensor:       0.2965    True
+front_right_sensor:0.0818    True
+right_sensor:      0.0343    True
+
+Angle:                       3079.89 °
+Angle_setpoint:              3169.57 °
+x: 2.3218 y:-1.1817   target_x: 2.8182 targe_y: -1.4241
+
+got to wall distance, start set up left turn
+---------------------------------------------------------------------
+State:             5
+follow_sensor:     4
+
+front_sensor:      0.0515
+front_left_sensor: 0.1090    True
+left_sensor:       0.3044    False
+front_right_sensor:0.0818    True
+right_sensor:      0.0342    True
+
+Angle:                       3079.90 °
+Angle_setpoint:              3169.57 °
+x: 2.3136 y:-1.1847   target_x: 2.8182 targe_y: -1.4241
+
+set up 90° left turn, start turning
+---------------------------------------------------------------------
+State:             2
+follow_sensor:     4
+
+front_sensor:      0.3019
+front_left_sensor: 0.6172    False
+left_sensor:       0.6277    False
+front_right_sensor:0.0786    True
+right_sensor:      0.0388    True
+
+Angle:                       3170.54 °
+Angle_setpoint:              3169.57 °
+x: 2.2842 y:-1.2480   target_x: 2.8182 targe_y: -1.4241
+
+turned parallel to right wall, start folloing it
+---------------------------------------------------------------------
+State:             9
+follow_sensor:     4
+
+front_sensor:      0.0762
+front_left_sensor: 0.1317    True
+left_sensor:       0.6257    False
+front_right_sensor:0.0748    True
+right_sensor:      0.0377    True
+
+Angle:                       3162.36 °
+Angle_setpoint:              3169.57 °
+x: 2.3418 y:-1.4271   target_x: 2.8182 targe_y: -1.4241
+
+found front wall, start controling the distance to it
+---------------------------------------------------------------------
+State:             4
+follow_sensor:     4
+
+front_sensor:      0.0584
+front_left_sensor: 0.1030    True
+left_sensor:       0.6274    False
+front_right_sensor:0.0720    True
+right_sensor:      0.0359    True
+
+Angle:                       3161.76 °
+Angle_setpoint:              3252.25 °
+x: 2.3450 y:-1.4420   target_x: 2.8182 targe_y: -1.4241
+
+got to wall distance, start set up left turn
+---------------------------------------------------------------------
+State:             5
+follow_sensor:     4
+
+front_sensor:      0.0535
+front_left_sensor: 0.0952    True
+left_sensor:       0.6281    False
+front_right_sensor:0.0716    True
+right_sensor:      0.0357    True
+
+Angle:                       3161.78 °
+Angle_setpoint:              3252.25 °
+x: 2.3462 y:-1.4477   target_x: 2.8182 targe_y: -1.4241
+
+set up 90° left turn, start turning
+---------------------------------------------------------------------
+State:             2
+follow_sensor:     4
+
+front_sensor:      0.6000
+front_left_sensor: 0.6414    False
+left_sensor:       0.3140    False
+front_right_sensor:0.0649    True
+right_sensor:      0.0365    True
+
+Angle:                       3252.71 °
+Angle_setpoint:              3252.25 °
+x: 2.4094 y:-1.4917   target_x: 2.8182 targe_y: -1.4241
+
+turned parallel to right wall, start folloing it
+---------------------------------------------------------------------
+State:             6
+follow_sensor:     4
+
+front_sensor:      0.5866
+front_left_sensor: 0.6415    False
+left_sensor:       0.3323    False
+front_right_sensor:0.3613    False
+right_sensor:      0.0268    True
+
+Angle:                       3253.89 °
+Angle_setpoint:              3252.25 °
+x: 2.6126 y:-1.4428   target_x: 2.8182 targe_y: -1.4241
+
+detekt edge, start driving forwoard
+---------------------------------------------------------------------
+State:             7
+follow_sensor:     4
+
+front_sensor:      0.4677
+front_left_sensor: 0.6407    False
+left_sensor:       0.3387    False
+front_right_sensor:0.6386    False
+right_sensor:      0.3443    False
+
+Angle:                       3253.53 °
+Angle_setpoint:              3252.25 °
+x: 2.6936 y:-1.4226   target_x: 2.7826 targe_y: -1.4008
+
+over edge set target point
