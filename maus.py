@@ -117,7 +117,7 @@ def main():
 #                 right_wheel_velocity_target = base_speed  + angle_control #+ angle_setpoint
                 left_wheel_velocity_target = base_speed   - angle_setpoint
                 right_wheel_velocity_target = base_speed  + angle_setpoint
-                auto.angle_setpoint = theta
+                angle_setpoint = theta
                 
                         
             

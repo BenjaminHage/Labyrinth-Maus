@@ -107,7 +107,7 @@ class ConsoleOutput:
         self.auto = auto_controller
 
         self.last_control_message = None  # Speichert die vorherige control_message
-        self.log_file_path = "info_lines_log.txt"  # Pfad zur Log-Datei
+        self.log_file_path = "info_lines_log.log"  # Pfad zur Log-Datei
 
   
     def start(self):
@@ -296,7 +296,7 @@ class RealTimePlotter:
 
 
 
-def handle_user_input(angle_setpoint, base_speed, autonomous_mode, close=False, debounce_delay=0.2):
+def handle_user_input(angle_setpoint, base_speed, autonomous_mode, close=False, debounce_delay=0.2, reset=None):
     # Initialize function attributes on the first call
     if not hasattr(handle_user_input, "last_key_states"):
         handle_user_input.last_key_states = {
@@ -311,26 +311,8 @@ def handle_user_input(angle_setpoint, base_speed, autonomous_mode, close=False, 
 
     current_time = time.monotonic()
     if current_time - handle_user_input.last_time > debounce_delay:
-        # Reset initial values
-        base_speed = 0
-        angle_setpoint = 0
-
-        # Check and continuously process "up" key
-        if keyboard.is_pressed('up'):
-            base_speed += 0.5  # Continuously increase speed
-
-        # Check and continuously process "down" key
-        if keyboard.is_pressed('down'):
-            base_speed -= 0.5  # Continuously decrease speed
-
-        # Check and continuously process "left" key
-        if keyboard.is_pressed('left'):
-            angle_setpoint += 0.15  # Continuous angle adjustment
-
-        # Check and continuously process "right" key
-        if keyboard.is_pressed('right'):
-            angle_setpoint -= 0.15  # Continuous angle adjustment
-
+        
+        
         # Check and debounce the "c" key for a discrete action
         if keyboard.is_pressed('c'):
             if not handle_user_input.last_key_states['c']:
@@ -348,6 +330,29 @@ def handle_user_input(angle_setpoint, base_speed, autonomous_mode, close=False, 
                 handle_user_input.last_time = current_time
         else:
             handle_user_input.last_key_states['a'] = False
+
+
+        # Reset initial values
+        base_speed = 0
+        angle_setpoint = 0
+        
+        # Check and continuously process "up" key
+        if keyboard.is_pressed('up'):
+            base_speed += 0.5  # Continuously increase speed
+
+        # Check and continuously process "down" key
+        if keyboard.is_pressed('down'):
+            base_speed -= 0.5  # Continuously decrease speed
+
+        # Check and continuously process "left" key
+        if keyboard.is_pressed('left'):
+            angle_setpoint += 0.15  # Continuous angle adjustment
+
+        # Check and continuously process "right" key
+        if keyboard.is_pressed('right'):
+            angle_setpoint -= 0.15  # Continuous angle adjustment
+
+       
 
     # Return the updated values
     return angle_setpoint, base_speed, close, autonomous_mode

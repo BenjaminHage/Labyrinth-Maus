@@ -832,15 +832,19 @@ class AutonomousController:
         angle_change = abs(current_theta - previous_theta) * (180 / math.pi)
         return angle_change < esc_angel_toleranz
 
-    def reset(self):
+    def reset(self, angle_setpoint=None):
         self.state = 0
         self.prev_state = 0
         self.follow_sensor = []
         self.previous_theta = np.inf
+        if angle_setpoint != None:
+            self.angle_setpoint=angle_setpoint
+        
         self.feature_list = np.empty((0, 2))
         self.change_feature_list = np.empty((0, 2))
         self.prev_feature = []
         self.on_closed_Loop = False
+        
         self.pledge_count = []
 
     def set_base_speed(self, base_speed):
