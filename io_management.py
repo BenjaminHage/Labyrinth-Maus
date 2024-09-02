@@ -101,6 +101,9 @@ class ConsoleOutput:
         self.info_lines = []
         self.auto = auto_controller
 
+        self.last_control_message = None  # Speichert die vorherige control_message
+        self.log_file_path = "info_lines_log.txt"  # Pfad zur Log-Datei
+
   
     def start(self):
         """Startet die Konsole."""
@@ -181,11 +184,37 @@ class ConsoleOutput:
                 
             ]
 
+        # Prüfen, ob sich die control_message geändert hat
+        current_control_message = self.auto.control_message
+        if current_control_message != self.last_control_message:
+            self.last_control_message = current_control_message  # Speichern der aktuellen control_message
+            self.log_info_lines()  # Logge die gesamten info_lines
+
+    
+    def log_info_lines(self):
+        """Loggt die gesamte info_lines in eine Datei."""
+        # In die Datei schreiben
+        with open(self.log_file_path, "a") as log_file:
+            log_file.write("\n".join(self.info_lines) + "\n")
+
   
     def display_console_output(self):
         """Zeigt den Konsolenoutput an."""
         print("\033[H\033[J", end="")  # Lösche die Konsole
         print("\n".join(self.info_lines))
+
+    
+    def show_full_log(self):
+        """Zeigt den gesamten Log der Datei in der Konsole an."""
+        try:
+            with open(self.log_file_path, "r") as log_file:
+                log_content = log_file.read()
+                print("\n--- Gesamter Log der info_lines ---\n")
+                print(log_content)
+                print("\n-----------------------------------\n")
+        except FileNotFoundError:
+            print("Keine Log-Datei gefunden. Es wurden noch keine Logs aufgezeichnet.")
+            
 
 
 
