@@ -297,61 +297,58 @@ class RealTimePlotter:
 
 
 def handle_user_input(angle_setpoint, base_speed, autonomous_mode, close=False, debounce_delay=0.2):
-    
-    # Dictionary zum Speichern des letzten Zustands jeder Taste
-    last_key_states = {
-        'up': False,
-        'down': False,
-        'left': False,
-        'right': False,
-        'c': False,
-        'a': False
-    }
+    # Initialize function attributes on the first call
+    if not hasattr(handle_user_input, "last_key_states"):
+        handle_user_input.last_key_states = {
+            'up': False,
+            'down': False,
+            'left': False,
+            'right': False,
+            'c': False,
+            'a': False
+        }
+        handle_user_input.last_time = time.monotonic()
 
-    last_time = time.monotonic()
-    # Schleife zum kontinuierlichen Überprüfen der Tasteneingaben
-    while True:
-        current_time = time.monotonic()
-        if current_time - last_time > debounce_delay:
-            # Initialwerte setzen
-            base_speed = 0
-            angle_setpoint = 0
-            
-            # Überprüfen und kontinuierliches Verarbeiten der "up" Taste
-            if keyboard.is_pressed('up'):
-                base_speed += 0.5  # Kontinuierliches Erhöhen der Geschwindigkeit
-    
-            # Überprüfen und kontinuierliches Verarbeiten der "down" Taste
-            if keyboard.is_pressed('down'):
-                base_speed -= 0.5  # Kontinuierliches Verringern der Geschwindigkeit
-    
-            # Überprüfen und kontinuierliches Verarbeiten der "left" Taste
-            if keyboard.is_pressed('left'):
-                angle_setpoint += 0.15  # Kontinuierliche Änderung des Winkels
-    
-            # Überprüfen und kontinuierliches Verarbeiten der "right" Taste
-            if keyboard.is_pressed('right'):
-                angle_setpoint -= 0.15  # Kontinuierliche Änderung des Winkels
-    
-            # Überprüfen und Entprellen der "c" Taste für eine diskrete Aktion
-            if keyboard.is_pressed('c'):
-                if not last_key_states['c']:
-                    close = True  # Setze close auf True beim ersten Drücken
-                    last_key_states['c'] = True
-                    last_time = current_time
-            else:
-                last_key_states['c'] = False
-    
-            # Überprüfen und Entprellen der "a" Taste für eine diskrete Aktion
-            if keyboard.is_pressed('a'):
-                if not last_key_states['a']:
-                    autonomous_mode = not autonomous_mode  # Wechsel des autonomen Modus
-                    last_key_states['a'] = True
-                    last_time = current_time
-            else:
-                last_key_states['a'] = False
+    current_time = time.monotonic()
+    if current_time - handle_user_input.last_time > debounce_delay:
+        # Reset initial values
+        base_speed = 0
+        angle_setpoint = 0
 
-        
-        # Rückgabe der aktuellen Werte
-        yield angle_setpoint, base_speed, close, autonomous_mode
+        # Check and continuously process "up" key
+        if keyboard.is_pressed('up'):
+            base_speed += 0.5  # Continuously increase speed
+
+        # Check and continuously process "down" key
+        if keyboard.is_pressed('down'):
+            base_speed -= 0.5  # Continuously decrease speed
+
+        # Check and continuously process "left" key
+        if keyboard.is_pressed('left'):
+            angle_setpoint += 0.15  # Continuous angle adjustment
+
+        # Check and continuously process "right" key
+        if keyboard.is_pressed('right'):
+            angle_setpoint -= 0.15  # Continuous angle adjustment
+
+        # Check and debounce the "c" key for a discrete action
+        if keyboard.is_pressed('c'):
+            if not handle_user_input.last_key_states['c']:
+                close = True  # Set close to True on first press
+                handle_user_input.last_key_states['c'] = True
+                handle_user_input.last_time = current_time
+        else:
+            handle_user_input.last_key_states['c'] = False
+
+        # Check and debounce the "a" key for a discrete action
+        if keyboard.is_pressed('a'):
+            if not handle_user_input.last_key_states['a']:
+                autonomous_mode = not autonomous_mode  # Toggle autonomous mode
+                handle_user_input.last_key_states['a'] = True
+                handle_user_input.last_time = current_time
+        else:
+            handle_user_input.last_key_states['a'] = False
+
+    # Return the updated values
+    return angle_setpoint, base_speed, close, autonomous_mode
 
