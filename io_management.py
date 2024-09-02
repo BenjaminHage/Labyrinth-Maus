@@ -312,7 +312,7 @@ def handle_user_input(angle_setpoint, base_speed, autonomous_mode, close=False, 
     # Schleife zum kontinuierlichen Überprüfen der Tasteneingaben
     while True:
         current_time = time.monotonic()
-        if current_time - last_time > debounce_delay
+        if current_time - last_time > debounce_delay:
             # Initialwerte setzen
             base_speed = 0
             angle_setpoint = 0
