@@ -291,21 +291,62 @@ class RealTimePlotter:
 
 
 
-def handle_user_input(angle_setpoint, base_speed, autonomous_mode, close = False):
-    base_speed = 0
-    angle_setpoint = 0
-    if keyboard.is_pressed('up'):  # Up arrow key
-        base_speed += 0.5
-    if keyboard.is_pressed('down'):  # Down arrow key
-        base_speed -= 0.5
-    if keyboard.is_pressed('left'):  # Left arrow key
-        angle_setpoint += 0.15
-    if keyboard.is_pressed('right'):  # Right arrow key
-        angle_setpoint -= 0.15
-    if keyboard.is_pressed('c'):
-        close = True
-    if keyboard.is_pressed('a'):
-        autonomous_mode = not autonomous_mode
+def handle_user_input(angle_setpoint, base_speed, autonomous_mode, close=False, debounce_delay=0.2):
+    
+    # Dictionary zum Speichern des letzten Zustands jeder Taste
+    last_key_states = {
+        'up': False,
+        'down': False,
+        'left': False,
+        'right': False,
+        'c': False,
+        'a': False
+    }
+
+    last_time = time.monotonic()
+    # Schleife zum kontinuierlichen Überprüfen der Tasteneingaben
+    while True:
+        current_time = time.monotonic()
+        if current_time - last_time > debounce_delay
+            # Initialwerte setzen
+            base_speed = 0
+            angle_setpoint = 0
+            
+            # Überprüfen und kontinuierliches Verarbeiten der "up" Taste
+            if keyboard.is_pressed('up'):
+                base_speed += 0.5  # Kontinuierliches Erhöhen der Geschwindigkeit
+    
+            # Überprüfen und kontinuierliches Verarbeiten der "down" Taste
+            if keyboard.is_pressed('down'):
+                base_speed -= 0.5  # Kontinuierliches Verringern der Geschwindigkeit
+    
+            # Überprüfen und kontinuierliches Verarbeiten der "left" Taste
+            if keyboard.is_pressed('left'):
+                angle_setpoint += 0.15  # Kontinuierliche Änderung des Winkels
+    
+            # Überprüfen und kontinuierliches Verarbeiten der "right" Taste
+            if keyboard.is_pressed('right'):
+                angle_setpoint -= 0.15  # Kontinuierliche Änderung des Winkels
+    
+            # Überprüfen und Entprellen der "c" Taste für eine diskrete Aktion
+            if keyboard.is_pressed('c'):
+                if not last_key_states['c']:
+                    close = True  # Setze close auf True beim ersten Drücken
+                    last_key_states['c'] = True
+                    last_time = current_time
+            else:
+                last_key_states['c'] = False
+    
+            # Überprüfen und Entprellen der "a" Taste für eine diskrete Aktion
+            if keyboard.is_pressed('a'):
+                if not last_key_states['a']:
+                    autonomous_mode = not autonomous_mode  # Wechsel des autonomen Modus
+                    last_key_states['a'] = True
+                    last_time = current_time
+            else:
+                last_key_states['a'] = False
+
         
-    return angle_setpoint, base_speed, close, autonomous_mode
+        # Rückgabe der aktuellen Werte
+        yield angle_setpoint, base_speed, close, autonomous_mode
 
