@@ -91,6 +91,11 @@ class OutputManager:
         plt.legend()
         plt.grid(True)
         plt.show()
+        
+    def show_full_log(self):
+        if self.console_output is not None:
+            self.console_output.show_full_log()
+        
 
 
 
@@ -159,7 +164,7 @@ class ConsoleOutput:
          #   "",     
            f"Angle:                       {math.degrees(theta):.2f} °",
            f"Angle_setpoint:              {math.degrees(self.auto.angle_setpoint):.2f} °",
-         #   f"x: {x} y:{y}   target_x: {self.auto.target_x} targe_y: {self.auto.target_y}",
+           f"x: {x:.4f} y:{y:.4f}   target_x: {self.auto.target_x:.4f} targe_y: {self.auto.target_y:.4f}",
            "",
             f"{self.auto.control_message}"
             ]

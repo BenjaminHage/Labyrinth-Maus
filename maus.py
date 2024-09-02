@@ -54,7 +54,7 @@ def main():
     esc_angle_comparison_interval = 1
     esc_angel_toleranz = 1
     
-    point_distance_pid = PIDController(kp=-0.55, ki=-0.0, kd=0, i_minmax=100, d_max=70, pid_minmax=0.5)
+    point_distance_pid = PIDController(kp=-0.65, ki=-0.0, kd=0, i_minmax=100, d_max=70, pid_minmax=0.5)
     wall_distance_pid = PIDController(kp=0.5, ki=0.000, kd=0.35, d_minmax=0.029, i_minmax=1, pid_minmax = 12, pid_min=-0.2)
     esc = ESCController(dither_frequency, dither_amplitude, learning_rate)
     
@@ -65,7 +65,7 @@ def main():
     ###### Auto #####
    
     out = io.OutputManager()
-    #out.start_console_output(auto)
+    out.start_console_output(auto)
     #out.start_rt_plot()
 
 
@@ -117,6 +117,7 @@ def main():
 #                 right_wheel_velocity_target = base_speed  + angle_control #+ angle_setpoint
                 left_wheel_velocity_target = base_speed   - angle_setpoint
                 right_wheel_velocity_target = base_speed  + angle_setpoint
+                auto.angle_setpoint = theta
                 
                         
             
@@ -170,6 +171,7 @@ def main():
        # out.aktivate_final_batch_plot()
        # out.aktivate_final_rt_plot()
         out.show_final_plots(robot)
+        out.show_full_log()
         
     except KeyboardInterrupt:
         print("\nPlot Closed by keyboardInterupt")
