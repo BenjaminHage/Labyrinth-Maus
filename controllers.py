@@ -167,7 +167,7 @@ class ESCController:
 class AutonomousController:
     def __init__(self, angle_pid, wall_distance_pid, point_distance_pid, esc, base_speed, base_rotation_speed, desired_distance, sensor_activation_threshold,
                  wheel_distance, robot_radius, sensor_angles, robot,
-                 control_distance = 5, angle_toleranz = 3, distance_toleranz = 3, 
+                 control_distance = 5, angle_toleranz = 3, distance_toleranz = 1.5, 
                  esc_angle_comparison_interval = 1, esc_angel_toleranz = 0.8,  feature_toleranz = 3, direkt_change_toleranz = 15):
         
         self.state = 0
@@ -367,10 +367,20 @@ class AutonomousController:
                     self.state = 1
                     error = self.desired_distance - left_sensor
                     self.wall_distance_pid.set_previous_error(error)   
-                elif not((self.follow_sensor == self.right) or (self.follow_sensor == self.left)): #else mag ich nicht
+                elif not((self.follow_sensor == self.right) or (self.follow_sensor == self.left) or (self.follow_sensor == self.front)): #könnte if follow = [] abfragen
                     self.control_message ="did turned start driving forward"
                     self.prev_state = self.state
                     self.state = 6
+                elif not((self.follow_sensor == self.right) or (self.follow_sensor == self.left)) and (self.follow_sensor == self.front): 
+                    if front_sensor > self.desired_distance + self.distance_toleranz:
+                        self.control_message ="did ortogonal turn, start driving forward"
+                        self.prev_state = self.state
+                        self.state = 6
+                    else:
+                        self.control_message ="did ortogonal turn, start controlling to near front wall"
+                        self.prev_state = self.state
+                        self.state = 9
+                        
                 elif ((self.follow_sensor == self.right) or (self.follow_sensor == self.left)): #else mag ich nicht
                     self.control_message ="did on point turn, start driving forward"
                     self.prev_state = self.state
@@ -419,7 +429,7 @@ class AutonomousController:
                 self.control_message ="front wall is near, start to controll the distance"
                 self.prev_state = self.state
                 self.state = 9
-            elif (self.follow_sensor == self.right or self.follow_sensor == self.left) and front_sensor < (self.desired_distance ):
+            elif (self.follow_sensor == self.right or self.follow_sensor == self.left) and front_sensor < self.near_activation_threshold:
                 self.control_message ="error unenspectet front wall, restart init"
                 self.prev_state = self.state
                 self.state = 0
@@ -546,7 +556,7 @@ class AutonomousController:
                 self.state = 2
                 error = self.desired_distance - right_sensor
                 self.wall_distance_pid.set_previous_error(error)
-            elif (self.follow_sensor == self.right or self.follow_sensor == self.left) and front_sensor < (self.desired_distance / 2.5):
+            elif (self.follow_sensor == self.right or self.follow_sensor == self.left) and front_sensor < self.near_activation_threshold:
                 self.control_message ="error unenspectet front wall, restart init"
                 self.prev_state = self.state
                 self.state = 0
