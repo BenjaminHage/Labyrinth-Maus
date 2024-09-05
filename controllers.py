@@ -1222,7 +1222,7 @@ class AutonomousController:
     def get_set_angle_set_point(self):
         return self.angle_setpoint
 
-    def autonomous_control_pledge(self, sensor_readings, x, y, theta, current_time, time_step):
+    def autonomous_control_pledge(self, sensor_readings, x, y, omega, theta, current_time, time_step):
         
         ############################# pledge ####################################
 
