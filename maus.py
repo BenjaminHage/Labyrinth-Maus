@@ -16,6 +16,7 @@ def main():
     
     parser = argparse.ArgumentParser(description="Robot control script")
     parser.add_argument('-f', '--filename', type=str, default=None, help='Name der Datei mit den parametern für die Distanzmessung')
+    parser.add_argument('-a', '--autonomous', action='store_true', help='Aktiviere den autonomen Modus')
     args = parser.parse_args()
     
     
@@ -73,7 +74,7 @@ def main():
     angle_setpoint = 0
     base_speed = 0
     close = False
-    autonomous_mode = False
+    autonomous_mode = args.autonomous
     
     
     start_Time = time.monotonic() 
