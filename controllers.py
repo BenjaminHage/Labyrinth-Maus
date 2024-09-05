@@ -1227,11 +1227,13 @@ class AutonomousController:
         ############################# pledge ####################################
 
         # Read the side sensors
-        front_sensor = sensor_readings[self.front]
-        left_sensor = sensor_readings[self.left]
-        front_left_sensor = sensor_readings[self.front_left]
-        right_sensor = sensor_readings[self.right]
-        front_right_sensor = sensor_readings[self.front_right]
+        front_sensor = sensor_readings[self.front]/100
+        left_sensor = sensor_readings[self.left]/100
+        front_left_sensor = sensor_readings[self.front_left]/100
+        right_sensor = sensor_readings[self.right]/100
+        front_right_sensor = sensor_readings[self.front_right]/100
+
+        sensor_readings = [reading / 100 for reading in sensor_readings]
 
         self.front_sensor_active, front_sensor_flanke = self.flanke_detektion(front_sensor, self.front_sensor_active, self.activation_threshold )
         self.left_sensor_active, left_sensor_flanke = self.flanke_detektion(left_sensor, self.left_sensor_active, self.activation_threshold )
@@ -1246,152 +1248,228 @@ class AutonomousController:
                 
                 min_range_sensor = np.argmin(sensor_readings)
                 if min_range_sensor == self.right:
+                    self.control_message ="detect wall at the right, set up turning to it"
                     self.prev_state = self.state
                     self.state = 3
-                elif min_range_sensor == self.left:    
+                elif min_range_sensor == self.left:
+                    self.control_message ="detect wall at the left, set up turning to it"
                     self.prev_state = self.state
                     self.state = 4
                 elif min_range_sensor == self.front_left:
+                    self.control_message ="detect wall at the front_left, set up turning to it"
                     self.prev_state = self.state
                     self.state = 11
                 elif min_range_sensor == self.front_right:
+                    self.control_message ="detect wall at the front_right, set up turning to it"
                     self.prev_state = self.state
                     self.state = 10 
                 elif min_range_sensor == self.front:
+                    self.control_message ="detect wall at the front, set up turning to it"
                     self.prev_state = self.state
                     self.state = 12
             else:
+                self.control_message ="no wall detected, set up 360° turn"
                 self.prev_state = self.state
                 self.state = 15
 
-        elif self.state == 1:
+        elif self.state == 1: #linke wand folgen
             if front_sensor <= self.desired_distance + self.control_distance:
+                self.control_message ="found front wall, start controling the distance to it"
                 self.prev_state = self.state
                 self.state = 9
             elif not self.front_left_sensor_active:
+                self.control_message ="detekt edge, start driving forwoard"
                 self.prev_state = self.state
                 self.state = 6
 
-        elif self.state == 2:
+        elif self.state == 2: #rechte wand folgen
             if front_sensor <= self.desired_distance + self.control_distance:
+                self.control_message ="found front wall, start controling the distance to it"
                 self.prev_state = self.state
                 self.state = 9
             elif not self.front_right_sensor_active:
+                self.control_message ="detekt edge, start driving forwoard"
                 self.prev_state = self.state
                 self.state = 6  
 
-        elif self.state == 3:
+        elif self.state == 3: #set up 90° rechts drehen
+            self.control_message ="set up 90° right turn, start turning"
             self.prev_state = self.state
             self.state = 5
 
-        elif self.state == 4:
+        elif self.state == 4: #set up 90° links drehen
+            self.control_message ="set up 90° left turn, start turning"
             self.prev_state = self.state
             self.state = 5
 
-        elif self.state == 5:
-            if self.angle_toleranz > abs(self.angle_setpoint - theta):
+        elif self.state == 5: #geregelt drehen
+            if self.angle_toleranz > abs(math.degrees(self.angle_setpoint) - math.degrees(theta)):
                 if self.follow_sensor == []:
+                    self.control_message ="turnd to front wall, start esc"
                     self.esc.set_previous_hpf_input(-front_sensor)
                     self.prev_state = self.state
-                    self.state = 13 
+                    #self.state = 13 
+                    self.state = 15
                 elif self.follow_sensor == self.right and self.right_sensor_active:
+                    self.control_message ="turned parallel to right wall, set up pid for right wall"
                     self.prev_state = self.state
                     self.state = 19
                 elif self.follow_sensor == self.left and self.left_sensor_active:
+                    self.control_message ="turned parallel to left wall, set up pid for left wall"
                     self.prev_state = self.state
                     self.state = 18
-                else:
+                elif not((self.follow_sensor == self.right) or (self.follow_sensor == self.left) or (self.follow_sensor == self.front)): #könnte if follow = [] abfragen
+                    self.control_message ="did turned, start search by driving forward"
                     self.prev_state = self.state
-                    self.state = 6                  
+                    self.state = 6    
+                elif not((self.follow_sensor == self.right) or (self.follow_sensor == self.left)) and (self.follow_sensor == self.front): #könnte if follow = front abfragen
+                    if front_sensor > self.desired_distance + self.distance_toleranz:
+                        self.control_message ="did ortogonal turn, start driving forward"
+                        self.prev_state = self.state
+                        self.state = 6
+                    else:
+                        self.control_message ="did ortogonal turn, start controlling to near front wall"
+                        self.prev_state = self.state
+                        self.state = 9
+                        
+                elif ((self.follow_sensor == self.right) or (self.follow_sensor == self.left)): #else mag ich nicht
+                    self.control_message ="did on point turn, start driving forward"
+                    self.prev_state = self.state
+                    self.state = 6             
 
-        elif self.state == 6:
+        elif self.state == 6: #ungeregelt gerade aus
             if ((left_sensor_flanke and not self.left_sensor_active and self.follow_sensor == self.left) or \
-                    (right_sensor_flanke and not self.right_sensor_active and self.follow_sensor == self.right)) and self.pledge_count != 0:
+                    (right_sensor_flanke and not self.right_sensor_active and self.follow_sensor == self.right)) and \
+                    self.pledge_count != 0 and (self.prev_state == 2 or self.prev_state == 1):
+                self.control_message ="over edge set target point"
                 self.prev_state = self.state
                 self.state = 7
-            elif self.control_distance > abs(self.get_distance_to_point(x, y, self.target_x, self.target_y)) and self.prev_state == 7 and\
+            elif self.control_distance > abs(self.get_distance_to_point(x, y, theta, self.target_x, self.target_y)) and self.prev_state == 7 and\
                     (self.follow_sensor == self.right or self.follow_sensor == self.left):
+                self.control_message ="near target point start controling to it"
                 self.prev_state = self.state
                 self.state = 8 
+            
+            elif front_left_sensor <= self.desired_distance / math.cos(math.pi / 4)  and self.follow_sensor == self.left and self.prev_state != 7 and self.prev_state != 1:
+                self.control_message ="arraived at front_letf wall, start controlling to it"
+                self.prev_state = self.state
+                self.state = 21
+            elif front_right_sensor <= self.desired_distance / math.cos(math.pi / 4) and self.follow_sensor == self.right and self.prev_state != 7 and self.prev_state != 2:
+                self.control_message ="arraived at front_right wall, start controlling to it"
+                self.prev_state = self.state
+                self.state = 22 #die brauchennoch einen setup state
+            
             elif self.front_sensor_active and self.pledge_count == 0 and self.prev_state != 13:
+                self.control_message ="ausrichtung gerade wand forne für pledge wechsel aber esc ertmal übersprungen"
                 self.prev_state = self.state
                 self.esc.set_previous_hpf_input(-front_sensor)
-                self.state = 13   
+                self.state = 13  
+
             elif left_sensor <= self.near_activation_threshold and self.follow_sensor == self.left and self.prev_state != 7 and self.prev_state != 1:
+                self.control_message ="arraived at letf wall, setup pid for left wall"
                 self.prev_state = self.state
                 self.state = 18
             elif right_sensor <= self.near_activation_threshold and self.follow_sensor == self.right and self.prev_state != 7 and self.prev_state != 2:
+                self.control_message ="arraived at letf wall, setup pid for left wall"
                 self.prev_state = self.state
-                self.state = 19       
+                self.state = 19   
+
             elif self.follow_sensor == [] and not all(x >= self.activation_threshold  for x in sensor_readings) and self.pledge_count != 0: 
+                self.control_message ="found a wall, restart init"
                 self.prev_state = self.state
                 self.state = 0
             elif self.follow_sensor == self.front and front_sensor <= (self.desired_distance + self.control_distance) :
+                self.control_message ="front wall is near, start to controll the distance"
                 self.prev_state = self.state
                 self.state = 9
+            elif (self.follow_sensor == self.right or self.follow_sensor == self.left) and front_sensor < self.near_activation_threshold:
+                self.control_message ="error unenspectet front wall, restart init"
+                self.prev_state = self.state
+                self.state = 0
 
-        elif self.state == 7:
+        elif self.state == 7: #set up forwoard point
+            self.control_message ="set up forwoard point, start driving forwoard to it"
             self.prev_state = self.state
             self.state = 6
 
-        elif self.state == 8:
-            if self.distance_toleranz > self.get_distance_to_point(x, y, self.target_x, self.target_y):
+        elif self.state == 8: #regelung zum Punkt
+            if self.distance_toleranz > self.get_distance_to_point(x, y, theta, self.target_x, self.target_y):
+                self.control_message ="got to point"
                 if self.follow_sensor == self.left: 
+                    self.control_message ="got to point, start set up left turn"
                     self.prev_state = self.state
                     self.state = 4
                 elif self.follow_sensor == self.right:
+                    self.control_message ="got to point, start set up right turn"
                     self.prev_state = self.state
                     self.state = 3
 
-        elif self.state == 9:
+        elif self.state == 9: #regelung wand forne
             if abs(self.desired_distance - front_sensor) < self.distance_toleranz:
+                self.control_message ="got to wall distance"
                 if self.follow_sensor == self.left:
+                    self.control_message ="got to wall distance, start set up right turn"
                     self.prev_state = self.state
                     self.state = 3     
                 elif self.follow_sensor == self.right:
+                    self.control_message ="got to wall distance, start set up left turn"
                     self.prev_state = self.state
                     self.state = 4  
                 elif self.follow_sensor == self.front and self.front_left_sensor_active: 
+                    self.control_message ="got to wall distance, detect wall font left, start set up left turn"
                     self.prev_state = self.state
                     self.state = 4   
                 elif self.follow_sensor == self.front and self.front_right_sensor_active:
+                    self.control_message ="got to wall distance, detect wall font right, start set up right turn"
                     self.prev_state = self.state
                     self.state = 3     
                 elif self.follow_sensor == self.front:
+                    self.control_message ="got to wall distance, no front left, font right wall, start set up light left turn"
                     self.prev_state = self.state
                     self.state = 11    
 
-        elif self.state == 10:
+        elif self.state == 10: #set up 45° rechts drehen
+            self.control_message ="set up 45° right turn, start turning"
             self.prev_state = self.state
             self.state = 5
 
-        elif self.state == 11:
+        elif self.state == 11: #set up 45° links drehen
+            self.control_message ="set up 45° left turn, start turning"
             self.prev_state = self.state
             self.state = 5  
 
-        elif self.state == 12:
+        elif self.state == 12: #set up 0° links drehen
+            self.control_message ="set up 0° turn, start turning"
             self.prev_state = self.state
             self.state = 5       
 
-        elif self.state == 13:
+        elif self.state == 13: #esc
             
             if current_time - self.previous_time >= self.esc_angle_comparison_interval:
                 
                 if self.has_angle_changed_less_than_threshold(self.previous_theta, theta, self.esc_angel_toleranz):
+                    self.control_message ="ortogonal to front wall, start driving forwoard"
                     self.prev_state = self.state
                     self.state = 6
                 self.previous_theta = theta
                 self.previous_time = current_time
 
-        elif self.state == 14:
-            if not all(x >= self.activation_threshold  for x in sensor_readings):
+        elif self.state == 14: #ungeregelt drehen
+            if not all(x >= self.activation_threshold  for x in sensor_readings) and not self.follow_sensor == self.front:
+                self.control_message ="found a wall restart init"
                 self.prev_state = self.state
                 self.state = 0
+            elif theta >= self.angle_setpoint and self.follow_sensor == self.front:
+                self.control_message ="did 360° turn, set angel_setpoint to smalest front distance"
+                self.prev_state = self.state
+                self.state = 20
             elif theta >= self.angle_setpoint:
+                self.control_message ="found no wall after 360° turn, start driving forward"
                 self.prev_state = self.state
                 self.state = 6    
 
-        elif self.state == 15:
+        elif self.state == 15: #set up 360° recht drehen
+            self.control_message ="set up 360° turn, start turning"
             self.prev_state = self.state
             self.state = 14
 
@@ -1401,18 +1479,57 @@ class AutonomousController:
         elif self.state == 17:
             pass
 
-        elif self.state == 18:
+        elif self.state == 18: #setup pid links
             self.state = 1  
 
-        elif self.state == 19:
+        elif self.state == 19: #setup pid rechts
             self.state = 2 
 
+        elif self.state == 20: #setup winkel mit kleinstem abstand
+            self.control_message ="set smalest distance angel, statr turning"
+            self.prev_state = self.state
+            self.state = 5
+
+        elif self.state == 21: #forne links folgen
+            if left_sensor <= self.near_activation_threshold and self.follow_sensor == self.left and self.prev_state != 7 and self.prev_state != 1:
+                self.control_message ="arraived at letf wall, start controlling to it"
+                self.prev_state = self.state
+                self.state = 1
+                error = self.desired_distance - left_sensor
+                self.wall_distance_pid.set_previous_error(error)
+            elif (self.follow_sensor == self.right or self.follow_sensor == self.left) and front_sensor < (self.desired_distance / 2.5):
+                self.control_message ="error unenspectet front wall, restart init"
+                self.prev_state = self.state
+                self.state = 0
+            elif not self.front_left_sensor_active and front_left_sensor_flanke:
+                self.control_message ="detekt edge, start driving forwoard"
+                self.prev_state = self.state
+                self.state = 6      
+        
+        elif self.state == 22: #forne rechts folgen
+            if right_sensor <= self.near_activation_threshold and self.follow_sensor == self.right and self.prev_state != 7 and self.prev_state != 2:
+                self.control_message ="arraived at right wall, start controlling to it"
+                self.prev_state = self.state
+                self.state = 2
+                error = self.desired_distance - right_sensor
+                self.wall_distance_pid.set_previous_error(error)
+            elif (self.follow_sensor == self.right or self.follow_sensor == self.left) and front_sensor < self.near_activation_threshold:
+                self.control_message ="error unenspectet front wall, restart init"
+                self.prev_state = self.state
+                self.state = 0
+            elif not self.front_right_sensor_active and front_right_sensor_flanke:
+                self.control_message ="detekt edge, start driving forwoard"
+                self.prev_state = self.state
+                self.state = 6
+ 
 
         ############################# pledge ####################################
 
         # Calculate control action for maintaining a constant distance to the wall
 
         if self.state == 0: #init
+            self.follow_sensor = []
+            self.pledge_count = []
             self.left_wheel_velocity = 0
             self.right_wheel_velocity = 0
         
@@ -1433,42 +1550,80 @@ class AutonomousController:
             self.follow_sensor = self.right
 
         elif self.state == 3: #set up 90° recht drehen
-            self.angle_setpoint = theta - math.radians(90)
+            if self.prev_state == 9:
+                self.angle_setpoint = theta - math.radians(90 - self.undercut)
+            elif self.prev_state == 8:
+                self.angle_setpoint = self.angle_setpoint - math.radians(90)
+            else:
+                self.angle_setpoint = theta - math.radians(90)
+           
             if self.follow_sensor == self.front:
                 self.follow_sensor = self.left
-                self.on_closed_Loop = False
-
+                
             if self.pledge_count != []:
-                self.pledge_count -= 1    
+                self.pledge_count -= 1 
+
+            self.left_wheel_velocity = 0
+            self.right_wheel_velocity = 0   
 
         elif self.state == 4: #set up 90° links drehen 
-            self.angle_setpoint = theta + math.radians(90)
+            if self.prev_state == 9:
+                self.angle_setpoint = theta + math.radians(90 - self.undercut)
+            elif self.prev_state == 8:
+                self.angle_setpoint = self.angle_setpoint + math.radians(90)
+            else:
+                self.angle_setpoint = theta + math.radians(90)
+
             if self.follow_sensor == self.front:
                 self.follow_sensor = self.right
-                self.on_closed_Loop = False
             
             if self.pledge_count != []:
                 self.pledge_count += 1
 
+            self.left_wheel_velocity = 0
+            self.right_wheel_velocity = 0
+
         elif self.state == 5: #geregelt drehen
-            angle_control = self.angle_pid.update(self.angle_setpoint, theta, time_step)
+            if abs(self.angle_setpoint - theta) <= math.radians(3):
+                self.angle_pid.set_integral(0)
+            angle_control = np.sign(self.angle_pid.previous_error)* 0.05 *(self.base_rotation_speed - abs(omega))
+            angle_control += self.angle_pid.update(self.angle_setpoint, theta, time_step)
+           
             self.left_wheel_velocity = - angle_control
             self.right_wheel_velocity = angle_control
 
         elif self.state == 6: #ungeregelt gerade aus
-            self.left_wheel_velocity = self.base_speed
-            self.right_wheel_velocity = self.base_speed
+            angle_control = 0
+            base_speed = self.base_speed
+
+            if self.prev_state == 7:
+                relative_angle = self.relative_angle(x, y, theta, self.target_x, self.target_y)
+                angle_control = np.sign(self.angle_pid.previous_error)* 0.00 *(self.base_rotation_speed - abs(omega))
+                angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.3
+                base_speed = self.base_speed * 1
+            else:
+                angle_control = np.sign(self.angle_pid.previous_error)* 0.00 *(self.base_rotation_speed - abs(omega))
+                angle_control += self.angle_pid.update(self.angle_setpoint, theta, time_step) * 1
+                base_speed = self.base_speed * 1
+
+            self.left_wheel_velocity = base_speed - angle_control
+            self.right_wheel_velocity = base_speed + angle_control
 
             if self.pledge_count == 0:
                 self.follow_sensor = self.front
 
         elif self.state == 7: #set up forwoard point
-            self.target_x, self.target_y = self.get_forward_point(x, y, theta, self.desired_distance)
+            self.target_x, self.target_y = self.get_forward_point(x, y, theta, self.desired_distance + + self.robot_radius + 0.015)
 
         elif self.state == 8: #regelung zum punkt
             distance_control = self.point_distance_pid.update(0, self.get_distance_to_point(x, y, self.target_x, self.target_y), time_step)
-            self.left_wheel_velocity = distance_control
-            self.right_wheel_velocity = distance_control
+            
+            relative_angle = self.relative_angle(x, y, theta, self.target_x, self.target_y)
+            angle_control = np.sign(self.angle_pid.previous_error)* 0.00 *(self.base_rotation_speed - abs(omega))
+            angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.3
+            
+            self.left_wheel_velocity = distance_control - angle_control
+            self.right_wheel_velocity = distance_control + angle_control
 
         elif self.state == 9: #regelung wandabstand forne
             distance_control = self.point_distance_pid.update(self.desired_distance, front_sensor, time_step)
@@ -1477,14 +1632,20 @@ class AutonomousController:
 
         elif self.state == 10: #set up 45° recht drehen
             self.angle_setpoint = theta - math.radians(45)
+            self.left_wheel_velocity = 0
+            self.right_wheel_velocity = 0
 
         elif self.state == 11: #set up 45° links drehen 
             self.angle_setpoint = theta + math.radians(45)
             if self.follow_sensor == self.front:
                 self.follow_sensor = self.right 
+            self.left_wheel_velocity = 0
+            self.right_wheel_velocity = 0
 
         elif self.state == 12: #set up 0° links drehen 
-            self.angle_setpoint = theta     
+            self.angle_setpoint = theta    
+            self.left_wheel_velocity = 0
+            self.right_wheel_velocity = 0 
 
         elif self.state == 13: #esc front
             # Update the control input using ESC
@@ -1498,11 +1659,19 @@ class AutonomousController:
             self.follow_sensor = self.front
         
         elif self.state == 14: #ungeregelt drehen
-            self.left_wheel_velocity = -(self.wheel_distance / 2.0) * self.base_rotation_speed
-            self.right_wheel_velocity = (self.wheel_distance / 2.0) * self.base_rotation_speed
+            self.left_wheel_velocity = -0.1#-(self.wheel_distance / 2.0) * self.base_rotation_speed
+            self.right_wheel_velocity = 0.1#(self.wheel_distance / 2.0) * self.base_rotation_speed
+
+            if front_sensor < self.min_distance and self.follow_sensor == self.front:
+                self.min_distance = front_sensor
+                self.min_distance_angle = theta
 
         elif self.state == 15: #set up 360° recht drehen
-            self.angle_setpoint = theta + math.radians(360)    
+            self.angle_setpoint = theta + math.radians(360) 
+            self.left_wheel_velocity = 0
+            self.right_wheel_velocity = 0
+            if self.prev_state == 5:
+                self.follow_sensor = self.front   
 
         elif self.state == 16: #direktes wechseln nach links
             self.follow_sensor = self.left     
@@ -1524,6 +1693,30 @@ class AutonomousController:
             if self.pledge_count == []:
                 self.pledge_count = 0
 
+        elif self.state == 20: #setzen winkel mit minimalen abstand #ehemals state 16
+            angle_diff = self.min_distance_angle - theta
+            if angle_diff < math.radians(-180):
+                self.min_distance_angle = theta + angle_diff + math.radians(360)
+            self.angle_setpoint = self.min_distance_angle
+            self.min_distance = np.inf
+            self.left_wheel_velocity = 0
+            self.right_wheel_velocity = 0
+        
+        elif self.state == 21: #links diagonal folgen
+                angle_control = 1 * self.wall_distance_pid.update(self.desired_distance / math.cos(math.pi / 4), front_left_sensor, time_step)
+
+                # Adjust wheel velocities
+                self.left_wheel_velocity = self.base_speed + angle_control
+                self.right_wheel_velocity = self.base_speed - angle_control
+                self.follow_sensor = self.left
+
+        elif self.state == 22: #rechts diagonal folgen
+            angle_control = 1 * self.wall_distance_pid.update(self.desired_distance / math.cos(math.pi / 4), front_right_sensor, time_step)
+
+            # Adjust wheel velocities
+            self.left_wheel_velocity = self.base_speed - angle_control
+            self.right_wheel_velocity = self.base_speed + angle_control
+            self.follow_sensor = self.right
         ############################# pledge ####################################
 
         return self.left_wheel_velocity, self.right_wheel_velocity
