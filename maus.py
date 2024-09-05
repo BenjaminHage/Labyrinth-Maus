@@ -106,7 +106,7 @@ def main():
             angle_setpoint, base_speed, close, autonomous_mode = io.handle_user_input(angle_setpoint, base_speed,autonomous_mode, close=close)
                         
             if autonomous_mode:
-                left_wheel_velocity_target, right_wheel_velocity_target = auto.autonomous_control_right_hand(sensor_readings, x, y, theta, gyro_w, current_time, time_step)
+                left_wheel_velocity_target, right_wheel_velocity_target = auto.autonomous_control_pledge(sensor_readings, x, y, theta, gyro_w, current_time, time_step)
                 #print(sensor_readings)
             else:
                 # PID controller to adjust wheel velocities
@@ -172,7 +172,7 @@ def main():
        # out.aktivate_final_batch_plot()
        # out.aktivate_final_rt_plot()
         out.show_final_plots(robot)
-        out.show_full_log()
+       # out.show_full_log()
         
     except KeyboardInterrupt:
         print("\nPlot Closed by keyboardInterupt")
