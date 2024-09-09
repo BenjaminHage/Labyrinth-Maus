@@ -108,6 +108,10 @@ class ConsoleOutput:
 
         self.last_control_message = None  # Speichert die vorherige control_message
         self.log_file_path = "info_lines_log.log"  # Pfad zur Log-Datei
+        
+        # Überschreibe die Log-Datei beim Start des Programms
+        with open(self.log_file_path, "w") as log_file:
+            log_file.write("Log-Datei neu erstellt.\n")
 
   
     def start(self):
