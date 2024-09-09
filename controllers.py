@@ -1350,11 +1350,13 @@ class AutonomousController:
                 self.prev_state = self.state
                 self.state = 8 
             
-            elif front_left_sensor <= self.desired_distance / math.cos(math.pi / 4)  and self.follow_sensor == self.left and self.prev_state != 7 and self.prev_state != 1:
+            elif front_left_sensor <= self.desired_distance / math.cos(math.pi / 4)  and self.follow_sensor == self.left and self.prev_state != 7 and\
+                     self.prev_state != 1 and self.pledge_count != 0:
                 self.control_message ="arraived at front_letf wall, start controlling to it"
                 self.prev_state = self.state
                 self.state = 21
-            elif front_right_sensor <= self.desired_distance / math.cos(math.pi / 4) and self.follow_sensor == self.right and self.prev_state != 7 and self.prev_state != 2:
+            elif front_right_sensor <= self.desired_distance / math.cos(math.pi / 4) and self.follow_sensor == self.right and self.prev_state != 7 and\
+                     self.prev_state != 2 and self.pledge_count != 0:
                 self.control_message ="arraived at front_right wall, start controlling to it"
                 self.prev_state = self.state
                 self.state = 22 #die brauchennoch einen setup state
