@@ -43,7 +43,7 @@ def main():
     
     #Auto
     init_base_speed = 0.12
-    init_base_rotation_speed = 1.2
+    init_base_rotation_speed = 2.25
     desired_distance = 3.5  # Desired distance from the wall
     sensor_activation_threshold = 22 
     diagonal_activation_threshold = 30

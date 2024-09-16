@@ -230,7 +230,12 @@ class AutonomousController:
         self.esc = esc
         
         self.control_message = ""
+        
         self.undercut = 0
+        self.point_overshoot = 0.015
+        self.kw_standing = 0.04
+        self.kw_driving = 0
+        
         self.min_distance = np.inf
         self.min_distance_angle = 0
 
@@ -623,7 +628,7 @@ class AutonomousController:
         elif self.state == 5: #geregelt drehen
             if abs(self.angle_setpoint - theta) <= math.radians(3):
                 self.angle_pid.set_integral(0)
-            angle_control = np.sign(self.angle_pid.previous_error)* 0.05 *(self.base_rotation_speed - abs(omega))
+            angle_control = np.sign(self.angle_pid.previous_error)* self.kw_standing *(self.base_rotation_speed - abs(omega))
             angle_control += self.angle_pid.update(self.angle_setpoint, theta, time_step) 
             self.left_wheel_velocity = - angle_control
             self.right_wheel_velocity = angle_control
@@ -633,11 +638,11 @@ class AutonomousController:
             base_speed = self.base_speed
             if self.prev_state == 7:
                 relative_angle = self.relative_angle(x, y, theta, self.target_x, self.target_y)
-                angle_control = np.sign(self.angle_pid.previous_error)* 0.00 *(self.base_rotation_speed - abs(omega))
+                angle_control = np.sign(self.angle_pid.previous_error)* self.kw_driving *(self.base_rotation_speed - abs(omega))
                 angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.3
-                base_speed = self.base_speed * 1
+                base_speed = self.base_speed * 1.0
             else:
-                angle_control = np.sign(self.angle_pid.previous_error)* 0.00 *(self.base_rotation_speed - abs(omega))
+                angle_control = np.sign(self.angle_pid.previous_error)* self.kw_driving *(self.base_rotation_speed - abs(omega))
                 angle_control += self.angle_pid.update(self.angle_setpoint, theta, time_step) * 1
                 base_speed = self.base_speed * 1
             
@@ -647,7 +652,7 @@ class AutonomousController:
         elif self.state == 7: #set up forwoard point
 #             self.robot.set_position_and_angle(0,0,0)
 #             self.angle_setpoint = 0
-            self.target_x, self.target_y = self.get_forward_point(x, y, theta, self.desired_distance + self.robot_radius + 0.015)
+            self.target_x, self.target_y = self.get_forward_point(x, y, theta, self.desired_distance + self.robot_radius + self.point_overshoot)
             # self.check_features(x,y)
             # self.left_wheel_velocity = 0
             # self.right_wheel_velocity = 0
@@ -656,7 +661,7 @@ class AutonomousController:
             distance_control = self.point_distance_pid.update(0, self.get_distance_to_point(x, y, theta, self.target_x, self.target_y), time_step)
             
             relative_angle = self.relative_angle(x, y, theta, self.target_x, self.target_y)
-            angle_control = np.sign(self.angle_pid.previous_error)* 0.00 *(self.base_rotation_speed - abs(omega))
+            angle_control = np.sign(self.angle_pid.previous_error)* self.kw_driving *(self.base_rotation_speed - abs(omega))
             angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.3
             
             self.left_wheel_velocity = distance_control - angle_control
@@ -699,8 +704,8 @@ class AutonomousController:
             self.follow_sensor = self.front
         
         elif self.state == 14: #ungeregelt drehen
-            self.left_wheel_velocity = -0.1#-(self.wheel_distance / 2.0) * self.base_rotation_speed
-            self.right_wheel_velocity = 0.1#(self.wheel_distance / 2.0) * self.base_rotation_speed
+            self.left_wheel_velocity = -(self.wheel_distance / 2.0) * self.base_rotation_speed
+            self.right_wheel_velocity = (self.wheel_distance / 2.0) * self.base_rotation_speed
 
             if front_sensor < self.min_distance and self.follow_sensor == self.front:
                 self.min_distance = front_sensor
@@ -1607,7 +1612,7 @@ class AutonomousController:
         elif self.state == 5: #geregelt drehen
             if abs(self.angle_setpoint - theta) <= math.radians(3):
                 self.angle_pid.set_integral(0)
-            angle_control = np.sign(self.angle_pid.previous_error)* 0.04 *(self.base_rotation_speed - abs(omega))
+            angle_control = np.sign(self.angle_pid.previous_error)* self.kw_standing *(self.base_rotation_speed - abs(omega))
             angle_control += self.angle_pid.update(self.angle_setpoint, theta, time_step)
            
             self.left_wheel_velocity = - angle_control
@@ -1619,13 +1624,13 @@ class AutonomousController:
 
             if self.prev_state == 7:
                 relative_angle = self.relative_angle(x, y, theta, self.target_x, self.target_y)
-                angle_control = np.sign(self.angle_pid.previous_error)* 0.00 *(self.base_rotation_speed - abs(omega))
+                angle_control = np.sign(self.angle_pid.previous_error)* self.kw_driving *(self.base_rotation_speed - abs(omega))
                 angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.3
-                base_speed = self.base_speed * 1
+                base_speed = self.base_speed 
             else:
-                angle_control = np.sign(self.angle_pid.previous_error)* 0.00 *(self.base_rotation_speed - abs(omega))
-                angle_control += self.angle_pid.update(self.angle_setpoint, theta, time_step) * 1
-                base_speed = self.base_speed * 1
+                angle_control = np.sign(self.angle_pid.previous_error)* self.kw_driving *(self.base_rotation_speed - abs(omega))
+                angle_control += self.angle_pid.update(self.angle_setpoint, theta, time_step) * 1.0
+                base_speed = self.base_speed 
 
             self.left_wheel_velocity = base_speed - angle_control
             self.right_wheel_velocity = base_speed + angle_control
@@ -1634,13 +1639,13 @@ class AutonomousController:
                 self.follow_sensor = self.front
 
         elif self.state == 7: #set up forwoard point
-            self.target_x, self.target_y = self.get_forward_point(x, y, theta, self.desired_distance + + self.robot_radius + 0.015)
+            self.target_x, self.target_y = self.get_forward_point(x, y, theta, self.desired_distance + self.robot_radius + self.point_overshoot)
 
         elif self.state == 8: #regelung zum punkt
             distance_control = self.point_distance_pid.update(0, self.get_distance_to_point(x, y, theta, self.target_x, self.target_y), time_step)
             
             relative_angle = self.relative_angle(x, y, theta, self.target_x, self.target_y)
-            angle_control = np.sign(self.angle_pid.previous_error)* 0.00 *(self.base_rotation_speed - abs(omega))
+            angle_control = np.sign(self.angle_pid.previous_error)* self.kw_driving *(self.base_rotation_speed - abs(omega))
             angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.3
             
             self.left_wheel_velocity = distance_control - angle_control
@@ -1683,8 +1688,8 @@ class AutonomousController:
             self.follow_sensor = self.front
         
         elif self.state == 14: #ungeregelt drehen
-            self.left_wheel_velocity = -0.1#-(self.wheel_distance / 2.0) * self.base_rotation_speed
-            self.right_wheel_velocity = 0.1#(self.wheel_distance / 2.0) * self.base_rotation_speed
+            self.left_wheel_velocity = -(self.wheel_distance / 2.0) * self.base_rotation_speed
+            self.right_wheel_velocity = (self.wheel_distance / 2.0) * self.base_rotation_speed
 
             if front_sensor < self.min_distance and self.follow_sensor == self.front:
                 self.min_distance = front_sensor
