@@ -194,8 +194,8 @@ class AutonomousController:
         self.feature_toleranz = feature_toleranz/100 
         self.direkt_change_toleranz = direkt_change_toleranz/100
         self.activation_threshold = sensor_activation_threshold/100
-        self.diagonal_activation_threshold = 35/100
-        self.near_activation_threshold = 20/100 
+        self.diagonal_activation_threshold = 30/100
+        self.near_activation_threshold = 15/100 
 
         self.esc_angle_comparison_interval = esc_angle_comparison_interval
         self.esc_angel_toleranz = esc_angel_toleranz
@@ -1340,7 +1340,7 @@ class AutonomousController:
         elif self.state == 6: #ungeregelt gerade aus
             if ((left_sensor_flanke and not self.left_sensor_active and self.follow_sensor == self.left) or \
                     (right_sensor_flanke and not self.right_sensor_active and self.follow_sensor == self.right)) and \
-                    self.pledge_count != 0 and (self.prev_state == 2 or self.prev_state == 1):
+                    self.pledge_count != 0 and (self.prev_state == 2 or self.prev_state == 1 or self.prev_state == 18 or self.prev_state == 19):
                 self.control_message ="over edge set target point"
                 self.prev_state = self.state
                 self.state = 7
@@ -1351,12 +1351,12 @@ class AutonomousController:
                 self.state = 8 
             
             elif front_left_sensor <= self.desired_distance / math.cos(math.pi / 4)  and self.follow_sensor == self.left and self.prev_state != 7 and\
-                     self.prev_state != 1 and self.pledge_count != 0:
+                     self.prev_state != 1 and self.prev_state != 18 and self.prev_state != 18 and self.pledge_count != 0:
                 self.control_message ="arraived at front_letf wall, start controlling to it"
                 self.prev_state = self.state
                 self.state = 21
             elif front_right_sensor <= self.desired_distance / math.cos(math.pi / 4) and self.follow_sensor == self.right and self.prev_state != 7 and\
-                     self.prev_state != 2 and self.pledge_count != 0:
+                     self.prev_state != 2 and self.prev_state != 19 and self.prev_state != 19 and self.pledge_count != 0:
                 self.control_message ="arraived at front_right wall, start controlling to it"
                 self.prev_state = self.state
                 self.state = 22 #die brauchennoch einen setup state
@@ -1367,12 +1367,12 @@ class AutonomousController:
                 self.esc.set_previous_hpf_input(-front_sensor)
                 self.state = 13  
 
-            elif left_sensor <= self.near_activation_threshold and self.follow_sensor == self.left and self.prev_state != 7 and self.prev_state != 1:
+            elif left_sensor <= self.near_activation_threshold and self.follow_sensor == self.left and self.prev_state != 7 and self.prev_state != 1 and self.prev_state != 18:
                 self.control_message ="arraived at letf wall, setup pid for left wall"
                 self.prev_state = self.state
                 self.state = 18
-            elif right_sensor <= self.near_activation_threshold and self.follow_sensor == self.right and self.prev_state != 7 and self.prev_state != 2:
-                self.control_message ="arraived at letf wall, setup pid for left wall"
+            elif right_sensor <= self.near_activation_threshold and self.follow_sensor == self.right and self.prev_state != 7 and self.prev_state != 2 and self.prev_state != 19:
+                self.control_message ="arraived at right wall, setup pid for right wall"
                 self.prev_state = self.state
                 self.state = 19   
 
@@ -1485,10 +1485,24 @@ class AutonomousController:
             pass
 
         elif self.state == 18: #setup pid links
-            self.state = 1  
+            if not self.front_left_sensor_active:
+                self.control_message ="detekt edge, start driving forwoard"
+                self.prev_state = self.state
+                self.state = 6
+            else:
+                self.control_message ="did setup,start following left wall"
+                self.prev_state = self.state
+                self.state = 1  
 
         elif self.state == 19: #setup pid rechts
-            self.state = 2 
+            if not self.front_right_sensor_active:
+                self.control_message ="detekt edge, start driving forwoard"
+                self.prev_state = self.state
+                self.state = 6
+            else:
+                self.control_message ="did setup,start following right wall"
+                self.prev_state = self.state
+                self.state = 2 
 
         elif self.state == 20: #setup winkel mit kleinstem abstand
             self.control_message ="set smalest distance angel, statr turning"
