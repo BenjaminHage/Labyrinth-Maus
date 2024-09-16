@@ -238,6 +238,38 @@ class DifferentialDriveRobot:
   
     def state_estimate(self, left_wheel_velocity, right_wheel_velocity, gyro_w, current_time, time_step): ######################################################################
 
+        handle_encoder_mode()
+        # Positions-Update basierend auf der aktuellen Geschwindigkeit
+        
+        self.robot_x, self.robot_y, self.robot_angle, self.robot_v = self.update_robot(self.robot_x, self.robot_y, self.robot_angle, self.left_wheel_velocity,
+                                                                         self.right_wheel_velocity, gyro_w - self.gyro_w_bias, time_step)
+
+        self.left_wheel_velocities.append(self.left_wheel_velocity)
+        self.right_wheel_velocities.append(self.right_wheel_velocity)
+        self.times.append(current_time)
+        self.left_wheel_velocity_targets.append(left_wheel_velocity)
+        self.right_wheel_velocity_targets.append(right_wheel_velocity)
+    
+    
+    def state_estimate_Kalman(self, left_wheel_velocity, right_wheel_velocity, gyro_w, current_time, time_step): ######################################################################
+        
+        handle_encoder_mode()
+        # Positions-Update basierend auf der aktuellen Geschwindigkeit
+
+        # UKF Vorhersage
+        self.ukf_estimator.predict(time_step)
+
+        # Sensorwerte als Messungen
+        z = np.array([self.left_wheel_velocity, self.right_wheel_velocity, gyro_w - self.gyro_w_bias])
+
+        # UKF Update
+        self.ukf_estimator.update(z)
+
+        # Aktualisierung der Roboterzustände
+        self.k_robot_x, self.k_robot_y, self.k_robot_angle, _, _, _, self.k_robot_v = self.ukf_estimator.get_state()
+    
+    
+    def handle_encoder_mode(self):
         if self.encoder_mode == 0:
         # Geschwindigkeit auf 0 setzen, falls das Timeout überschritten wurde
             if time.monotonic() - self.last_left_time > self.velocity_timeout:
@@ -259,32 +291,7 @@ class DifferentialDriveRobot:
             
             self.left_wheel_velocity = self.lpf_speed.filter(left_wheel_velocity, time_step)
             self.right_wheel_velocity = self.lpf_speed_right.filter(right_wheel_velocity, time_step)
-            
-        # Positions-Update basierend auf der aktuellen Geschwindigkeit
         
-        
-
-        # UKF Vorhersage
-        self.ukf_estimator.predict(time_step)
-
-        # Sensorwerte als Messungen
-        z = np.array([self.left_wheel_velocity, self.right_wheel_velocity, gyro_w - self.gyro_w_bias])
-
-        # UKF Update
-        self.ukf_estimator.update(z)
-
-        # Aktualisierung der Roboterzustände
-        self.k_robot_x, self.k_robot_y, self.k_robot_angle, _, _, _, self.k_robot_v = self.ukf_estimator.get_state()
-
-        
-        self.robot_x, self.robot_y, self.robot_angle, self.robot_v = self.update_robot(self.robot_x, self.robot_y, self.robot_angle, self.left_wheel_velocity,
-                                                                         self.right_wheel_velocity, gyro_w - self.gyro_w_bias, time_step)
-
-        self.left_wheel_velocities.append(self.left_wheel_velocity)
-        self.right_wheel_velocities.append(self.right_wheel_velocity)
-        self.times.append(current_time)
-        self.left_wheel_velocity_targets.append(left_wheel_velocity)
-        self.right_wheel_velocity_targets.append(right_wheel_velocity)
   
     def get_position_and_angle(self):
         return self.robot_x, self.robot_y, self.robot_angle, self.robot_v

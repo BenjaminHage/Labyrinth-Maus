@@ -165,10 +165,11 @@ class ESCController:
         
         
 class AutonomousController:
-    def __init__(self, angle_pid, wall_distance_pid, point_distance_pid, esc, base_speed, base_rotation_speed, desired_distance, sensor_activation_threshold,
+    def __init__(self, angle_pid, wall_distance_pid, point_distance_pid, esc, base_speed, base_rotation_speed, desired_distance,
+                 sensor_activation_threshold, diagonal_activation_threshold, near_activation_threshold
                  wheel_distance, robot_radius, sensor_angles, robot,
                  control_distance = 5, angle_toleranz = 3, distance_toleranz = 1.5, 
-                 esc_angle_comparison_interval = 1, esc_angel_toleranz = 0.8,  feature_toleranz = 3, direkt_change_toleranz = 15):
+                 esc_angle_comparison_interval = 1, esc_angel_toleranz = 0.8,  feature_toleranz = 3, direkt_change_toleranz = 5):
         
         self.state = 0
         
@@ -194,8 +195,8 @@ class AutonomousController:
         self.feature_toleranz = feature_toleranz/100 
         self.direkt_change_toleranz = direkt_change_toleranz/100
         self.activation_threshold = sensor_activation_threshold/100
-        self.diagonal_activation_threshold = 30/100
-        self.near_activation_threshold = 15/100 
+        self.diagonal_activation_threshold = diagonal_activation_threshold/100
+        self.near_activation_threshold = near_activation_threshold/100 
 
         self.esc_angle_comparison_interval = esc_angle_comparison_interval
         self.esc_angel_toleranz = esc_angel_toleranz
@@ -214,7 +215,7 @@ class AutonomousController:
         self.front_right_sensor_active = False
 
         self.prev_state = 0
-        self.previous_time = 0#pygame.time.get_ticks() / 1000.0  #überlegen zeit unabhängig von pygame machen
+        self.previous_time = 0
         self.previous_theta = np.inf
         self.feature_list = np.empty((0, 2))
         self.change_feature_list = np.empty((0, 2))
@@ -1226,14 +1227,15 @@ class AutonomousController:
         
         ############################# pledge ####################################
 
-        # Read the side sensors
-        front_sensor = sensor_readings[self.front]/100
-        left_sensor = sensor_readings[self.left]/100
-        front_left_sensor = sensor_readings[self.front_left]/100
-        right_sensor = sensor_readings[self.right]/100
-        front_right_sensor = sensor_readings[self.front_right]/100
-
         sensor_readings = [reading / 100 for reading in sensor_readings]
+        
+        # Read the side sensors
+        front_sensor = sensor_readings[self.front]
+        left_sensor = sensor_readings[self.left]
+        front_left_sensor = sensor_readings[self.front_left]
+        right_sensor = sensor_readings[self.right]
+        front_right_sensor = sensor_readings[self.front_right]
+
 
         self.front_sensor_active, front_sensor_flanke = self.flanke_detektion(front_sensor, self.front_sensor_active, self.activation_threshold )
         self.left_sensor_active, left_sensor_flanke = self.flanke_detektion(left_sensor, self.left_sensor_active, self.activation_threshold )
@@ -1322,7 +1324,7 @@ class AutonomousController:
                     self.control_message ="did turned, start search by driving forward"
                     self.prev_state = self.state
                     self.state = 6    
-                elif not((self.follow_sensor == self.right) or (self.follow_sensor == self.left)) and (self.follow_sensor == self.front): #könnte if follow = front abfragen
+                elif self.follow_sensor == self.front:
                     if front_sensor > self.desired_distance + self.distance_toleranz:
                         self.control_message ="did ortogonal turn, start driving forward"
                         self.prev_state = self.state

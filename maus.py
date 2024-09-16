@@ -45,8 +45,10 @@ def main():
     init_base_speed = 0.12
     init_base_rotation_speed = 1.2
     desired_distance = 3.5  # Desired distance from the wall
-    sensor_activation_threshold = 22 #= robot.get_sensor_range() * 0.75 
-    direkt_change_toleranz = 5
+    sensor_activation_threshold = 22 
+    diagonal_activation_threshold = 30
+    near_activation_threshold = 15
+    
     
     #ESC
     dither_frequency = 0.1  # Frequency of dither signal (Hz)
@@ -60,7 +62,8 @@ def main():
     esc = ESCController(dither_frequency, dither_amplitude, learning_rate)
     
     auto = AutonomousController(angle_pid, wall_distance_pid, point_distance_pid, esc, init_base_speed,
-                                        init_base_rotation_speed, desired_distance, sensor_activation_threshold,
+                                        init_base_rotation_speed, desired_distance,
+                                        sensor_activation_threshold, diagonal_activation_threshold, near_activation_threshold 
                                         robot.get_wheel_distance(), robot.get_robot_radius(),robot.get_sensor_angles(),robot)
      
     ###### Auto #####
@@ -92,12 +95,8 @@ def main():
                 break
             
             x, y, theta, v = robot.get_position_and_angle()
-            ukf_x, ukf_y, ukf_theta, ukf_v = robot.get_ukf_position_and_angle()
-            # print(f"x    : {x:8.4f}    y    : {x:8.4f}    o    : {theta:8.4f}    v    : {v:8.4f}")
-            # print(f"ukf_x: {ukf_x:8.4f}    ukf_y: {ukf_y:8.4f}    ukf_o: {ukf_theta:8.4f}    ukf_v: {ukf_v:8.4f}")
-            
-            
-            
+            #ukf_x, ukf_y, ukf_theta, ukf_v = robot.get_ukf_position_and_angle()
+         
             sensor_readings = robot.get_sensor_readings()
             sensor_readings = robot.filter_sensor_readings(sensor_readings, time_step)
             imu_gyro_readings = robot.get_imu_readings()
@@ -107,9 +106,8 @@ def main():
                         
             if autonomous_mode:
                 left_wheel_velocity_target, right_wheel_velocity_target = auto.autonomous_control_pledge(sensor_readings, x, y, theta, gyro_w, current_time, time_step)
-                #print(sensor_readings)
+                
             else:
-                # PID controller to adjust wheel velocities
                 if abs(angle_setpoint - theta) <= math.radians(1.5):
                     angle_pid.set_integral(0)
                 angle_control = np.sign(angle_pid.previous_error)* 0.01 *(init_base_rotation_speed - abs(gyro_w)) + angle_pid.update(angle_setpoint, theta, time_step)
