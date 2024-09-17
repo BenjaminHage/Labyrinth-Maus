@@ -166,7 +166,7 @@ class ESCController:
         
 class AutonomousController:
     def __init__(self, angle_pid, wall_distance_pid, point_distance_pid, esc, base_speed, base_rotation_speed, desired_distance,
-                 sensor_activation_threshold, diagonal_activation_threshold, near_activation_threshold
+                 sensor_activation_threshold, diagonal_activation_threshold, near_activation_threshold,	
                  wheel_distance, robot_radius, sensor_angles, robot,
                  control_distance = 5, angle_toleranz = 3, distance_toleranz = 1.5, 
                  esc_angle_comparison_interval = 1, esc_angel_toleranz = 0.8,  feature_toleranz = 3, direkt_change_toleranz = 5):
@@ -233,7 +233,7 @@ class AutonomousController:
         
         self.undercut = 0
         self.point_overshoot = 0.015
-        self.kw_standing = 0.04
+        self.kw_standing = 0.02
         self.kw_driving = 0
         
         self.min_distance = np.inf
@@ -626,7 +626,7 @@ class AutonomousController:
             self.right_wheel_velocity = 0
 
         elif self.state == 5: #geregelt drehen
-            if abs(self.angle_setpoint - theta) <= math.radians(3):
+            if abs(self.angle_setpoint - theta) <= math.radians(self.angle_toleranz):
                 self.angle_pid.set_integral(0)
             angle_control = np.sign(self.angle_pid.previous_error)* self.kw_standing *(self.base_rotation_speed - abs(omega))
             angle_control += self.angle_pid.update(self.angle_setpoint, theta, time_step) 
@@ -1610,7 +1610,7 @@ class AutonomousController:
             self.right_wheel_velocity = 0
 
         elif self.state == 5: #geregelt drehen
-            if abs(self.angle_setpoint - theta) <= math.radians(3):
+            if abs(self.angle_setpoint - theta) <= math.radians(self.angle_toleranz):
                 self.angle_pid.set_integral(0)
             angle_control = np.sign(self.angle_pid.previous_error)* self.kw_standing *(self.base_rotation_speed - abs(omega))
             angle_control += self.angle_pid.update(self.angle_setpoint, theta, time_step)

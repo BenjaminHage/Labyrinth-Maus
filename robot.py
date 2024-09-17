@@ -238,7 +238,7 @@ class DifferentialDriveRobot:
   
     def state_estimate(self, left_wheel_velocity, right_wheel_velocity, gyro_w, current_time, time_step): ######################################################################
 
-        handle_encoder_mode()
+        self.handle_encoder_mode()
         # Positions-Update basierend auf der aktuellen Geschwindigkeit
         
         self.robot_x, self.robot_y, self.robot_angle, self.robot_v = self.update_robot(self.robot_x, self.robot_y, self.robot_angle, self.left_wheel_velocity,
@@ -253,7 +253,7 @@ class DifferentialDriveRobot:
     
     def state_estimate_Kalman(self, left_wheel_velocity, right_wheel_velocity, gyro_w, current_time, time_step): ######################################################################
         
-        handle_encoder_mode()
+        self.handle_encoder_mode()
         # Positions-Update basierend auf der aktuellen Geschwindigkeit
 
         # UKF Vorhersage
