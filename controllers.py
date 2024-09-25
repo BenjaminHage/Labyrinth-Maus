@@ -233,8 +233,10 @@ class AutonomousController:
         
         self.undercut = 0
         self.point_overshoot = 0.015
-        self.kw_standing = 0.02
+        self.kw_standing = 0.012
         self.kw_driving = 0
+        self.front_desired_distance_faktor = 1
+        self.corner_init_front_desired_distance_faktor = 3.5
         
         self.min_distance = np.inf
         self.min_distance_angle = 0
@@ -639,12 +641,12 @@ class AutonomousController:
             if self.prev_state == 7:
                 relative_angle = self.relative_angle(x, y, theta, self.target_x, self.target_y)
                 angle_control = np.sign(self.angle_pid.previous_error)* self.kw_driving *(self.base_rotation_speed - abs(omega))
-                angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.3
+                angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.0
                 base_speed = self.base_speed * 1.0
             else:
                 angle_control = np.sign(self.angle_pid.previous_error)* self.kw_driving *(self.base_rotation_speed - abs(omega))
-                angle_control += self.angle_pid.update(self.angle_setpoint, theta, time_step) * 1
-                base_speed = self.base_speed * 1
+                angle_control += self.angle_pid.update(self.angle_setpoint, theta, time_step) * 1.0
+                base_speed = self.base_speed * 1.0
             
             self.left_wheel_velocity = base_speed - angle_control
             self.right_wheel_velocity = base_speed + angle_control
@@ -662,7 +664,7 @@ class AutonomousController:
             
             relative_angle = self.relative_angle(x, y, theta, self.target_x, self.target_y)
             angle_control = np.sign(self.angle_pid.previous_error)* self.kw_driving *(self.base_rotation_speed - abs(omega))
-            angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.3
+            angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.0
             
             self.left_wheel_velocity = distance_control - angle_control
             self.right_wheel_velocity = distance_control + angle_control
@@ -1330,7 +1332,11 @@ class AutonomousController:
                     self.prev_state = self.state
                     self.state = 6    
                 elif self.follow_sensor == self.front:
-                    if front_sensor > self.desired_distance + self.distance_toleranz:
+                    if not (self.front_left_sensor_active or self.front_right_sensor_active):
+                        self.front_desired_distance_faktor = self.corner_init_front_desired_distance_faktor
+                    else:
+                        self.front_desired_distance_faktor = 1
+                    if front_sensor > self.desired_distance * self.front_desired_distance_faktor + self.distance_toleranz:
                         self.control_message ="did ortogonal turn, start driving forward"
                         self.prev_state = self.state
                         self.state = 6
@@ -1387,7 +1393,7 @@ class AutonomousController:
                 self.control_message ="found a wall, restart init"
                 self.prev_state = self.state
                 self.state = 0
-            elif self.follow_sensor == self.front and front_sensor <= (self.desired_distance + self.control_distance) :
+            elif self.follow_sensor == self.front and front_sensor <= (self.desired_distance * self.front_desired_distance_faktor + self.control_distance) :
                 self.control_message ="front wall is near, start to controll the distance"
                 self.prev_state = self.state
                 self.state = 9
@@ -1414,7 +1420,7 @@ class AutonomousController:
                     self.state = 3
 
         elif self.state == 9: #regelung wand forne
-            if abs(self.desired_distance - front_sensor) < self.distance_toleranz:
+            if abs(self.desired_distance * self.front_desired_distance_faktor - front_sensor) < self.distance_toleranz:
                 self.control_message ="got to wall distance"
                 if self.follow_sensor == self.left:
                     self.control_message ="got to wall distance, start set up right turn"
@@ -1625,7 +1631,7 @@ class AutonomousController:
             if self.prev_state == 7:
                 relative_angle = self.relative_angle(x, y, theta, self.target_x, self.target_y)
                 angle_control = np.sign(self.angle_pid.previous_error)* self.kw_driving *(self.base_rotation_speed - abs(omega))
-                angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.3
+                angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.0
                 base_speed = self.base_speed 
             else:
                 angle_control = np.sign(self.angle_pid.previous_error)* self.kw_driving *(self.base_rotation_speed - abs(omega))
@@ -1637,6 +1643,7 @@ class AutonomousController:
 
             if self.pledge_count == 0:
                 self.follow_sensor = self.front
+                self.front_desired_distance_faktor = 1
 
         elif self.state == 7: #set up forwoard point
             self.target_x, self.target_y = self.get_forward_point(x, y, theta, self.desired_distance + self.robot_radius + self.point_overshoot)
@@ -1646,13 +1653,17 @@ class AutonomousController:
             
             relative_angle = self.relative_angle(x, y, theta, self.target_x, self.target_y)
             angle_control = np.sign(self.angle_pid.previous_error)* self.kw_driving *(self.base_rotation_speed - abs(omega))
-            angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.3
+            angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.0
             
             self.left_wheel_velocity = distance_control - angle_control
             self.right_wheel_velocity = distance_control + angle_control
 
         elif self.state == 9: #regelung wandabstand forne
-            distance_control = self.point_distance_pid.update(self.desired_distance, front_sensor, time_step)
+            if self.follow_sensor == self.front and not (self.front_left_sensor_active or self.front_right_sensor_active):
+                self.front_desired_distance_faktor = self.corner_init_front_desired_distance_faktor
+            else:
+                self.front_desired_distance_faktor = 1
+            distance_control = self.point_distance_pid.update(self.desired_distance * self.front_desired_distance_faktor, front_sensor, time_step)
             self.left_wheel_velocity = distance_control
             self.right_wheel_velocity = distance_control  
 

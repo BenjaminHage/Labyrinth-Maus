@@ -153,6 +153,7 @@ class ConsoleOutput:
             "---------------------------------------------------------------------",
             f"State:             {self.auto.state}",
             f"follow_sensor:     {self.auto.follow_sensor}",
+            f"pledge_count:     {self.auto.pledge_count}",
           #  f"Desired_distance:  {self.desired_distance}",
           #  f"aktivation_thres:  {self.activation_threshold}",
           #  f"Base_Speed:        {self.base_speed:.2f} m/s",

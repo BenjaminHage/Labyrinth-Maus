@@ -35,7 +35,7 @@ def main():
     speed_pid_right.set_integral(0.00000000000000001)
     
     #angle_pid = PIDController(kp=150, ki=100.0, kd=10.00, d_minmax=100, i_minmax=100)
-    angle_pid = PIDController(kp=0.06, ki=0.00, kd=0.0, d_minmax=0.029, i_minmax=0.1, pid_minmax=1, pid_min = -0.5)
+    angle_pid = PIDController(kp=0.05, ki=0.00, kd=0.0, d_minmax=0.029, i_minmax=0.1, pid_minmax=1, pid_min = -0.5)
     ###### Manuell #####
 
 
@@ -43,7 +43,7 @@ def main():
     
     #Auto
     init_base_speed = 0.12
-    init_base_rotation_speed = 2.25
+    init_base_rotation_speed = 2.0
     desired_distance = 3.5  # Desired distance from the wall
     sensor_activation_threshold = 22 
     diagonal_activation_threshold = 30
