@@ -1634,7 +1634,7 @@ class AutonomousController:
         elif self.state == 6: #ungeregelt gerade aus
             angle_control = 0
             base_speed = self.base_speed
-             self.on_point = False
+            self.on_point = False
 
             if self.prev_state == 7:
                 relative_angle = self.relative_angle(x, y, theta, self.target_x, self.target_y)
