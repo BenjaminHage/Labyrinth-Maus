@@ -59,9 +59,10 @@ def main():
     
     point_distance_pid = PIDController(kp=-1.2, ki=-0.0, kd=0, i_minmax=100, d_max=70, pid_minmax=0.5)
     wall_distance_pid = PIDController(kp=0.5, ki=0.000, kd=0.35, d_minmax=0.029, i_minmax=1, pid_minmax = 12, pid_min=-0.2)
+    diag_wall_distance_pid = PIDController(kp=0.5, ki=0.000, kd=0.35, d_minmax=0.029, i_minmax=1, pid_minmax = 10, pid_min=-0.02)
     esc = ESCController(dither_frequency, dither_amplitude, learning_rate)
     
-    auto = AutonomousController(angle_pid, wall_distance_pid, point_distance_pid, esc, init_base_speed,
+    auto = AutonomousController(angle_pid, wall_distance_pid, diag_wall_distance_pid, point_distance_pid, esc, init_base_speed,
                                         init_base_rotation_speed, desired_distance,
                                         sensor_activation_threshold, diagonal_activation_threshold, near_activation_threshold, 
                                         robot.get_wheel_distance(), robot.get_robot_radius(),robot.get_sensor_angles(),robot)
