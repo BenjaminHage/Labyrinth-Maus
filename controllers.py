@@ -165,7 +165,7 @@ class ESCController:
         
         
 class AutonomousController:
-    def __init__(self, angle_pid, wall_distance_pid, point_distance_pid, esc, base_speed, base_rotation_speed, desired_distance,
+    def __init__(self, angle_pid, wall_distance_pid, diag_wall_distance_pid,point_distance_pid, esc, base_speed, base_rotation_speed, desired_distance,
                  sensor_activation_threshold, diagonal_activation_threshold, near_activation_threshold,	
                  wheel_distance, robot_radius, sensor_angles, robot,
                  control_distance = 5, angle_toleranz = 3, distance_toleranz = 1.5, 
@@ -226,6 +226,7 @@ class AutonomousController:
 
         self.angle_pid = angle_pid
         self.wall_distance_pid = wall_distance_pid
+        self.diag_wall_distance_pid = diag_wall_distance_pid             
         self.point_distance_pid = point_distance_pid
         self.esc = esc
         
@@ -733,7 +734,7 @@ class AutonomousController:
         
 
         elif self.state == 21: #links diagonal folgen
-                angle_control = 1 * self.wall_distance_pid.update(self.desired_distance / math.cos(math.pi / 4), front_left_sensor, time_step)
+                angle_control = 1 * self.diag_wall_distance_pid.update(self.desired_distance / math.cos(math.pi / 4), front_left_sensor, time_step)
 
                 # Adjust wheel velocities
                 self.left_wheel_velocity = self.base_speed + angle_control
@@ -741,7 +742,7 @@ class AutonomousController:
                 self.follow_sensor = self.left
 
         elif self.state == 22: #rechts diagonal folgen
-                angle_control = 1 * self.wall_distance_pid.update(self.desired_distance / math.cos(math.pi / 4), front_right_sensor, time_step)
+                angle_control = 1 * self.diag_wall_distance_pid.update(self.desired_distance / math.cos(math.pi / 4), front_right_sensor, time_step)
 
                 # Adjust wheel velocities
                 self.left_wheel_velocity = self.base_speed - angle_control
@@ -1743,7 +1744,7 @@ class AutonomousController:
             self.right_wheel_velocity = 0
         
         elif self.state == 21: #links diagonal folgen
-                angle_control = 1 * self.wall_distance_pid.update(self.desired_distance / math.cos(math.pi / 4), front_left_sensor, time_step)
+                angle_control = 1 * self.diag_wall_distance_pid.update(self.desired_distance / math.cos(math.pi / 4), front_left_sensor, time_step)
 
                 # Adjust wheel velocities
                 self.left_wheel_velocity = self.base_speed + angle_control
@@ -1751,7 +1752,7 @@ class AutonomousController:
                 self.follow_sensor = self.left
 
         elif self.state == 22: #rechts diagonal folgen
-            angle_control = 1 * self.wall_distance_pid.update(self.desired_distance / math.cos(math.pi / 4), front_right_sensor, time_step)
+            angle_control = 1 * self.diag_wall_distance_pid.update(self.desired_distance / math.cos(math.pi / 4), front_right_sensor, time_step)
 
             # Adjust wheel velocities
             self.left_wheel_velocity = self.base_speed - angle_control
