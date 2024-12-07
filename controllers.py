@@ -1289,6 +1289,7 @@ class AutonomousController:
                 self.state = 9
             elif not self.front_left_sensor_active:
                 self.control_message ="detekt edge, start driving forwoard"
+                self.angle_setpoint = theta
                 self.prev_state = self.state
                 self.state = 6
 
@@ -1299,6 +1300,7 @@ class AutonomousController:
                 self.state = 9
             elif not self.front_right_sensor_active:
                 self.control_message ="detekt edge, start driving forwoard"
+                self.angle_setpoint = theta
                 self.prev_state = self.state
                 self.state = 6  
 
