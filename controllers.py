@@ -298,7 +298,6 @@ class AutonomousController:
 
 
         if self.state == 0: # init
-            self.on_point = False
             if not all(x >= self.activation_threshold for x in sensor_readings):
                 
                 min_range_sensor = np.argmin(sensor_readings)
@@ -583,6 +582,7 @@ class AutonomousController:
             self.follow_sensor = []
             self.left_wheel_velocity = 0
             self.right_wheel_velocity = 0
+            self.on_point = False
         
         elif self.state == 1: #linke wand folgen
             angle_control = self.wall_distance_pid.update(self.desired_distance, left_sensor, time_step)
@@ -1325,11 +1325,11 @@ class AutonomousController:
                     self.prev_state = self.state
                     #self.state = 13 
                     self.state = 15
-                elif self.follow_sensor == self.right and self.right_sensor_active:
+                elif self.follow_sensor == self.right and self.right_sensor_active and not self.on_point:
                     self.control_message ="turned parallel to right wall, set up pid for right wall"
                     self.prev_state = self.state
                     self.state = 19
-                elif self.follow_sensor == self.left and self.left_sensor_active:
+                elif self.follow_sensor == self.left and self.left_sensor_active and not self.on_point:
                     self.control_message ="turned parallel to left wall, set up pid for left wall"
                     self.prev_state = self.state
                     self.state = 18
@@ -1570,6 +1570,7 @@ class AutonomousController:
             self.pledge_count = []
             self.left_wheel_velocity = 0
             self.right_wheel_velocity = 0
+             self.on_point = False
         
         elif self.state == 1: #linke wand folgen
             angle_control = self.wall_distance_pid.update(self.desired_distance, left_sensor, time_step)
@@ -1633,6 +1634,7 @@ class AutonomousController:
         elif self.state == 6: #ungeregelt gerade aus
             angle_control = 0
             base_speed = self.base_speed
+             self.on_point = False
 
             if self.prev_state == 7:
                 relative_angle = self.relative_angle(x, y, theta, self.target_x, self.target_y)
@@ -1663,6 +1665,7 @@ class AutonomousController:
             
             self.left_wheel_velocity = distance_control - angle_control
             self.right_wheel_velocity = distance_control + angle_control
+            self.on_point = True
 
         elif self.state == 9: #regelung wandabstand forne
             if self.follow_sensor == self.front and not (self.front_left_sensor_active or self.front_right_sensor_active):
