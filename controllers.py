@@ -172,6 +172,7 @@ class AutonomousController:
                  esc_angle_comparison_interval = 1, esc_angel_toleranz = 0.8,  feature_toleranz = 3, direkt_change_toleranz = 5):
         
         self.state = 0
+        self.on_ponint = False             
         
         self.left_wheel_velocity = 0
         self.right_wheel_velocity = 0
@@ -297,6 +298,7 @@ class AutonomousController:
 
 
         if self.state == 0: # init
+            self.on_point = False
             if not all(x >= self.activation_threshold for x in sensor_readings):
                 
                 min_range_sensor = np.argmin(sensor_readings)
@@ -364,13 +366,13 @@ class AutonomousController:
                     self.prev_state = self.state
                     #self.state = 13
                     self.state = 15
-                elif self.follow_sensor == self.right and self.right_sensor_active:
+                elif self.follow_sensor == self.right and self.right_sensor_active and not self.on_point:
                     self.control_message ="turned parallel to right wall, start folloing it"
                     self.prev_state = self.state
                     self.state = 2
                     error = self.desired_distance - right_sensor
                     self.wall_distance_pid.set_previous_error(error)    
-                elif self.follow_sensor == self.left and self.left_sensor_active:
+                elif self.follow_sensor == self.left and self.left_sensor_active and not self.on_point:
                     self.control_message ="turned parallel to left wall, start folloing it"
                     self.prev_state = self.state
                     self.state = 1
@@ -648,7 +650,7 @@ class AutonomousController:
                 angle_control = np.sign(self.angle_pid.previous_error)* self.kw_driving *(self.base_rotation_speed - abs(omega))
                 angle_control += self.angle_pid.update(self.angle_setpoint, theta, time_step) * 1.0
                 base_speed = self.base_speed * 1.0
-            
+            self.on_point = False
             self.left_wheel_velocity = base_speed - angle_control
             self.right_wheel_velocity = base_speed + angle_control
 
@@ -666,7 +668,8 @@ class AutonomousController:
             relative_angle = self.relative_angle(x, y, theta, self.target_x, self.target_y)
             angle_control = np.sign(self.angle_pid.previous_error)* self.kw_driving *(self.base_rotation_speed - abs(omega))
             angle_control += self.angle_pid.update(relative_angle, theta, time_step) * 1.0
-            
+
+            self.on_point = True
             self.left_wheel_velocity = distance_control - angle_control
             self.right_wheel_velocity = distance_control + angle_control
 
