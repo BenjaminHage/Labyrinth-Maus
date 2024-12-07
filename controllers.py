@@ -172,7 +172,7 @@ class AutonomousController:
                  esc_angle_comparison_interval = 1, esc_angel_toleranz = 0.8,  feature_toleranz = 3, direkt_change_toleranz = 5):
         
         self.state = 0
-        self.on_ponint = False             
+        self.on_point = False             
         
         self.left_wheel_velocity = 0
         self.right_wheel_velocity = 0
