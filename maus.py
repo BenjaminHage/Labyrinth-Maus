@@ -45,9 +45,9 @@ def main():
     init_base_speed = 0.12
     init_base_rotation_speed = 2.0
     desired_distance = 3.5  # Desired distance from the wall
-    sensor_activation_threshold = 22 
-    diagonal_activation_threshold = 30
-    near_activation_threshold = 15
+    sensor_activation_threshold = 20 
+    diagonal_activation_threshold = 28
+    near_activation_threshold = 12
     
     
     #ESC
