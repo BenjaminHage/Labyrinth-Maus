@@ -1570,7 +1570,7 @@ class AutonomousController:
             self.pledge_count = []
             self.left_wheel_velocity = 0
             self.right_wheel_velocity = 0
-             self.on_point = False
+            self.on_point = False
         
         elif self.state == 1: #linke wand folgen
             angle_control = self.wall_distance_pid.update(self.desired_distance, left_sensor, time_step)
