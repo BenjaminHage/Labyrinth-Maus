@@ -234,7 +234,7 @@ class AutonomousController:
         self.control_message = ""
         
         self.undercut = 0
-        self.point_overshoot = 0.015
+        self.point_overshoot = 0.0
         self.kw_standing = 0.012
         self.kw_driving = 0
         self.front_desired_distance_faktor = 1
