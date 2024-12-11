@@ -47,7 +47,7 @@ def main():
     desired_distance = 3.5  # Desired distance from the wall
     sensor_activation_threshold = 20 
     diagonal_activation_threshold = 28
-    near_activation_threshold = 17
+    near_activation_threshold = 16
     
     
     #ESC
