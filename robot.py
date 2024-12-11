@@ -18,7 +18,7 @@ import board
 
 
 class DifferentialDriveRobot:
-    def __init__ (self, param_file = 'parameters.txt', mesurment_noise_mean = 0, mesurment_noise_standard_deviation = 1, system_noise_mean = 0, system_noise_standard_deviation = 1, 
+    def __init__ (self, param_file = '~/Labyrinth-Maus/parameters.txt', mesurment_noise_mean = 0, mesurment_noise_standard_deviation = 1, system_noise_mean = 0, system_noise_standard_deviation = 1, 
                   init_robot_x = 0, init_robot_y = 0, init_robot_angle = 0, motion_model=None, measurement_model=None, process_noise=None, measurement_noise=None, dt=0.081):
         self.left_wheel_velocities = []  # Liste zur Speicherung der gemessenen Geschwindigkeiten
         self.right_wheel_velocities = []  # Liste zur Speicherung der gemessenen Geschwindigkeiten
