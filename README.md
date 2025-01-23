@@ -14,10 +14,12 @@ sudo apt install python3-rpi-lgpio
 sudo git clone https://github.com/pololu/motoron-python.git
 cd motoron-python
 sudo python3 setup.py install #--break-system-packages
+cd ../
 
 sudo git clone https://github.com/abelectronicsuk/ABElectronics_Python_Libraries.git
 cd ABElectronics_Python_Libraries
 sudo python3 setup.py install #--break-system-packages
+cd ../
 
 #sudo pip3 install Adafruit-Blinka --break-system-packages #vielleicht unnötig weil nächster es mit installiert 
 sudo pip3 install adafruit-circuitpython-icm20x --break-system-packages
