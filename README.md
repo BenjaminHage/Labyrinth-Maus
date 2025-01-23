@@ -1,6 +1,6 @@
 # Labyrinth-Maus
 
-sudo pigpiod
+#sudo pigpiod
 sudo apt install git python3-dev python3-pip
 
 sudo pip3 install smbus2 --break-system-packages
@@ -26,42 +26,43 @@ sudo pip3 install matplotlib --break-system-packages
 sudo pip3 install keyboard --break-system-packages
 sudo pip3 install scipy --break-system-packages
 sudo pip3 install filterpy --break-system-packages
+sudo pip3 install numpy --break-system-packages #nachträglich hinzugefügt müsste aber hoffentlich stimmen
 
 #wget https://files.waveshare.com/upload/e/ea/UPS_Module_3S_Code.zip
 
 
-sudo chmod +x setup_pi_ap.sh
+#sudo chmod +x setup_pi_ap.sh
 
-sudo chmod +x git-push-script.sh
+#sudo chmod +x git-push-script.sh
 
 
 
 
 ###################### .env  #########################################
 
-sudo raspi-config nonint do_i2c 0
-sudo pigpiod
+#sudo raspi-config nonint do_i2c 0
+#sudo pigpiod
 
-python3 -m venv .env
-source .env/bin/activate
+#python3 -m venv .env
+#source .env/bin/activate
 
 #pip3 install Adafruit-Blinka
 #pip3 install adafruit-circuitpython-icm20x
 
 #sudo git clone https://github.com/abelectronicsuk/ABElectronics_Python_Libraries.git
-cd ABElectronics_Python_Libraries
-python3 setup.py install
-cd ../
+#cd ABElectronics_Python_Libraries
+#python3 setup.py install
+#cd ../
 
 #git clone https://github.com/pololu/motoron-python.git
-cd motoron-python
-python3 setup.py install
-cd ../
+#cd motoron-python
+#python3 setup.py install
+#cd ../
 
-pip3 install numpy
-pip3 install matplotlib
-pip3 install keyboard
-pip3 install smbus2
+#pip3 install numpy
+#pip3 install matplotlib
+#pip3 install keyboard
+#pip3 install smbus2
 
 
 
