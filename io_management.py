@@ -333,6 +333,9 @@ def handle_user_input(angle_setpoint, base_speed, autonomous_mode, close=False, 
                 autonomous_mode = not autonomous_mode  # Toggle autonomous mode
                 handle_user_input.last_key_states['a'] = True
                 handle_user_input.last_time = current_time
+
+                if reset is not None:
+                    reset()
         else:
             handle_user_input.last_key_states['a'] = False
 
