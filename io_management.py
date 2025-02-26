@@ -340,25 +340,25 @@ def handle_user_input(angle_setpoint, base_speed, autonomous_mode, close=False, 
             handle_user_input.last_key_states['a'] = False
 
 
-        # Reset initial values
-        base_speed = 0
-        angle_setpoint = 0
-        
-        # Check and continuously process "up" key
-        if keyboard.is_pressed('up'):
-            base_speed += 0.5  # Continuously increase speed
-
-        # Check and continuously process "down" key
-        if keyboard.is_pressed('down'):
-            base_speed -= 0.5  # Continuously decrease speed
-
-        # Check and continuously process "left" key
-        if keyboard.is_pressed('left'):
-            angle_setpoint += 0.15  # Continuous angle adjustment
-
-        # Check and continuously process "right" key
-        if keyboard.is_pressed('right'):
-            angle_setpoint -= 0.15  # Continuous angle adjustment
+    # Reset initial values
+    base_speed = 0
+    angle_setpoint = 0
+    
+    # Check and continuously process "up" key
+    if keyboard.is_pressed('up'):
+        base_speed += 0.5  # Continuously increase speed
+    
+    # Check and continuously process "down" key
+    if keyboard.is_pressed('down'):
+        base_speed -= 0.5  # Continuously decrease speed
+    
+    # Check and continuously process "left" key
+    if keyboard.is_pressed('left'):
+        angle_setpoint += 0.15  # Continuous angle adjustment
+    
+    # Check and continuously process "right" key
+    if keyboard.is_pressed('right'):
+        angle_setpoint -= 0.15  # Continuous angle adjustment
 
        
 
